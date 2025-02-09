@@ -4,3 +4,5 @@ The manual experiment logs and results are put in the directory /manual_experime
 The generated Dockerfiles are put in the directory /success_dockerfile
 
 The validation script is put in /validation_dockerfile.py
+
+The prompt of Repo2Run is put in the directory /prompt
