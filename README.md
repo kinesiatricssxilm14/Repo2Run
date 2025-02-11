@@ -5,4 +5,4 @@ The generated Dockerfiles are put in the directory /success_dockerfile
 
 The validation script is put in /validation_dockerfile.py
 
-The prompt of Repo2Run is put in the directory /prompt
+The prompts are shown in the directory /prompt
