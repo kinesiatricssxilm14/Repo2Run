@@ -7,4 +7,4 @@ The validation script is put in /validation_dockerfile.py
 
 The prompts are shown in the directory /prompt
 
-![Logo](.Repo2Run_Logo.png)
+![Logo](./Repo2Run_Logo.png)
