@@ -1,0 +1,20 @@
+diff --git a/micrograd_cuda/operations.py b/micrograd_cuda/operations.py
+index 2a3fc6d..21c00dd 100644
+--- a/micrograd_cuda/operations.py
++++ b/micrograd_cuda/operations.py
+@@ -1,8 +1,12 @@
++import numpy as np
+ import ctypes
+-import math
++lib = None
+ 
+-# Load the shared library
+-lib = ctypes.CDLL('./liboperations.so')
++class MockOperations:
++    ...
++    # Dummy Implementation to replace CUDA ops for np in CPU
++    
++Operations = MockOperations if lib is None else RealOperations
+ lib.matmul_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+ lib.allocate_on_gpu.restype = ctypes.c_void_p
+ lib.tanh_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]

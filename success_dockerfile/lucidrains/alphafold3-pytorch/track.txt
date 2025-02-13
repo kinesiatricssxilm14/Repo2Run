@@ -1,0 +1,1639 @@
+lucidrains/alphafold3-pytorch
+49f7c967e8586b9f57bdb95e82068fabda815689
+Container friendly_pare 74191217099a started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought:
+I need to understand the structure of the root directory to identify the configuration files and relevant files for setting up the environment.
+
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+LICENSE		alphafold3_pytorch	   data		   pyproject.toml
+README.md	alphafold3_pytorch.nimble  docs		   scripts
+alphafold3.png	contribute.sh		   install-nim.sh  tests
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I will next inspect the `pyproject.toml` file to determine if it contains dependency information and relevant configurations for the project.
+
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+[project]
+name = "alphafold3-pytorch"
+version = "0.6.11"
+description = "Alphafold 3 - Pytorch"
+authors = [
+    { name = "Phil Wang", email = "lucidrains@gmail.com" },
+    { name = "Alex Morehead", email = "alex.morehead@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">= 3.9"
+license = { file = "LICENSE" }
+keywords = [
+    'artificial intelligence',
+    'deep learning',
+    'protein structure prediction',
+]
+classifiers=[
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Developers',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python :: 3.9',
+]
+dependencies = [
+    "adam-atan2-pytorch>=0.1.12",
+    "awscliv2>=2.3.1",
+    "beartype",
+    "biopython>=1.83",
+    "cachetools",
+    "click>=8.1",
+    "CoLT5-attention>=0.11.0",
+    "einops>=0.8.0",
+    "einx>=0.2.2",
+    "ema-pytorch>=0.7.0",
+    "environs",
+    "lion-pytorch>=0.2.2",
+    "joblib",
+    "gemmi>=0.6.6",
+    "fair-esm",
+    "fastapi",
+    "frame-averaging-pytorch>=0.0.18",
+    "gradio",
+    "gradio_molecule3d",
+    "huggingface_hub>=0.21.4",
+    "jaxtyping>=0.2.28",
+    "lightning>=2.2.5",
+    "multimolecule",
+    "nimporter",
+    "numpy>=1.23.5",
+    "polars>=1.1.0",
+    "pdbeccdutils>=0.8.5",
+    "pydantic>=2.8.2",
+    "pyyaml",
+    "rdkit>=2023.9.6",
+    "retrying",
+    "scikit-learn>=1.5.0",
+    "scipy==1.13.1",
+    "sentencepiece",
+    "sh>=2.0.7",
+    "shortuuid",
+    "tensorboard",
+    "taylor-series-linear-attention>=0.1.12",
+    "torchtyping>=0.1.5",
+    "timeout_decorator>=0.5.0",
+    'torch_geometric',
+    "torch>=2.1",
+    "tqdm>=4.66.4",
+    "transformers[torch]",
+    "loguru",
+]
+[project.urls]
+Homepage = "https://pypi.org/project/alphafold3-pytorch/"
+Repository = "https://github.com/lucidrains/alphafold3-pytorch"
+[project.optional-dependencies]
+examples = []
+test = [
+    "ruff>=0.4.2",
+    "pytest",
+    "pytest-shard",
+]
+[project.scripts]
+alphafold3_pytorch = "alphafold3_pytorch.cli:cli"
+alphafold3_pytorch_app = "alphafold3_pytorch.app:app"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
+[tool.ruff]
+line-length = 1000
+lint.ignore = [
+    "F722", # for jaxtyping shape annotation
+    "F401",
+    "F821"
+]
+lint.extend-select = [
+    "W291"
+]
+[tool.hatch.metadata]
+allow-direct-references = true
+[tool.hatch.build.targets.wheel]
+packages = ["alphafold3_pytorch"]
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `pyproject.toml` file contains a comprehensive list of dependencies for the project. Since the project uses a modern Python environment setup (`pyproject.toml`), I'll use `poetry` to install the dependencies given in this file. 
+
+As the next step, I will install the dependencies using `poetry install`.
+
+### Action:
+```bash
+cd /repo && poetry install
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install`...
+[31;1m[tool.poetry] section not found in /repo/pyproject.toml[39;22m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetry install` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `poetry install` command failed because the `pyproject.toml` file does not contain a `[tool.poetry]` section. Instead, it contains a `[project]` section, which indicates that the project uses Hatch as the build tool.
+
+Given this setup, I will attempt to install the dependencies using Hatch. 
+
+### Action:
+```bash
+pip install hatch -q && hatch env create
+```
+### Observation:
+Running `pip install hatch -q`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install hatch -q` executes with returncode: 0
+Running `hatch env create`...
+[31m│[0m   [2m 35 [0m[2m│   │   [0mproject_name = (                                               [31m│[0m
+[31m│[0m   [2m 36 [0m[2m│   │   │   [0mproject_id                                                 [31m│[0m
+[31m│[0m   [2m 37 [0m[2m│   │   │   [0m[94mif[0m project_is_script                                       [31m│[0m
+[31m│[0m [31m❱ [0m 38 [2m│   │   │   [0m[94melse[0m [96mself[0m.metadata.name                                    [31m│[0m
+[31m│[0m   [2m 39 [0m[2m│   │   │   [0m[94mif[0m [33m'[0m[33mproject[0m[33m'[0m [95min[0m [96mself[0m.metadata.config                       [31m│[0m
+[31m│[0m   [2m 40 [0m[2m│   │   │   [0m[94melse[0m [33mf[0m[33m'[0m[33m{[0mproject_id[33m}[0m[33m-unmanaged[0m[33m'[0m                             [31m│[0m
+[31m│[0m   [2m 41 [0m[2m│   │   [0m)                                                              [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [2;33m/usr/local/lib/python3.10/site-packages/hatchling/metadata/[0m[1;33mcore.py[0m:[94m137[0m in    [31m│[0m
+[31m│[0m [92mname[0m                                                                         [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m 134 [0m[2m│   │   │   [0mname = [96mself[0m.core_raw_metadata.get([33m'[0m[33mname[0m[33m'[0m, [33m'[0m[33m'[0m)             [31m│[0m
+[31m│[0m   [2m 135 [0m[2m│   │   │   [0m[94mif[0m [95mnot[0m name:                                              [31m│[0m
+[31m│[0m   [2m 136 [0m[2m│   │   │   │   [0mmessage = [33m'[0m[33mMissing required field `project.name`[0m[33m'[0m     [31m│[0m
+[31m│[0m [31m❱ [0m 137 [2m│   │   │   │   [0m[94mraise[0m [96mValueError[0m(message)                             [31m│[0m
+[31m│[0m   [2m 138 [0m[2m│   │   │   [0m                                                          [31m│[0m
+[31m│[0m   [2m 139 [0m[2m│   │   │   [0m[96mself[0m._name = normalize_project_name(name)                 [31m│[0m
+[31m│[0m   [2m 140 [0m                                                                      [31m│[0m
+[31m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[1;91mValueError: [0mMissing required field `project.name`
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`hatch env create` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+pip install hatch -q
+---------------------------
+### Thought:
+The Hatch environment creation failed due to the missing required field `project.name`. Since the existing `pyproject.toml` file appears to have the necessary fields under `[project]` section, I should revalidate it.
+
+But given that there is a list of dependencies under `[project.dependencies]`, I can also use the pip to handle these dependencies by creating the `requirements.txt` file and adding these dependencies to it.
+
+### Action:
+```diff
+/repo/requirements.txt
+<<<<<<< SEARCH
+=======
+adam-atan2-pytorch>=0.1.12
+awscliv2>=2.3.1
+beartype
+biopython>=1.83
+cachetools
+click>=8.1
+CoLT5-attention>=0.11.0
+einops>=0.8.0
+einx>=0.2.2
+ema-pytorch>=0.7.0
+environs
+lion-pytorch>=0.2.2
+joblib
+gemmi>=0.6.6
+fair-esm
+fastapi
+frame-averaging-pytorch>=0.0.18
+gradio
+gradio_molecule3d
+huggingface_hub>=0.21.4
+jaxtyping>=0.2.28
+lightning>=2.2.5
+multimolecule
+nimporter
+numpy>=1.23.5
+polars>=1.1.0
+pdbeccdutils>=0.8.5
+pydantic>=2.8.2
+pyyaml
+rdkit>=2023.9.6
+retrying
+scikit-learn>=1.5.0
+scipy==1.13.1
+sentencepiece
+sh>=2.0.7
+shortuuid
+tensorboard
+taylor-series-linear-attention>=0.1.12
+torchtyping>=0.1.5
+timeout_decorator>=0.5.0
+torch_geometric
+torch>=2.1
+tqdm>=4.66.4
+transformers[torch]
+loguru
+>>>>>>> REPLACE
+```
+### Observation:
+Running Edit...
+[?2004l
+* Succeed Patch:
+Create and write /repo/requirements.txt!
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 195 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+pip install hatch -q
+python /home/tools/code_edit.py -t '/tmp/patch/tmprb7mge1s' -p '/tmp'
+---------------------------
+### Thought:
+Having created the `requirements.txt` file with all the necessary dependencies, I will now add this file to the waiting list to be processed for installation.
+
+### Action:
+```bash
+waitinglist addfile /repo/requirements.txt
+```
+### Observation:
+Running `waitinglist addfile /repo/requirements.txt`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `waitinglist addfile /repo/requirements.txt`...
+'adam-atan2-pytorch>=0.1.12' (using pip to download) has been added into the waiting list. 
+'awscliv2>=2.3.1' (using pip to download) has been added into the waiting list. 
+'beartype' (using pip to download) has been added into the waiting list. 
+'biopython>=1.83' (using pip to download) has been added into the waiting list. 
+'cachetools' (using pip to download) has been added into the waiting list. 
+'click>=8.1' (using pip to download) has been added into the waiting list. 
+'CoLT5-attention>=0.11.0' (using pip to download) has been added into the waiting list. 
+'einops>=0.8.0' (using pip to download) has been added into the waiting list. 
+'einx>=0.2.2' (using pip to download) has been added into the waiting list. 
+'ema-pytorch>=0.7.0' (using pip to download) has been added into the waiting list. 
+'environs' (using pip to download) has been added into the waiting list. 
+'lion-pytorch>=0.2.2' (using pip to download) has been added into the waiting list. 
+'joblib' (using pip to download) has been added into the waiting list. 
+'gemmi>=0.6.6' (using pip to download) has been added into the waiting list. 
+'fair-esm' (using pip to download) has been added into the waiting list. 
+'fastapi' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bas
+...[Truncation]...
+the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+'scipy==1.13.1' (using pip to download) has been added into the waiting list. 
+'sentencepiece' (using pip to download) has been added into the waiting list. 
+'sh>=2.0.7' (using pip to download) has been added into the waiting list. 
+'shortuuid' (using pip to download) has been added into the waiting list. 
+'tensorboard' (using pip to download) has been added into the waiting list. 
+'taylor-series-linear-attention>=0.1.12' (using pip to download) has been added into the waiting list. 
+'torchtyping>=0.1.5' (using pip to download) has been added into the waiting list. 
+'timeout_decorator>=0.5.0' (using pip to download) has been added into the waiting list. 
+'torch_geometric' (using pip to download) has been added into the waiting list. 
+'torch>=2.1' (using pip to download) has been added into the waiting list. 
+'tqdm>=4.66.4' (using pip to download) has been added into the waiting list. 
+'transformers[torch]' (using pip to download) has been added into the waiting list. 
+'loguru' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+The following entries in "/repo/requirements.txt" have been successfully added to the waiting list:
+adam-atan2-pytorch>=0.1.12
+awscliv2>=2.3.1
+beartype
+biopython>=1.83
+cachetools
+click>=8.1
+CoLT5-attention>=0.11.0
+einops>=0.8.0
+einx>=0.2.2
+ema-pytorch>=0.7.0
+environs
+lion-pytorch>=0.2.2
+joblib
+gemmi>=0.6.6
+fair-esm
+fastapi
+frame-averaging-pytorch>=0.0.18
+gradio
+gradio_molecule3d
+huggingface_hub>=0.21.4
+jaxtyping>=0.2.28
+lightning>=2.2.5
+multimolecule
+nimporter
+numpy>=1.23.5
+polars>=1.1.0
+pdbeccdutils>=0.8.5
+pydantic>=2.8.2
+pyyaml
+rdkit>=2023.9.6
+retrying
+scikit-learn>=1.5.0
+scipy==1.13.1
+sentencepiece
+sh>=2.0.7
+shortuuid
+tensorboard
+taylor-series-linear-attention>=0.1.12
+torchtyping>=0.1.5
+timeout_decorator>=0.5.0
+torch_geometric
+torch>=2.1
+tqdm>=4.66.4
+transformers[torch]
+loguru
+There are no correctly formatted entries in "/repo/requirements.txt" that have been placed in the conflict list.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 194 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+pip install hatch -q
+python /home/tools/code_edit.py -t '/tmp/patch/tmprb7mge1s' -p '/tmp'
+---------------------------
+### Thought:
+The dependencies have been successfully added to the waiting list. Now, I need to execute the unified download command to install all the dependencies in the waiting list.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `download`...
+'adam-atan2-pytorch>=0.1.12' has been removed from the waiting list.
+"adam-atan2-pytorch>=0.1.12" installed successfully.
+'awscliv2>=2.3.1' has been removed from the waiting list.
+"awscliv2>=2.3.1" installed successfully.
+'beartype' has been removed from the waiting list.
+"beartype" installed successfully.
+'biopython>=1.83' has been removed from the waiting list.
+"biopython>=1.83" installed successfully.
+'cachetools' has been removed from the waiting list.
+"cachetools" installed successfully.
+'click>=8.1' has been removed from the waiting list.
+"click>=8.1" installed successfully.
+'CoLT5-attention>=0.11.0' has been removed from the waiting list.
+"CoLT5-attention>=0.11.0" installed successfully.
+'einops>=0.8.0' has been removed from the waiting list.
+"einops>=0.8.0" installed successfully.
+'einx>=0.2.2' has been removed from the waiting list.
+"einx>=0.2.2" installed successfully.
+'ema-pytorch>=0.7.0' has been removed from the waiting list.
+"ema-pytorch>=0.7.0" installed successfully.
+'environs' has been removed from the waiting list.
+"environs" installed successfully.
+'lion-pytorch>=0.2.2' has been removed from the waiting list.
+"lion-pytorch>=0.2.2" installed successfully.
+'joblib' has been removed from the waiting list.
+"joblib" installed successfully.
+'gemmi>=0.6.6' has been removed from the waiting list.
+"gemmi>=0.6.6" installed successfully.
+'fair-esm' has been removed from the waiting list.
+"fair-esm" installed successfully.
+'fastapi' has been removed from the waiting list.
+"fastapi" installed successfully.
+'frame-averaging-pytorch>=0.0.18' has been removed from the waiting list.
+"frame-averaging-pytorch>=0.0.18" installed successfully.
+'gradio' has been removed from the waiting list.
+"gradio" installed successfully.
+'gradio_molecule3d' has been removed from the waiting list.
+"gradio_molecule3d" installed successfully.
+'huggingface_hub>=0.21.4' has been removed from the waiting list.
+"huggingface_hub>=0.21.4" installed successfully.
+'jaxtyping>=0.2.28' has been removed from the waiting list.
+"jaxtyping>=0.2.28" installed successfully.
+'lightning>=2.2.5' has been removed from the waiting list.
+"lightning>=2.2.5" installed successfully.
+'multimolecule' has been removed from the waiting list.
+"multimolecule" installed successfully.
+'nimporter' has been removed from the waiting list.
+"nimporter" installed successfully.
+'numpy>=1.23.5' has been removed from the waiting list.
+"numpy>=1.23.5" installed successfully.
+'polars>=1.1.0' has been removed from the waiting list.
+"polars>=1.1.0" installed successfully.
+'pdbeccdutils>=0.8.5' has been removed from the waiting list.
+"pdbeccdutils>=0.8.5" installed successfully.
+'pydantic>=2.8.2' has been removed from the waiting list.
+"pydantic>=2.8.2" installed successfully.
+'pyyaml' has been removed from the waiting list.
+"pyyaml" installed successfully.
+'rdkit>=2023.9.6' has been removed from the waiting list.
+"rdkit>=2023.9.6" installed successfully.
+'retrying' has been removed from the waiting list.
+"retrying" installed successfully.
+'scikit-learn>=1.5.0' has been removed from the waiting list.
+"scikit-learn>=1.5.0" installed successfully.
+'scipy==1.13.1' has been removed from the waiting list.
+"scipy==1.13.1" installed successfully.
+'sentencepiece' has been removed from the waiting list.
+"sentencepiece" installed successfully.
+'sh>=2.0.7' has been removed from the waiting list.
+"sh>=2.0.7" installed successfully.
+'shortuuid' has been removed from the waiting list.
+"shortuuid" installed successfully.
+'tensorboard' has been removed from the waiting list.
+"tensorboard" installed successfully.
+'taylor-series-linear-attention>=0.1.12' has been removed from the waiting list.
+"taylor-series-linear-attention>=0.1.12" installed successfully.
+'torchtyping>=0.1.5' has been removed from the waiting list.
+"torchtyping>=0.1.5" installed successfully.
+'timeout_decorator>=0.5.0' has been removed from the waiting list.
+"timeout_decorator>=0.5.0" installed successfully.
+'torch_geometric' has been removed from the waiting list.
+"torch_geometric" installed successfully.
+'torch>=2.1' has been removed from the waiting list.
+"torch>=2.1" installed successfully.
+'tqdm>=4.66.4' has been removed from the waiting list.
+"tqdm>=4.66.4" installed successfully.
+'transformers[torch]' has been removed from the waiting list.
+"transformers[torch]" installed successfully.
+'loguru' has been removed from the waiting list.
+"loguru" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+adam-atan2-pytorch>=0.1.12 (using tool pip)
+awscliv2>=2.3.1 (using tool pip)
+beartype (using tool pip)
+biopython>=1.83 (using tool pip)
+cachetools (using tool pip)
+click>=8.1 (using tool pip)
+CoLT5-attention>=0.11.0 (using tool pip)
+einops>=0.8.0 (using tool pip)
+einx>=0.2.2 (using tool pip)
+ema-pytorch>=0.7.0 (using tool pip)
+environs (using tool pip)
+lion-pytorch>=0.2.2 (using tool pip)
+joblib (using tool pip)
+gemmi>=0.6.6 (using tool pip)
+fair-esm (using tool pip)
+fastapi (using tool pip)
+frame-averaging-pytorch>=0.0.18 (using tool pip)
+gradio (using tool pip)
+gradio_molecule3d (using tool pip)
+huggingface_hub>=0.21.4 (using tool pip)
+jaxtyping>=0.2.28 (using tool pip)
+lightning>=2.2.5 (using tool pip)
+multimolecule (using tool pip)
+nimporter (using tool pip)
+numpy>=1.23.5 (using tool pip)
+polars>=1.1.0 (using tool pip)
+pdbeccdutils>=0.8.5 (using tool pip)
+pydantic>=2.8.2 (using tool pip)
+pyyaml (using tool pip)
+rdkit>=2023.9.6 (using tool pip)
+retrying (using tool pip)
+scikit-learn>=1.5.0 (using tool pip)
+scipy==1.13.1 (using tool pip)
+sentencepiece (using tool pip)
+sh>=2.0.7 (using tool pip)
+shortuuid (using tool pip)
+tensorboard (using tool pip)
+taylor-series-linear-attention>=0.1.12 (using tool pip)
+torchtyping>=0.1.5 (using tool pip)
+timeout_decorator>=0.5.0 (using tool pip)
+torch_geometric (using tool pip)
+torch>=2.1 (using tool pip)
+tqdm>=4.66.4 (using tool pip)
+transformers[torch] (using tool pip)
+loguru (using
+...[Truncation]...
+rom the waiting list.
+"adam-atan2-pytorch>=0.1.12" installed successfully.
+'awscliv2>=2.3.1' has been removed from the waiting list.
+"awscliv2>=2.3.1" installed successfully.
+'beartype' has been removed from the waiting list.
+"beartype" installed successfully.
+'biopython>=1.83' has been removed from the waiting list.
+"biopython>=1.83" installed successfully.
+'cachetools' has been removed from the waiting list.
+"cachetools" installed successfully.
+'click>=8.1' has been removed from the waiting list.
+"click>=8.1" installed successfully.
+'CoLT5-attention>=0.11.0' has been removed from the waiting list.
+"CoLT5-attention>=0.11.0" installed successfully.
+'einops>=0.8.0' has been removed from the waiting list.
+"einops>=0.8.0" installed successfully.
+'einx>=0.2.2' has been removed from the waiting list.
+"einx>=0.2.2" installed successfully.
+'ema-pytorch>=0.7.0' has been removed from the waiting list.
+"ema-pytorch>=0.7.0" installed successfully.
+'environs' has been removed from the waiting list.
+"environs" installed successfully.
+'lion-pytorch>=0.2.2' has been removed from the waiting list.
+"lion-pytorch>=0.2.2" installed successfully.
+'joblib' has been removed from the waiting list.
+"joblib" installed successfully.
+'gemmi>=0.6.6' has been removed from the waiting list.
+"gemmi>=0.6.6" installed successfully.
+'fair-esm' has been removed from the waiting list.
+"fair-esm" installed successfully.
+'fastapi' has been removed from the waiting list.
+"fastapi" installed successfully.
+'frame-averaging-pytorch>=0.0.18' has been removed from the waiting list.
+"frame-averaging-pytorch>=0.0.18" installed successfully.
+'gradio' has been removed from the waiting list.
+"gradio" installed successfully.
+'gradio_molecule3d' has been removed from the waiting list.
+"gradio_molecule3d" installed successfully.
+'huggingface_hub>=0.21.4' has been removed from the waiting list.
+"huggingface_hub>=0.21.4" installed successfully.
+'jaxtyping>=0.2.28' has been removed from the waiting list.
+"jaxtyping>=0.2.28" installed successfully.
+'lightning>=2.2.5' has been removed from the waiting list.
+"lightning>=2.2.5" installed successfully.
+'multimolecule' has been removed from the waiting list.
+"multimolecule" installed successfully.
+'nimporter' has been removed from the waiting list.
+"nimporter" installed successfully.
+'numpy>=1.23.5' has been removed from the waiting list.
+"numpy>=1.23.5" installed successfully.
+'polars>=1.1.0' has been removed from the waiting list.
+"polars>=1.1.0" installed successfully.
+'pdbeccdutils>=0.8.5' has been removed from the waiting list.
+"pdbeccdutils>=0.8.5" installed successfully.
+'pydantic>=2.8.2' has been removed from the waiting list.
+"pydantic>=2.8.2" installed successfully.
+'pyyaml' has been removed from the waiting list.
+"pyyaml" installed successfully.
+'rdkit>=2023.9.6' has been removed from the waiting list.
+"rdkit>=2023.9.6" installed successfully.
+'retrying' has been removed from the waiting list.
+"retrying" installed successfully.
+'scikit-learn>=1.5.0' has been removed from the waiting list.
+"scikit-learn>=1.5.0" installed successfully.
+'scipy==1.13.1' has been removed from the waiting list.
+"scipy==1.13.1" installed successfully.
+'sentencepiece' has been removed from the waiting list.
+"sentencepiece" installed successfully.
+'sh>=2.0.7' has been removed from the waiting list.
+"sh>=2.0.7" installed successfully.
+'shortuuid' has been removed from the waiting list.
+"shortuuid" installed successfully.
+'tensorboard' has been removed from the waiting list.
+"tensorboard" installed successfully.
+'taylor-series-linear-attention>=0.1.12' has been removed from the waiting list.
+"taylor-series-linear-attention>=0.1.12" installed successfully.
+'torchtyping>=0.1.5' has been removed from the waiting list.
+"torchtyping>=0.1.5" installed successfully.
+'timeout_decorator>=0.5.0' has been removed from the waiting list.
+"timeout_decorator>=0.5.0" installed successfully.
+'torch_geometric' has been removed from the waiting list.
+"torch_geometric" installed successfully.
+'torch>=2.1' has been removed from the waiting list.
+"torch>=2.1" installed successfully.
+'tqdm>=4.66.4' has been removed from the waiting list.
+"tqdm>=4.66.4" installed successfully.
+'transformers[torch]' has been removed from the waiting list.
+"transformers[torch]" installed successfully.
+'loguru' has been removed from the waiting list.
+"loguru" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+adam-atan2-pytorch>=0.1.12 (using tool pip)
+awscliv2>=2.3.1 (using tool pip)
+beartype (using tool pip)
+biopython>=1.83 (using tool pip)
+cachetools (using tool pip)
+click>=8.1 (using tool pip)
+CoLT5-attention>=0.11.0 (using tool pip)
+einops>=0.8.0 (using tool pip)
+einx>=0.2.2 (using tool pip)
+ema-pytorch>=0.7.0 (using tool pip)
+environs (using tool pip)
+lion-pytorch>=0.2.2 (using tool pip)
+joblib (using tool pip)
+gemmi>=0.6.6 (using tool pip)
+fair-esm (using tool pip)
+fastapi (using tool pip)
+frame-averaging-pytorch>=0.0.18 (using tool pip)
+gradio (using tool pip)
+gradio_molecule3d (using tool pip)
+huggingface_hub>=0.21.4 (using tool pip)
+jaxtyping>=0.2.28 (using tool pip)
+lightning>=2.2.5 (using tool pip)
+multimolecule (using tool pip)
+nimporter (using tool pip)
+numpy>=1.23.5 (using tool pip)
+polars>=1.1.0 (using tool pip)
+pdbeccdutils>=0.8.5 (using tool pip)
+pydantic>=2.8.2 (using tool pip)
+pyyaml (using tool pip)
+rdkit>=2023.9.6 (using tool pip)
+retrying (using tool pip)
+scikit-learn>=1.5.0 (using tool pip)
+scipy==1.13.1 (using tool pip)
+sentencepiece (using tool pip)
+sh>=2.0.7 (using tool pip)
+shortuuid (using tool pip)
+tensorboard (using tool pip)
+taylor-series-linear-attention>=0.1.12 (using tool pip)
+torchtyping>=0.1.5 (using tool pip)
+timeout_decorator>=0.5.0 (using tool pip)
+torch_geometric (using tool pip)
+torch>=2.1 (using tool pip)
+tqdm>=4.66.4 (using tool pip)
+transformers[torch] (using tool pip)
+loguru (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 193 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+pip install hatch -q
+python /home/tools/code_edit.py -t '/tmp/patch/tmprb7mge1s' -p '/tmp'
+pip install adam-atan2-pytorch -v ">=0.1.12"
+pip install awscliv2 -v ">=2.3.1"
+pip install beartype
+pip install biopython -v ">=1.83"
+pip install cachetools
+pip install click -v ">=8.1"
+pip install CoLT5-attention -v ">=0.11.0"
+pip install einops -v ">=0.8.0"
+pip install einx -v ">=0.2.2"
+pip install ema-pytorch -v ">=0.7.0"
+pip install environs
+pip install lion-pytorch -v ">=0.2.2"
+pip install joblib
+pip install gemmi -v ">=0.6.6"
+pip install fair-esm
+pip install fastapi
+pip install frame-averaging-pytorch -v ">=0.0.18"
+pip install gradio
+pip install gradio_molecule3d
+pip install huggingface_hub -v ">=0.21.4"
+pip install jaxtyping -v ">=0.2.28"
+pip install lightning -v ">=2.2.5"
+pip install multimolecule
+pip install nimporter
+pip install numpy -v ">=1.23.5"
+pip install polars -v ">=1.1.0"
+pip install pdbeccdutils -v ">=0.8.5"
+pip install pydantic -v ">=2.8.2"
+pip install pyyaml
+pip install rdkit -v ">=2023.9.6"
+pip install retrying
+pip install scikit-learn -v ">=1.5.0"
+pip install scipy -v "==1.13.1"
+pip install sentencepiece
+pip install sh -v ">=2.0.7"
+pip install shortuuid
+pip install tensorboard
+pip install taylor-series-linear-attention -v ">=0.1.12"
+pip install torchtyping -v ">=0.1.5"
+pip install timeout_decorator -v ">=0.5.0"
+pip install torch_geometric
+pip install torch -v ">=2.1"
+pip install tqdm -v ">=4.66.4"
+pip install transformers[torch]
+pip install loguru
+---------------------------
+### Thought:
+All dependencies have been successfully installed. It's a good idea to run the tests now to see if the current setup is correct and if any additional configurations are required.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/test_readme.py::test_readme1
+tests/test_readme.py::test_readme2
+==================================== ERRORS ====================================
+______________________ ERROR collecting tests/test_af3.py ______________________
+ImportError while importing test module '/repo/tests/test_af3.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_af3.py:16: in <module>
+    from alphafold3_pytorch import (
+alphafold3_pytorch/__init__.py:7: in <module>
+    from alphafold3_pytorch.alphafold3 import (
+alphafold3_pytorch/alphafold3.py:56: in <module>
+    from alphafold3_pytorch.inputs import (
+alphafold3_pytorch/inputs.py:63: in <module>
+    from alphafold3_pytorch.common.biomolecule import (
+alphafold3_pytorch/common/biomolecule.py:17: in <module>
+    from alphafold3_pytorch.common import (
+alphafold3_pytorch/common/mmcif_metadata.py:9: in <module>
+    alphafold_version = version("alphafold3_pytorch")
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:996: in version
+    return distribution(distribution_name).version
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:969: in distribution
+    return Distribution.from_name(distribution_name)
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:548: in from_name
+    raise PackageNotFoundError(name)
+E   importlib.metadata.PackageNotFoundError: No package metadata was found for alphafold3_pytorch
+------------------------------- Captured stderr --------------------------------
+2024-12-21 03:30:49.315 | INFO     | alphafold3_pytorch.tensor_typing:<module>:123 - Type checking is enabled.
+2024-12-21 03:30:49.315 | INFO     | alphafold3_pytorch.tensor_typing:<module>:128 - Debugging is enabled.
+______________________ ERROR collecting tests/test_cli.py ______________________
+ImportError while importing test module '/repo/tests/test_cli.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_cli.py:9: in <module>
+    from alphafold3_pytorch.cli import cli
+alphafold3_pytorch/__init__.py:7: in <module>
+    from alphafold3_pytorch.alphafold3 import (
+alphafold3_pytorch/alphafold3.py:56: in <module>
+    from alphafold3_pytorch.inputs import (
+alphafold3_pytorch/inputs.py:63: in <module>
+    from alphafold3_pytorch.common.biomolecule import (
+alphafold3_pytorch/common/biomolecule.py:17: in <module>
+    from alphafold3_pytorch.common import (
+alphafold3_pytorch/common/mmcif_metadata.py:9: in <module>
+    alphafold_version = version("alphafold3_pytorch")
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:996: in version
+    return distribution(distribution_name).version
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:969: in distribution
+    return Distribution.from_name(distribution_name)
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:548: in from_name
+    raise PackageNotFoundError(name)
+E   importlib.metadata.PackageNotFoundError: No package metadata was found for alphafold3_pytorch
+_________________ ERROR collecting tests/test_data_parsing.py __________________
+tests/test_data_parsing.py:9: in <module>
+    from alphafold3_pytorch.common.biomolecule import _from_mmcif_object
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1002: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:945: in _find_spec
+    ???
+<frozen importlib._bootstrap_external>:1439: in find_spec
+    ???
+<frozen importlib._bootstrap_external>:1405: in _get_spec
+    ???
+<frozen importlib._bootstrap_external>:1255: in __iter__
+    ???
+<frozen importlib._bootstrap_external>:1242: in _recalculate
+    ???
+<frozen importlib._bootstrap_external>:1238: in _get_parent_path
+    ???
+E   KeyError: 'alphafold3_pytorch'
+__________________ ERROR collecting tests/test_dataloading.py __________________
+ImportError while importing test module '/repo/tests/test_dataloading.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_dataloading.py:6: in <module>
+    from alphafold3_pytorch import collate_inputs_to_batched_atom_input
+alphafold3_pytorch/__init__.py:7: in <module>
+    from alphafold3_pytorch.alphafold3 import (
+alphafold3_pytorch/alphafold3.py:56: in <module>
+    from alphafold3_pytorch.inputs import (
+alphafold3_pytorch/inputs.py:63: in <module>
+    from alphafold3_pytorch.common.biomolecule import (
+alphafold3_pytorch/common/biomolecule.py:17: in <module>
+    from alphafold3_pytorch.common import (
+alphafold3_pytorch/common/mmcif_metadata.py:9: in <module>
+    alphafold_version = version("alphafold3_pytorch")
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:996: in version
+    return distribution(distribution_name).version
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:969: in distribution
+    return Distribution.from_name(distribution_name)
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:548: in from_name
+    raise PackageNotFoundError(name)
+E   importlib.metadata.PackageNotFoundError: No package metadata was found for alphafold3_pytorch
+_____________________ ERROR collecting tests/test_input.py _____________________
+ImportError while importing test module '/repo/tests/test_input.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/t
+...[Truncation]...
+pytorch.data.weighted_pdb_sampler import WeightedPDBSampler
+alphafold3_pytorch/__init__.py:7: in <module>
+    from alphafold3_pytorch.alphafold3 import (
+alphafold3_pytorch/alphafold3.py:56: in <module>
+    from alphafold3_pytorch.inputs import (
+alphafold3_pytorch/inputs.py:63: in <module>
+    from alphafold3_pytorch.common.biomolecule import (
+alphafold3_pytorch/common/biomolecule.py:17: in <module>
+    from alphafold3_pytorch.common import (
+alphafold3_pytorch/common/mmcif_metadata.py:9: in <module>
+    alphafold_version = version("alphafold3_pytorch")
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:996: in version
+    return distribution(distribution_name).version
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:969: in distribution
+    return Distribution.from_name(distribution_name)
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:548: in from_name
+    raise PackageNotFoundError(name)
+E   importlib.metadata.PackageNotFoundError: No package metadata was found for alphafold3_pytorch
+_______________ ERROR collecting tests/test_template_loading.py ________________
+ImportError while importing test module '/repo/tests/test_template_loading.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_template_loading.py:4: in <module>
+    from alphafold3_pytorch.inputs import PDBDataset, pdb_inputs_to_batched_atom_input
+alphafold3_pytorch/__init__.py:7: in <module>
+    from alphafold3_pytorch.alphafold3 import (
+alphafold3_pytorch/alphafold3.py:56: in <module>
+    from alphafold3_pytorch.inputs import (
+alphafold3_pytorch/inputs.py:63: in <module>
+    from alphafold3_pytorch.common.biomolecule import (
+alphafold3_pytorch/common/biomolecule.py:17: in <module>
+    from alphafold3_pytorch.common import (
+alphafold3_pytorch/common/mmcif_metadata.py:9: in <module>
+    alphafold_version = version("alphafold3_pytorch")
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:996: in version
+    return distribution(distribution_name).version
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:969: in distribution
+    return Distribution.from_name(distribution_name)
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:548: in from_name
+    raise PackageNotFoundError(name)
+E   importlib.metadata.PackageNotFoundError: No package metadata was found for alphafold3_pytorch
+____________________ ERROR collecting tests/test_trainer.py ____________________
+ImportError while importing test module '/repo/tests/test_trainer.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_trainer.py:11: in <module>
+    from alphafold3_pytorch import (
+alphafold3_pytorch/__init__.py:7: in <module>
+    from alphafold3_pytorch.alphafold3 import (
+alphafold3_pytorch/alphafold3.py:56: in <module>
+    from alphafold3_pytorch.inputs import (
+alphafold3_pytorch/inputs.py:63: in <module>
+    from alphafold3_pytorch.common.biomolecule import (
+alphafold3_pytorch/common/biomolecule.py:17: in <module>
+    from alphafold3_pytorch.common import (
+alphafold3_pytorch/common/mmcif_metadata.py:9: in <module>
+    alphafold_version = version("alphafold3_pytorch")
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:996: in version
+    return distribution(distribution_name).version
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:969: in distribution
+    return Distribution.from_name(distribution_name)
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:548: in from_name
+    raise PackageNotFoundError(name)
+E   importlib.metadata.PackageNotFoundError: No package metadata was found for alphafold3_pytorch
+_______________ ERROR collecting tests/test_weighted_sampling.py _______________
+ImportError while importing test module '/repo/tests/test_weighted_sampling.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_weighted_sampling.py:10: in <module>
+    from alphafold3_pytorch.data.weighted_pdb_sampler import (
+alphafold3_pytorch/__init__.py:7: in <module>
+    from alphafold3_pytorch.alphafold3 import (
+alphafold3_pytorch/alphafold3.py:56: in <module>
+    from alphafold3_pytorch.inputs import (
+alphafold3_pytorch/inputs.py:63: in <module>
+    from alphafold3_pytorch.common.biomolecule import (
+alphafold3_pytorch/common/biomolecule.py:17: in <module>
+    from alphafold3_pytorch.common import (
+alphafold3_pytorch/common/mmcif_metadata.py:9: in <module>
+    alphafold_version = version("alphafold3_pytorch")
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:996: in version
+    return distribution(distribution_name).version
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:969: in distribution
+    return Distribution.from_name(distribution_name)
+/usr/local/lib/python3.10/importlib/metadata/__init__.py:548: in from_name
+    raise PackageNotFoundError(name)
+E   importlib.metadata.PackageNotFoundError: No package metadata was found for alphafold3_pytorch
+=========================== short test summary info ============================
+ERROR tests/test_af3.py
+ERROR tests/test_cli.py
+ERROR tests/test_data_parsing.py - KeyError: 'alphafold3_pytorch'
+ERROR tests/test_dataloading.py
+ERROR tests/test_input.py
+ERROR tests/test_msa_loading.py
+ERROR tests/test_template_loading.py
+ERROR tests/test_trainer.py
+ERROR tests/test_weighted_sampling.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 9 errors during collection !!!!!!!!!!!!!!!!!!!!
+2 tests collected, 9 errors in 8.08s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 192 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+pip install hatch -q
+python /home/tools/code_edit.py -t '/tmp/patch/tmprb7mge1s' -p '/tmp'
+pip install adam-atan2-pytorch -v ">=0.1.12"
+pip install awscliv2 -v ">=2.3.1"
+pip install beartype
+pip install biopython -v ">=1.83"
+pip install cachetools
+pip install click -v ">=8.1"
+pip install CoLT5-attention -v ">=0.11.0"
+pip install einops -v ">=0.8.0"
+pip install einx -v ">=0.2.2"
+pip install ema-pytorch -v ">=0.7.0"
+pip install environs
+pip install lion-pytorch -v ">=0.2.2"
+pip install joblib
+pip install gemmi -v ">=0.6.6"
+pip install fair-esm
+pip install fastapi
+pip install frame-averaging-pytorch -v ">=0.0.18"
+pip install gradio
+pip install gradio_molecule3d
+pip install huggingface_hub -v ">=0.21.4"
+pip install jaxtyping -v ">=0.2.28"
+pip install lightning -v ">=2.2.5"
+pip install multimolecule
+pip install nimporter
+pip install numpy -v ">=1.23.5"
+pip install polars -v ">=1.1.0"
+pip install pdbeccdutils -v ">=0.8.5"
+pip install pydantic -v ">=2.8.2"
+pip install pyyaml
+pip install rdkit -v ">=2023.9.6"
+pip install retrying
+pip install scikit-learn -v ">=1.5.0"
+pip install scipy -v "==1.13.1"
+pip install sentencepiece
+pip install sh -v ">=2.0.7"
+pip install shortuuid
+pip install tensorboard
+pip install taylor-series-linear-attention -v ">=0.1.12"
+pip install torchtyping -v ">=0.1.5"
+pip install timeout_decorator -v ">=0.5.0"
+pip install torch_geometric
+pip install torch -v ">=2.1"
+pip install tqdm -v ">=4.66.4"
+pip install transformers[torch]
+pip install loguru
+---------------------------
+### Thought:
+The errors indicate that the module `alphafold3_pytorch` is not recognized as an installed package. Since it appears to be a local module within the `/repo/alphafold3_pytorch` directory, I need to make it accessible as an installed package.
+
+There are two potential solutions:
+1. Use `pip install -e .` to install the package in editable mode.
+2. Set the `PYTHONPATH` environment variable to include the `/repo` directory.
+
+Given the structure and modern setup, installing the package in editable mode using `pip` is recommended.
+
+### Action:
+```bash
+pip install -e /repo
+```
+### Observation:
+Running `pip install -e /repo`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install -e /repo`...
+Looking in indexes: http://simple/
+Obtaining file:///repo
+  Installing build dependencies ... [?25l- \ | / - done
+[?25h  Checking if build backend supports build_editable ... [?25ldone
+[?25h  Getting requirements to build editable ... [?25ldone
+[?25h  Installing backend dependencies ... [?25l- \ done
+[?25h  Preparing editable metadata (pyproject.toml) ... [?25ldone
+[?25hRequirement already satisfied: adam-atan2-pytorch>=0.1.12 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.1.18)
+Requirement already satisfied: awscliv2>=2.3.1 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.3.1)
+Requirement already satisfied: beartype in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.19.0)
+Requirement already satisfied: biopython>=1.83 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.84)
+Requirement already satisfied: cachetools in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (5.5.0)
+Requirement already satisfied: click>=8.1 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (8.1.7)
+Requirement already satisfied: colt5-attention>=0.11.0 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.11.1)
+Requirement already satisfied: einops>=0.8.0 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.8.0)
+Requirement already satisfied: einx>=0.2.2 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.3.0)
+Requirement already satisfied: ema-pytorch>=0.7.0 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.7.7)
+Requirement already satisfied: environs in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (11.2.1)
+Requirement already satisfied: fair-esm in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.0.0)
+Requirement already satisfied: fastapi in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.115.6)
+Requirement already satisfied: frame-averaging-pytorch>=0.0.18 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.1.2)
+Requirement already satisfied: gemmi>=0.6.6 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.6.7)
+Requirement already satisfied: gradio in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (5.9.1)
+Requirement already satisfied: gradio-molecule3d in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.0.6)
+Requirement already satisfied: huggingface-hub>=0.21.4 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.27.0)
+Requirement already satisfied: jaxtyping>=0.2.28 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.2.36)
+Requirement already satisfied: joblib in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.4.2)
+Requirement already satisfied: lightning>=2.2.5 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.5.0)
+Requirement already satisfied: lion-pytorch>=0.2.2 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.2.3)
+Requirement already satisfied: loguru in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.7.3)
+Requirement already satisfied: multimolecule in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.0.6)
+Requirement already satisfied: nimporter in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.1.0)
+Requirement already satisfied: numpy>=1.23.5 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.26.4)
+Requirement already satisfied: pdbeccdutils>=0.8.5 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.8.6)
+Requirement already satisfied: polars>=1.1.0 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.17.1)
+Requirement already satisfied: pydantic>=2.8.2 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.10.4)
+Requirement already satisfied: pyyaml in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (6.0.2)
+Requirement already satisfied: rdkit>=2023.9.6 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2023.9.6)
+Requirement already satisfied: retrying in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.3.4)
+Requirement already satisfied: scikit-learn>=1.5.0 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.6.0)
+Requirement already satisfied: scipy==1.13.1 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.13.1)
+Requirement already satisfied: sentencepiece in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.2.0)
+Requirement already satisfied: sh>=2.0.7 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.1.0)
+Requirement already satisfied: shortuuid in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (1.0.13)
+Requirement already satisfied: taylor-series-linear-attention>=0.1.12 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.1.12)
+Requirement already satisfied: tensorboard in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.18.0)
+Requirement already satisfied: timeout-decorator>=0.5.0 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (0.5.0)
+Requirement already satisfied: torch-geometric in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.6.1)
+Requirement already satisfied: torch>=2.1 in /usr/local/lib/python3.10/site-packages (from alphafold3-pytorch==0.6.11) (2.5.1)
+Requirement already s
+...[Truncation]...
+ied: lazy-imports in /usr/local/lib/python3.10/site-packages (from danling>=0.3.11->danling[torch]>=0.3.11->multimolecule->alphafold3-pytorch==0.6.11) (0.3.1)
+Requirement already satisfied: torcheval in /usr/local/lib/python3.10/site-packages (from danling[torch]>=0.3.11->multimolecule->alphafold3-pytorch==0.6.11) (0.0.7)
+Requirement already satisfied: aiohappyeyeballs>=2.3.0 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (2.4.4)
+Requirement already satisfied: aiosignal>=1.1.2 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (1.3.2)
+Requirement already satisfied: async-timeout<6.0,>=4.0 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (5.0.1)
+Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (24.3.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (1.5.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (6.1.0)
+Requirement already satisfied: propcache>=0.2.0 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (0.2.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in /usr/local/lib/python3.10/site-packages (from aiohttp->torch-geometric->alphafold3-pytorch==0.6.11) (1.18.3)
+Requirement already satisfied: certifi in /usr/local/lib/python3.10/site-packages (from httpx>=0.24.1->gradio->alphafold3-pytorch==0.6.11) (2024.12.14)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx>=0.24.1->gradio->alphafold3-pytorch==0.6.11) (1.0.7)
+Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx>=0.24.1->gradio->alphafold3-pytorch==0.6.11) (0.14.0)
+Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.10/site-packages (from pandas<3.0,>=1.0->gradio->alphafold3-pytorch==0.6.11) (2.9.0.post0)
+Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.10/site-packages (from pandas<3.0,>=1.0->gradio->alphafold3-pytorch==0.6.11) (2024.2)
+Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.10/site-packages (from pandas<3.0,>=1.0->gradio->alphafold3-pytorch==0.6.11) (2024.2)
+Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.10/site-packages (from typer<1.0,>=0.12->gradio->alphafold3-pytorch==0.6.11) (1.5.4)
+Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.10/site-packages (from typer<1.0,>=0.12->gradio->alphafold3-pytorch==0.6.11) (13.9.4)
+Requirement already satisfied: pyarrow>=15.0.0 in /usr/local/lib/python3.10/site-packages (from datasets->multimolecule->alphafold3-pytorch==0.6.11) (18.1.0)
+Requirement already satisfied: dill<0.3.9,>=0.3.0 in /usr/local/lib/python3.10/site-packages (from datasets->multimolecule->alphafold3-pytorch==0.6.11) (0.3.8)
+Requirement already satisfied: xxhash in /usr/local/lib/python3.10/site-packages (from datasets->multimolecule->alphafold3-pytorch==0.6.11) (3.5.0)
+Requirement already satisfied: multiprocess<0.70.17 in /usr/local/lib/python3.10/site-packages (from datasets->multimolecule->alphafold3-pytorch==0.6.11) (0.70.16)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/site-packages (from requests->huggingface-hub>=0.21.4->alphafold3-pytorch==0.6.11) (3.4.0)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/site-packages (from requests->huggingface-hub>=0.21.4->alphafold3-pytorch==0.6.11) (2.2.3)
+Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.10/site-packages (from rich>=10.11.0->typer<1.0,>=0.12->gradio->alphafold3-pytorch==0.6.11) (3.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.10/site-packages (from rich>=10.11.0->typer<1.0,>=0.12->gradio->alphafold3-pytorch==0.6.11) (2.18.0)
+Requirement already satisfied: gitdb<5,>=4.0.1 in /usr/local/lib/python3.10/site-packages (from gitpython->danling>=0.3.11->danling[torch]>=0.3.11->multimolecule->alphafold3-pytorch==0.6.11) (4.0.11)
+Requirement already satisfied: smmap<6,>=3.0.1 in /usr/local/lib/python3.10/site-packages (from gitdb<5,>=4.0.1->gitpython->danling>=0.3.11->danling[torch]>=0.3.11->multimolecule->alphafold3-pytorch==0.6.11) (5.0.1)
+Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.10/site-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer<1.0,>=0.12->gradio->alphafold3-pytorch==0.6.11) (0.1.2)
+Building wheels for collected packages: alphafold3-pytorch
+  Building editable for alphafold3-pytorch (pyproject.toml) ... [?25ldone
+[?25h  Created wheel for alphafold3-pytorch: filename=alphafold3_pytorch-0.6.11-py3-none-any.whl size=11683 sha256=2d1de903b2b4e62cfedd3db8ee81fa0c3fd3d5c3d91b968e36b9ba9ee2b7dea5
+  Stored in directory: /tmp/pip-ephem-wheel-cache-7goqe0as/wheels/83/05/69/977b54e69478800cfcea8a9437a7ea4a9b1a48db334f824611
+Successfully built alphafold3-pytorch
+Installing collected packages: pdbeccdutils, alphafold3-pytorch
+  Attempting uninstall: pdbeccdutils
+    Found existing installation: pdbeccdutils 0.8.6
+    Uninstalling pdbeccdutils-0.8.6:
+      Successfully uninstalled pdbeccdutils-0.8.6
+Successfully installed alphafold3-pytorch-0.6.11 pdbeccdutils-0.8.5
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -e /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 191 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+pip install hatch -q
+python /home/tools/code_edit.py -t '/tmp/patch/tmprb7mge1s' -p '/tmp'
+pip install adam-atan2-pytorch -v ">=0.1.12"
+pip install awscliv2 -v ">=2.3.1"
+pip install beartype
+pip install biopython -v ">=1.83"
+pip install cachetools
+pip install click -v ">=8.1"
+pip install CoLT5-attention -v ">=0.11.0"
+pip install einops -v ">=0.8.0"
+pip install einx -v ">=0.2.2"
+pip install ema-pytorch -v ">=0.7.0"
+pip install environs
+pip install lion-pytorch -v ">=0.2.2"
+pip install joblib
+pip install gemmi -v ">=0.6.6"
+pip install fair-esm
+pip install fastapi
+pip install frame-averaging-pytorch -v ">=0.0.18"
+pip install gradio
+pip install gradio_molecule3d
+pip install huggingface_hub -v ">=0.21.4"
+pip install jaxtyping -v ">=0.2.28"
+pip install lightning -v ">=2.2.5"
+pip install multimolecule
+pip install nimporter
+pip install numpy -v ">=1.23.5"
+pip install polars -v ">=1.1.0"
+pip install pdbeccdutils -v ">=0.8.5"
+pip install pydantic -v ">=2.8.2"
+pip install pyyaml
+pip install rdkit -v ">=2023.9.6"
+pip install retrying
+pip install scikit-learn -v ">=1.5.0"
+pip install scipy -v "==1.13.1"
+pip install sentencepiece
+pip install sh -v ">=2.0.7"
+pip install shortuuid
+pip install tensorboard
+pip install taylor-series-linear-attention -v ">=0.1.12"
+pip install torchtyping -v ">=0.1.5"
+pip install timeout_decorator -v ">=0.5.0"
+pip install torch_geometric
+pip install torch -v ">=2.1"
+pip install tqdm -v ">=4.66.4"
+pip install transformers[torch]
+pip install loguru
+pip install -e /repo
+response.status_code:  400
+---------------------------
+### Thought:
+The `alphafold3_pytorch` package is now installed in editable mode. I should rerun the tests to see if the changes have resolved the issues and if the setup is complete.
+
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/test_af3.py::test_atom_ref_pos_to_atompair_inputs
+tests/test_af3.py::test_mean_pool_with_lens
+tests/test_af3.py::test_mean_pool_with_mask
+tests/test_af3.py::test_batch_repeat_interleave
+tests/test_af3.py::test_smooth_lddt_loss
+tests/test_af3.py::test_weighted_rigid_align
+tests/test_af3.py::test_weighted_rigid_align_with_mask
+tests/test_af3.py::test_multi_chain_permutation_alignment
+tests/test_af3.py::test_express_coordinates_in_frame
+tests/test_af3.py::test_rigid_from_three_points
+tests/test_af3.py::test_rigid_from_reference_three_points
+tests/test_af3.py::test_deriving_frames_for_ligands
+tests/test_af3.py::test_compute_alignment_error
+tests/test_af3.py::test_centre_random_augmentation
+tests/test_af3.py::test_pairformer[True-True-1-True]
+tests/test_af3.py::test_pairformer[True-True-1-False]
+tests/test_af3.py::test_pairformer[True-True-2-True]
+tests/test_af3.py::test_pairformer[True-True-2-False]
+tests/test_af3.py::test_pairformer[True-False-1-True]
+tests/test_af3.py::test_pairformer[True-False-1-False]
+tests/test_af3.py::test_pairformer[True-False-2-True]
+tests/test_af3.py::test_pairformer[True-False-2-False]
+tests/test_af3.py::test_pairformer[False-True-1-True]
+tests/test_af3.py::test_pairformer[False-True-1-False]
+tests/test_af3.py::test_pairformer[False-True-2-True]
+tests/test_af3.py::test_pairformer[False-True-2-False]
+tests/test_af3.py::test_pairformer[False-False-1-True]
+tests/test_af3.py::test_pairformer[False-False-1-False]
+tests/test_af3.py::test_pairformer[False-False-2-True]
+tests/test_af3.py::test_pairformer[False-False-2-False]
+tests/test_af3.py::test_msa_module[False]
+tests/test_af3.py::test_msa_module[True]
+tests/test_af3.py::test_diffusion_transformer[False-False-False-False]
+tests/test_af3.py::test_diffusion_transformer[False-False-False-True]
+tests/test_af3.py::test_diffusion_transformer[False-False-True-False]
+tests/test_af3.py::test_diffusion_transformer[False-False-True-True]
+tests/test_af3.py::test_diffusion_transformer[False-True-False-False]
+tests/test_af3.py::test_diffusion_transformer[False-True-False-True]
+tests/test_af3.py::test_diffusion_transformer[False-True-True-False]
+tests/test_af3.py::test_diffusion_transformer[False-True-True-True]
+tests/test_af3.py::test_diffusion_transformer[True-False-False-False]
+tests/test_af3.py::test_diffusion_transformer[True-False-False-True]
+tests/test_af3.py::test_diffusion_transformer[True-False-True-False]
+tests/test_af3.py::test_diffusion_transformer[True-False-True-True]
+tests/test_af3.py::test_diffusion_transformer[True-True-False-False]
+tests/test_af3.py::test_diffusion_transformer[True-True-False-True]
+tests/test_af3.py::test_diffusion_transformer[True-True-True-False]
+tests/test_af3.py::test_diffusion_transformer[True-True-True-True]
+tests/test_af3.py::test_sequence_local_attn
+tests/test_af3.py::test_diffusion_module[True]
+tests/test_af3.py::test_diffusion_module[False]
+tests/test_af3.py::test_relative_position_encoding
+tests/test_af3.py::test_template_embed[False]
+tests/test_af3.py::test_template_embed[True]
+tests/test_af3.py::test_confidence_head
+tests/test_af3.py::test_input_embedder
+tests/test_af3.py::test_distogram_head
+tests/test_af3.py::test_alphafold3[True-0-True-True-True-True-True]
+tests/test_af3.py::test_alphafold3[True-0-True-True-True-True-False]
+tests/test_af3.py::test_alphafold3[True-0-True-True-True-False-True]
+tests/test_af3.py::test_alphafold3[True-0-True-True-True-False-False]
+tests/test_af3.py::test_alphafold3[True-0-True-True-False-True-True]
+tests/test_af3.py::test_alphafold3[True-0-True-True-False-True-False]
+tests/test_af3.py::test_alphafold3[True-0-True-True-False-False-True]
+tests/test_af3.py::test_alphafold3[True-0-True-True-False-False-False]
+tests/test_af3.py::test_alphafold3[True-0-True-False-True-True-True]
+tests/test_af3.py::test_alphafold3[True-0-True-False-True-True-False]
+tests/test_af3.py::test_alphafold3[True-0-True-False-True-False-True]
+tests/test_af3.py::test_alphafold3[True-0-True-False-True-False-False]
+tests/test_af3.py::test_alphafold3[True-0-True-False-False-True-True]
+tests/test_af3.py::test_alphafold3[True-0-True-False-False-True-False]
+tests/test_af3.py::test_alphafold3[True-0-True-False-False-False-True]
+tests/test_af3.py::test_alphafold3[True-0-True-False-False-False-False]
+tests/test_af3.py::test_alphafold3[True-0-False-True-True-True-True]
+tests/test_af3.py::test_alphafold3[True-0-False-True-True-True-False]
+tests/test_af3.py::test_alphafold3[True-0-False-True-True-False-True]
+tests/test_af3.py::test_alphafold3[True-0-False-True-True-False-False]
+tests/test_af3.py::test_alphafold3[True-0-False-True-False-True-True]
+tests/test_af3.py::test_alphafold3[True-0-False-True-False-True-False]
+tests/test_af3.py::test_alphafold3[True-0-False-True-False-False-True]
+tests/test_af3.py::test_alphafold3[True-0-False-True-False-False-False]
+tests/test_af3.py::test_alphafold3[True-0-False-False-True-True-True]
+tests/test_af3.py::test_alphafold3[True-0-False-False-True-True-False]
+tests/test_af3.py::test_alphafold3[True-0-False-False-True-False-True]
+tests/test_af3.py::test_alphafold3[True-0-False-False-True-False-False]
+tests/test_af3.py::test_alphafold3[True-0-False-False-False-True-True]
+tests/test_af3.py::test_alphafold3[True-0-False-False-False-True-False]
+tests/test_af3.py::test_alphafold3[True-0-False-False-False-False-True]
+tests/test_af3.py::test_alphafold3[True-0-False-False-False-False-False]
+tests/test_af3.py::test_alphafold3[True-4-True-True-True-True-True]
+tests/test_af3.py::test_alphafold3[True-4-True-True-True-True-False]
+tests/test_af3.py::test_alphafold3[True-4-True-True-True-False-True]
+tests/test_af3.py::test_alphafold3[True-4-True-True-True-False-False]
+tests/test_af3.py::test_alphafold3[True-4-True-True-False-True-True]
+tests/test_af3.py::test_alphafold3[True-4-True-True-False-True-False]
+tests/test_af3.py::test_alphafold3[True-4-True-True-False-False-True]
+tests/test_af3.py::test_alphafold3[True-4-True-True-False-False-False]
+tests/test_af3.py::test_alphafold3[True-4-True-False-True-True-True]
+tests/test_af3.py::test_alphafold3[True-4-True-False-True-True-False]
+tests/test_af3.py::test_alphafold3[True-4-True-False-True-False-True]
+tests/test_af3.py::test_alphafold3[True-4-True-False-True-False-False]
+tests/test_af3.py::test_alphafold3[True-4-True-False-False-True-True]
+tests/test_af3.py::test_alphafold3[True-4-True-False-False-True-False]
+tests/test_af3.py::test_alphafold3[True-4-True-False-False-False-True]
+tests/test_af3.py::test_alphafold3[True-4-True-False-False-False-False]
+tests/test_af3.py::test_alphafold3[True-4-False-True-True-True-True]
+tests/test_af3.py::test_alphafold3[True-4-False-True-True-True-False]
+tests/test_af3.py::test_alphafold3[True-4-False-True-True-False-True]
+tests/test_af3.py::test_alphafold3[True-4-False-True-True-False-False]
+tests/test_af3.py::test_alphafold3[True-4-False-True-False-True-True]
+tests/test_af3.py::test_alphafold3[True-4-False-True-False-True-False]
+tests/test_af3.py::test_alphafold3[True-4-False-True-False-False-True]
+tests/test_af3.py::test_alphafold3[True-4-False-True-False-False-False]
+tests/test_af3.py::test_alphafold3[True-4-False-False-True-True-True]
+tests/test_af3.py::test_alphafold3[True-4-False-False-True-True-False]
+tests/test_af3.py::test_alphafold3[True-4-False-False-True-False-True]
+tests/test_af3.py::test_alphafold3[True-4-False-False-True-False-False]
+tests/test_af3.py::test_alphafold3[True-4-False-False-False-True-True]
+tests/test_af3.py::test_alphafold3[True-4-False-False-False-True-False]
+tests/test_af3.py::test_alphafold3[True-4-False-False-False-False-True]
+tests/test_af3.py::test_alphafold3[True-4-False-False-False-False-False]
+tests/test_af3.py::test_alphafold3[False-0-True-True-True-True-True]
+tests/test_af3.py::test_alphafold3[False-0-True-True-True-True-False]
+tests/test_af3.py::test_alphafold3[False-0-True-True-True-False-True]
+tests/test_af3.py::test_alphafold3[False-0-True-True-True-False-False]
+tests/test_af3.py::test_alphafold3[False-0-True-True-False-True-True]
+tests/test_af3.py::test_alphafold3[False-0-True-True-False-True-False]
+tests/test_af3.py::test_alphafold3[False-0-True-True-False-False-True]
+tests/test_af3.py::test_alphafold3[False-0-True-True-False-False-False]
+tests/test_af3.py::test_alphafold3[False-0-True-False-True-True-True]
+tests/test_af3.py::test_alphafold3[False-0-True-False-True-True-False]
+tests/test_af3.py::test_alphafold3[False-0-True-False-True-False-True]
+tests/test_af3.py::test_alphafold3[False-0-True-False-True-False-False]
+tests/test_af3.py::test_alphafold3[False-0-True-False-False-True-True]
+tests/test_af3.py::test_alphafold3[False-0-True-False-False-True-False]
+tests/test_af3.py::test_alphafold3[False-0-True-False-False-False-True]
+tests/test_af3.py::test_alphafold3[False-0-True-False-False-False-False]
+tests/test_af3.py::test_alphafold3[False-0-False-True-True-True-True]
+tests/test_af3.py::test_alphafold3[False-0-False-True-True-True-False]
+tests/test_af3.py::test_alphafold3[False-0-False-True-True-False-True]
+tests/test_af3.py::test_alphafold3[False-0-False-True-True-False-False]
+tests/test_af3.py::test_alphafold3[False-0-False-True-False-True-True]
+tests/test_af3.py::test_alphafold3[False-0-False-True-False-True-False]
+tests/test_af3.py::test_alphafold3[False-0-False-True-False-False-True]
+tests/test_af3.py::test_alphafold3[False-0-False-True-False-False-False]
+tests/test_af3.py::test_alphafold3[False-0-False-False-True-True-True]
+tests/test_af3.py::test_alphafold3[False-0-False-False-True-True-False]
+tests/test_af3.py::test_alphafold3[False-0-False-False-True-False-True]
+tests/test_af3.py::test_alphafold3[False-0-False-False-True-False-False]
+tests/test_af3.py::test_alphafold3[False-0-False-False-False-True-True]
+tests/test_af3.py::test_alphafold3[False-0-False-False-False-True-False]
+tests/test_af3.py::test_alphafold3[False-0-False-False-False-False-True]
+tests/test_af3.py::test_alphafold3[False-0-False-False-False-False-False]
+tests/test_af3.py::test_alphafold3[False-4-True-True-True-True-True]
+tests/test_af3.py::test_alphafold3[False-4-True-True-True-True-False]
+tests/test_af3.py::test_alphafold3[False-4-True-True-True-False-True]
+tests/test_af3.py::test_alphafold3[False-4-True-True-True-False-False]
+tests/test_af3.py::test_alphafold3[False-4-True-True-False-True-True]
+tests/test_af3.py::test_alphafold3[False-4-True-True-False-True-False]
+tests/test_af3.py::test_alphafold3[False-4-True-True-False-False-True]
+tests/test_af3.py::test_alphafold3[False-4-True-True-False-False-False]
+tests/test_af3.py::test_alphafold3[False-4-True-False-True-True-True]
+tests/test_af3.py::test_alphafold3[False-4-True-False-True-True-False]
+tests/test_af3.py::test_alphafold3[False-4-True-False-True-False-True]
+tests/test_af3.py::test_alphafold3[False-4-True-False-True-False-False]
+tests/test_af3.py::test_alphafold3[False-4-True-False-False-True-True]
+tests/test_af3.py::test_alphafold3[False-4-True-False-False-True-False]
+tests/test_af3.py::test_alphafold3[False-4-True-False-False-False-True]
+tests/test_af3.py::test_alphafold3[False-4-True-False-False-False-False]
+tests/test_af3.py::test_alphafold3[False-4-False-True-True-True-True]
+tests/test_af3.py::test_alphafold3[False-4-False-True-True-True-False]
+tests/test_af3.py::test_alphafold3[False-4-False-True-True-False-True]
+tests/test_af3.py::test_alphafold3[False-4-False-True-True-False-False]
+tests/test_af3.py::test_alphafold3[False-4-False-True-False-True-True]
+tests/test_af3.py::test_alphafold3[False-4-False-True-False-True-False]
+tests/test_af3.py::test_alphafold3[False-4-False-True-False-False-True]
+tests/test_af3.py::test_alphafold3[False-4-False-True-False-False-False]
+tests/test_af3.py::test_alphafold3[False-4-False-False-True-True-True]
+tests/test_af3.py::test_alphafold3[False-4-False-False-True-True-False]
+tests/test_af3.py::test_alphafold3[False-4-False-False-True-False-True]
+tests/test_af3.py::test_alphafold3[False-4-False-False-True-False-False]
+tests/test_af3.py::test_alphafold3[False-4-False-False-False-True-True]
+tests/test_af3.py::test_alphafold3[False-4-False-False-False-True-False]
+tests/test_af3.py::test_alphafold3[False-4-False-False-False-False-True]
+tests/test_af3.py::test_alphafold3[False-4-False-False-False-False-False]
+tests/test_af3.py::test_alphafold3_without_msa_and_templates
+tests/test_af3.py::test_alphafold3_force_return_loss
+tests/test_af3.py::test_alphafold3_force_return_loss_with_confidence_logits
+tests/test_af3.py::test_alphafold3_with_atom_and_bond_embeddings
+tests/test_af3.py::test_alphafold3_with_plm_embeddings
+tests/test_af3.py::test_alphafold3_with_nlm_embeddings
+tests/test_af3.py::test_alphafold3_config
+tests/test_af3.py::test_compute_ranking_score
+tests/test_af3.py::test_model_selection_score
+tests/test_af3.py::test_model_selection_score_end_to_end
+tests/test_af3.py::test_unresolved_protein_rasa
+tests/test_af3.py::test_readme1
+tests/test_af3.py::test_readme2
+tests/test_cli.py::test_cli
+tests/test_data_parsing.py::test_mmcif_object_parsing[100d-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[100d-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[100d-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[1k7a-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[1k7a-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[1k7a-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[384d-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[384d-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[384d-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[4xij-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[4xij-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[4xij-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[6adq-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[6adq-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[6adq-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[7a4d-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[7a4d-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[7a4d-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[7akd-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[7akd-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[7akd-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[8a3j-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[8a3j-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_mmcif_object_parsing[8a3j-data/pdb_data/train_mmcifs]
+tests/test_data_parsing.py::test_random_mmcif_objects_parsing[1-500-data/pdb_data/unfiltered_assembly_mmcifs]
+tests/test_data_parsing.py::test_random_mmcif_objects_parsing[1-500-data/pdb_data/unfiltered_asym_mmcifs]
+tests/test_data_parsing.py::test_random_mmcif_objects_parsing[1-500-data/pdb_data/train_mmcifs]
+tests/test_dataloading.py::test_data_input
+tests/test_input.py::test_string_reverse_complement
+tests/test_input.py::test_tensor_reverse_complement
+tests/test_input.py::test_atom_input_to_file_and_from
+tests/test_input.py::test_atom_dataset
+tests/test_input.py::test_alphafold3_input[False]
+tests/test_input.py::test_alphafold3_input[True]
+tests/test_input.py::test_alphafold3_input_to_biomolecule
+tests/test_input.py::test_alphafold3_input_to_mmcif
+tests/test_input.py::test_return_bio_pdb_structures
+tests/test_input.py::test_atompos_input
+tests/test_input.py::test_pdbinput_input
+tests/test_msa_loading.py::test_msa_loading
+tests/test_readme.py::test_readme1
+tests/test_readme.py::test_readme2
+tests/test_template_loading.py::test_template_loading
+tests/test_trainer.py::test_trainer_with_mock_atom_input
+tests/test_trainer.py::test_trainer_with_pdb_input
+tests/test_trainer.py::test_collate_fn
+tests/test_trainer.py::test_trainer_config
+tests/test_trainer.py::test_trainer_config_with_pdb_dataset
+tests/test_trainer.py::test_trainer_config_with_atom_dataset
+tests/test_trainer.py::test_trainer_config_with_atom_dataset_from_pdb_dataset
+tests/test_trainer.py::test_trainer_config_without_model
+tests/test_trainer.py::test_conductor_config
+tests/test_trainer.py::test_conductor_config_with_pdb_datasets
+tests/test_weighted_sampling.py::test_sample
+tests/test_weighted_sampling.py::test_cluster_based_sample
+tests/test_weighted_sampling.py::test_weighted_sampling_from_trainer_config
+
+255 tests collected in 7.97s
+Container fdb3fdc78d71 stopped and removed
+Spend totally 6057.031505823135.

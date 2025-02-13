@@ -1,0 +1,1262 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 3.12kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 29.38kB done
+#4 DONE 0.0s
+
+#5 [1/7] FROM docker.io/library/python:3.10
+#5 CACHED
+
+#6 [2/7] COPY search_patch /search_patch
+#6 DONE 0.0s
+
+#7 [3/7] COPY code_edit.py /code_edit.py
+#7 DONE 0.0s
+
+#8 [4/7] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#8 0.523 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#8 0.876 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#8 0.975 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+#8 1.132 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8789 kB]
+#8 1.664 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [8856 B]
+#8 1.818 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [240 kB]
+#8 3.000 Fetched 9292 kB in 3s (3507 kB/s)
+#8 3.000 Reading package lists...
+#8 3.840 Reading package lists...
+#8 4.620 Building dependency tree...
+#8 4.855 Reading state information...
+#8 5.237 curl is already the newest version (7.88.1-10+deb12u8).
+#8 5.237 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+#8 25.85 Retrieving Poetry metadata
+#8 25.85 
+#8 25.85 # Welcome to Poetry!
+#8 25.85 
+#8 25.85 This will download and install the latest version of Poetry,
+#8 25.85 a dependency and package manager for Python.
+#8 25.85 
+#8 25.85 It will add the `poetry` command to Poetry's bin directory, located at:
+#8 25.85 
+#8 25.85 /root/.local/bin
+#8 25.85 
+#8 25.85 You can uninstall at any time by executing this script with the --uninstall option,
+#8 25.85 and these changes will be reverted.
+#8 25.85 
+#8 25.85 Installing Poetry (2.0.0)
+#8 25.85 Installing Poetry (2.0.0): Creating environment
+#8 25.85 Installing Poetry (2.0.0): Installing Poetry
+#8 25.85 Installing Poetry (2.0.0): Creating script
+#8 25.85 Installing Poetry (2.0.0): Done
+#8 25.85 
+#8 25.85 Poetry (2.0.0) is installed now. Great!
+#8 25.85 
+#8 25.85 To get started you need Poetry's bin directory (/root/.local/bin) in your `PATH`
+#8 25.85 environment variable.
+#8 25.85 
+#8 25.85 Add `export PATH="/root/.local/bin:$PATH"` to your shell configuration file.
+#8 25.85 
+#8 25.85 Alternatively, you can call Poetry explicitly with `/root/.local/bin/poetry`.
+#8 25.85 
+#8 25.85 You can test that everything is set up by executing:
+#8 25.85 
+#8 25.85 `poetry --version`
+#8 25.85 
+#8 DONE 26.1s
+
+#9 [5/7] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/invariantlabs-ai/invariant.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /invariant/. /repo && rm -rf /invariant/ &&     rm -rf /invariant &&     cd /repo && git checkout 81547a0d78a13951a6e415b9cd839d0ab68c6645 &&     cd /repo/analyzer && pip install -e . &&     ln -s /repo/testing/invariant/scorers /repo/testing/invariant/custom_types /repo/testing/invariant/testing /repo/analyzer/invariant/ &&     pip install nltk==3.9.1 &&     pip install invariant_sdk==0.0.4 &&     pip install openai==1.58.1 &&     cp -r /repo/testing/invariant/utils /repo/testing/invariant/constants.py /repo/analyzer/invariant/ &&     cp -r /repo/testing/invariant/cache /repo/testing/invariant/manager.py /repo/testing/invariant/__main__.py /repo/analyzer/invariant/ &&     pip install diskcache==5.6.3 &&     cp /repo/testing/invariant/config.py /repo/analyzer/invariant/ &&     python /code_edit.py -t "/search_patch/18.patch" &&     python /code_edit.py -t "/search_patch/19.patch" &&     python /code_edit.py -t "/search_patch/20.patch" &&     python /code_edit.py -t "/search_patch/21.patch" &&     pip install Pillow==11.0.0 &&     cp /repo/testing/invariant/formatter.py /repo/analyzer/invariant/ &&     pip install langchain_core==0.3.28 &&     cp -r /repo/testing/invariant/wrappers /repo/analyzer/invariant/ &&     pip install langchain_openai==0.2.14 &&     pip install swarm &&     pip install langgraph==0.2.60 &&     pip list &&     pip uninstall -y Swarm &&     pip install swarm &&     pip show -f swarm &&     python /code_edit.py -t "/search_patch/22.patch" &&     echo "try:\n from swarm import Swarm\n print('Swarm imported successfully')\n except Exception as e:\n print(str(e))" > /tmp/test_swarm_import.py &&     echo "try:" > /tmp/test_swarm_import.py &&     echo "    from swarm import Swarm" >> /tmp/test_swarm_import.py &&     echo "    print('Swarm imported successfully')" >> /tmp/test_swarm_import.py &&     echo "except Exception as e:" >> /tmp/test_swarm_import.py &&     echo "    print(str(e))" >> /tmp/test_swarm_import.py &&     python /tmp/test_swarm_import.py &&     pip show swarm &&     pip uninstall -y Swarm &&     pip install openai-swarm==0.1.1
+#9 1.850 Looking in indexes: http://simple/
+#9 2.001 Collecting pytest
+#9 2.019   Downloading http://packages/pytest/pytest-8.3.4-py3-none-any.whl (343 kB)
+#9 2.044      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 343.1/343.1 kB 17.6 MB/s eta 0:00:00
+#9 2.115 Collecting pytest-xdist
+#9 2.134   Downloading http://packages/pytest-xdist/pytest_xdist-3.6.1-py3-none-any.whl (46 kB)
+#9 2.165      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.1/46.1 kB 1.3 MB/s eta 0:00:00
+#9 2.215 Collecting iniconfig
+#9 2.234   Downloading http://packages/iniconfig/iniconfig-2.0.0-py3-none-any.whl (5.9 kB)
+#9 2.322 Collecting packaging
+#9 2.346   Downloading http://packages/packaging/packaging-24.2-py3-none-any.whl (65 kB)
+#9 2.358      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 65.5/65.5 kB 6.9 MB/s eta 0:00:00
+#9 2.401 Collecting exceptiongroup>=1.0.0rc8
+#9 2.419   Downloading http://packages/exceptiongroup/exceptiongroup-1.2.2-py3-none-any.whl (16 kB)
+#9 2.479 Collecting tomli>=1
+#9 2.497   Downloading http://packages/tomli/tomli-2.2.1-py3-none-any.whl (14 kB)
+#9 2.542 Collecting pluggy<2,>=1.5
+#9 2.560   Downloading http://packages/pluggy/pluggy-1.5.0-py3-none-any.whl (20 kB)
+#9 2.613 Collecting execnet>=2.1
+#9 2.638   Downloading http://packages/execnet/execnet-2.1.1-py3-none-any.whl (40 kB)
+#9 2.646      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.6/40.6 kB 7.4 MB/s eta 0:00:00
+#9 2.781 Installing collected packages: tomli, pluggy, packaging, iniconfig, execnet, exceptiongroup, pytest, pytest-xdist
+#9 3.311 Successfully installed exceptiongroup-1.2.2 execnet-2.1.1 iniconfig-2.0.0 packaging-24.2 pluggy-1.5.0 pytest-8.3.4 pytest-xdist-3.6.1 tomli-2.2.1
+#9 3.311 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 3.436 
+#9 3.436 [notice] A new release of pip is available: 23.0.1 -> 24.3.1
+#9 3.436 [notice] To update, run: pip install --upgrade pip
+#9 4.138 Looking in indexes: http://simple/
+#9 4.219 Collecting pipdeptree
+#9 4.240   Downloading http://packages/pipdeptree/pipdeptree-2.24.0-py3-none-any.whl (32 kB)
+#9 4.376 Collecting pip>=24.2
+#9 4.386   Using cached http://packages/pip/pip-24.3.1-py3-none-any.whl (1.8 MB)
+#9 4.404 Requirement already satisfied: packaging>=24.1 in /usr/local/lib/python3.10/site-packages (from pipdeptree) (24.2)
+#9 4.509 Installing collected packages: pip, pipdeptree
+#9 4.510   Attempting uninstall: pip
+#9 4.511     Found existing installation: pip 23.0.1
+#9 4.679     Uninstalling pip-23.0.1:
+#9 4.911       Successfully uninstalled pip-23.0.1
+#9 6.312 Successfully installed pip-24.3.1 pipdeptree-2.24.0
+#9 6.313 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 6.536 Cloning into 'invariant'...
+#9 10.27 Note: switching to '81547a0d78a13951a6e415b9cd839d0ab68c6645'.
+#9 10.27 
+#9 10.27 You are in 'detached HEAD' state. You can look around, make experimental
+#9 10.27 changes and commit them, and you can discard any commits you make in this
+#9 10.27 state without impacting any branches by switching back to a branch.
+#9 10.27 
+#9 10.27 If you want to create a new branch to retain commits you create, you may
+#9 10.27 do so (now or later) by using -c with the switch command. Example:
+#9 10.27 
+#9 10.27   git switch -c <new-branch-name>
+#9 10.27 
+#9 10.27 Or undo this operation with:
+#9 10.27 
+#9 10.27   git switch -
+#9 10.27 
+#9 10.27 Turn off this advice by setting config variable advice.detachedHead to false
+#9 10.27 
+#9 10.27 HEAD is now at 81547a0 Fix case in traverse_dot_path where the value is None when traversing.
+#9 10.79 Looking in indexes: http://simple/
+#9 10.79 Obtaining file:///repo/analyzer
+#9 10.80   Installing build dependencies: started
+#9 12.81   Installing build dependencies: finished with status 'done'
+#9 12.81   Checking if build backend supports build_editable: started
+#9 12.86   Checking if build backend supports build_editable: finished with status 'done'
+#9 12.86   Getting requirements to build editable: started
+#9 12.97   Getting requirements to build editable: finished with status 'done'
+#9 12.98   Installing backend dependencies: started
+#9 13.75   Installing backend dependencies: finished with status 'done'
+#9 13.75   Preparing editable metadata (pyproject.toml): started
+#9 13.97   Preparing editable metadata (pyproject.toml): finished with status 'done'
+#9 14.01 Collecting lark>=1.1.9 (from invariant==0.1.0)
+#9 14.03   Downloading http://packages/lark/lark-1.2.2-py3-none-any.whl (111 kB)
+#9 14.05 Requirement already satisfied: pip>=24.0 in /usr/local/lib/python3.10/site-packages (from invariant==0.1.0) (24.3.1)
+#9 14.36 Collecting pydantic>=2.7.3 (from invariant==0.1.0)
+#9 14.38   Downloading http://packages/pydantic/pydantic-2.10.4-py3-none-any.whl (431 kB)
+#9 14.72 Collecting semgrep>=1.78.0 (from invariant==0.1.0)
+#9 15.04   Downloading http://packages/semgrep/semgrep-1.101.0-cp39.cp310.cp311.py39.py310.py311-none-musllinux_1_0_x86_64.manylinux2014_x86_64.whl (28.0 MB)
+#9 15.21      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 28.0/28.0 MB 185.2 MB/s eta 0:00:00
+#9 15.34 Collecting termcolor>=2.4.0 (from invariant==0.1.0)
+#9 15.36   Downloading http://packages/termcolor/termcolor-2.5.0-py3-none-any.whl (7.8 kB)
+#9 15.39 Collecting annotated-types>=0.6.0 (from pydantic>=2.7.3->invariant==0.1.0)
+#9 15.42   Downloading http://packages/annotated-types/annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#9 16.77 Collecting pydantic-core==2.27.2 (from pydantic>=2.7.3->invariant==0.1.0)
+#9 16.80   Downloading http://packages/pydantic-core/pydantic_core-2.27.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#9 16.85      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 48.9 MB/s eta 0:00:00
+#9 16.90 Collecting typing-extensions>=4.12.2 (from pydantic>=2.7.3->invariant==0.1.0)
+#9 16.92   Downloading http://packages/typing-extensions/typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+#9 16.97 Collecting attrs>=21.3 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.00   Downloading http://packages/attrs/attrs-24.3.0-py3-none-any.whl (63 kB)
+#9 17.06 Collecting boltons~=21.0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.09   Downloading http://packages/boltons/boltons-21.0.0-py2.py3-none-any.whl (193 kB)
+#9 17.14 Collecting click-option-group~=0.5 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.16   Downloading http://packages/click-option-group/click_option_group-0.5.6-py3-none-any.whl (12 kB)
+#9 17.22 Collecting click~=8.1 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.24   Downloading http://packages/click/click-8.1.8-py3-none-any.whl (98 kB)
+#9 17.30 Collecting colorama~=0.4.0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.32   Downloading http://packages/colorama/colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+#9 17.36 Collecting defusedxml~=0.7.1 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.38   Downloading http://packages/defusedxml/defusedxml-0.7.1-py2.py3-none-any.whl (25 kB)
+#9 17.39 Requirement already satisfied: exceptiongroup~=1.2.0 in /usr/local/lib/python3.10/site-packages (from semgrep>=1.78.0->invariant==0.1.0) (1.2.2)
+#9 17.42 Collecting glom~=22.1 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.44   Downloading http://packages/glom/glom-22.1.0-py2.py3-none-any.whl (100 kB)
+#9 17.53 Collecting jsonschema~=4.6 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.55   Downloading http://packages/jsonschema/jsonschema-4.23.0-py3-none-any.whl (88 kB)
+#9 17.61 Collecting opentelemetry-api~=1.25.0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.64   Downloading http://packages/opentelemetry-api/opentelemetry_api-1.25.0-py3-none-any.whl (59 kB)
+#9 17.70 Collecting opentelemetry-sdk~=1.25.0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.72   Downloading http://packages/opentelemetry-sdk/opentelemetry_sdk-1.25.0-py3-none-any.whl (107 kB)
+#9 17.78 Collecting opentelemetry-exporter-otlp-proto-http~=1.25.0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.80   Downloading http://packages/opentelemetry-exporter-otlp-proto-http/opentelemetry_exporter_otlp_proto_http-1.25.0-py3-none-any.whl (16 kB)
+#9 17.86 Collecting opentelemetry-instrumentation-requests~=0.46b0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 17.97   Downloading http://packages/opentelemetry-instrumentation-requests/opentelemetry_instrumentation_requests-0.50b0-py3-none-any.whl (12 kB)
+#9 17.98 Requirement already satisfied: packaging>=21.0 in /usr/local/lib/python3.10/site-packages (from semgrep>=1.78.0->invariant==0.1.0) (24.2)
+#9 18.03 Collecting peewee~=3.14 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 18.05   Downloading http://packages/peewee/peewee-3.17.8.tar.gz (948 kB)
+#9 18.07      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 948.2/948.2 kB 68.2 MB/s eta 0:00:00
+#9 18.17   Installing build dependencies: started
+#9 20.72   Installing build dependencies: finished with status 'done'
+#9 20.72   Getting requirements to build wheel: started
+#9 21.08   Getting requirements to build wheel: finished with status 'done'
+#9 21.08   Preparing metadata (pyproject.toml): started
+#9 21.44   Preparing metadata (pyproject.toml): finished with status 'done'
+#9 21.52 Collecting requests~=2.22 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 21.52   Using cached http://packages/requests/requests-2.32.3-py3-none-any.whl (64 kB)
+#9 21.66 Collecting rich~=13.5.2 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 21.73   Downloading http://packages/rich/rich-13.5.3-py3-none-any.whl (239 kB)
+#9 22.09 Collecting ruamel.yaml>=0.18.5 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 22.11   Downloading http://packages/ruamel-yaml/ruamel.yaml-0.18.10-py3-none-any.whl (117 kB)
+#9 22.17 Collecting tomli~=2.0.1 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 22.19   Downloading http://packages/tomli/tomli-2.0.2-py3-none-any.whl (13 kB)
+#9 22.29 Collecting urllib3~=2.0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 22.29   Using cached http://packages/urllib3/urllib3-2.3.0-py3-none-any.whl (128 kB)
+#9 22.34 Collecting wcmatch~=8.3 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 22.36   Downloading http://packages/wcmatch/wcmatch-8.5.2-py3-none-any.whl (39 kB)
+#9 22.42 Collecting face>=20.1.0 (from glom~=22.1->semgrep>=1.78.0->invariant==0.1.0)
+#9 22.44   Downloading http://packages/face/face-24.0.0-py3-none-any.whl (54 kB)
+#9 22.50 Collecting jsonschema-specifications>=2023.03.6 (from jsonschema~=4.6->semgrep>=1.78.0->invariant==0.1.0)
+#9 22.51   Downloading http://packages/jsonschema-specifications/jsonschema_specifications-2024.10.1-py3-none-any.whl (18 kB)
+#9 22.59 Collecting referencing>=0.28.4 (from jsonschema~=4.6->semgrep>=1.78.0->invariant==0.1.0)
+#9 22.61   Downloading http://packages/referencing/referencing-0.35.1-py3-none-any.whl (26 kB)
+#9 23.22 Collecting rpds-py>=0.7.1 (from jsonschema~=4.6->semgrep>=1.78.0->invariant==0.1.0)
+#9 23.24   Downloading http://packages/rpds-py/rpds_py-0.22.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (381 kB)
+#9 23.32 Collecting deprecated>=1.2.6 (from opentelemetry-api~=1.25.0->semgrep>=1.78.0->invariant==0.1.0)
+#9 23.35   Downloading http://packages/deprecated/Deprecated-1.2.15-py2.py3-none-any.whl (9.9 kB)
+#9 23.47 Collecting importlib-metadata<=7.1,>=6.0 (from opentelemetry-api~=1.25.0->semgrep>=1.78.0->invariant==0.1.0)
+#9 23.49   Downloading http://packages/importlib-metadata/importlib_metadata-7.1.0-py3-none-any.whl (24 kB)
+#9 23.56 Collecting googleapis-common-protos~=1.52 (from opentelemetry-exporter-otlp-proto-http~=1.25.0->semgrep>=1.78.0->invariant==0.1.0)
+#9 23.58   Downloading http://packages/googleapis-common-protos/googleapis_common_protos-1.66.0-py2.py3-none-any.whl (221 kB)
+#9 23.64 Collecting opentelemetry-exporter-otlp-proto-common==1.25.0 (from opentelemetry-exporter-otlp-proto-http~=1.25.0->semgrep>=1.78.0->invariant==0.1.0)
+#9 23.66   Downloading http://packages/opentelemetry-exporter-otlp-proto-common/opentelemetry_exporter_otlp_proto_common-1.25.0-py3-none-any.whl (17 kB)
+#9 23.71 Collecting opentelemetry-proto==1.25.0 (from opentelemetry-exporter-otlp-proto-http~=1.25.0->semgrep>=1.78.0->invariant==0.1.0)
+#9 23.73   Downloading http://packages/opentelemetry-proto/opentelemetry_proto-1.25.0-py3-none-any.whl (52 kB)
+#9 24.15 Collecting protobuf<5.0,>=3.19 (from opentelemetry-proto==1.25.0->opentelemetry-exporter-otlp-proto-http~=1.25.0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.17   Downloading http://packages/protobuf/protobuf-4.25.5-cp37-abi3-manylinux2014_x86_64.whl (294 kB)
+#9 24.25 Collecting opentelemetry-instrumentation==0.50b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.27   Downloading http://packages/opentelemetry-instrumentation/opentelemetry_instrumentation-0.50b0-py3-none-any.whl (30 kB)
+#9 24.32 Collecting opentelemetry-semantic-conventions==0.50b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.35   Downloading http://packages/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.50b0-py3-none-any.whl (166 kB)
+#9 24.41 Collecting opentelemetry-util-http==0.50b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.43   Downloading http://packages/opentelemetry-util-http/opentelemetry_util_http-0.50b0-py3-none-any.whl (6.9 kB)
+#9 24.65 Collecting wrapt<2.0.0,>=1.0.0 (from opentelemetry-instrumentation==0.50b0->opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.67   Downloading http://packages/wrapt/wrapt-1.17.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (82 kB)
+#9 24.70 INFO: pip is looking at multiple versions of opentelemetry-semantic-conventions to determine which version is compatible with other requirements. This could take a while.
+#9 24.70 Collecting opentelemetry-instrumentation-requests~=0.46b0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 24.81   Downloading http://packages/opentelemetry-instrumentation-requests/opentelemetry_instrumentation_requests-0.49b2-py3-none-any.whl (12 kB)
+#9 24.82 Collecting opentelemetry-instrumentation==0.49b2 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.84   Downloading http://packages/opentelemetry-instrumentation/opentelemetry_instrumentation-0.49b2-py3-none-any.whl (30 kB)
+#9 24.86 Collecting opentelemetry-semantic-conventions==0.49b2 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.88   Downloading http://packages/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.49b2-py3-none-any.whl (159 kB)
+#9 24.91 Collecting opentelemetry-util-http==0.49b2 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 24.93   Downloading http://packages/opentelemetry-util-http/opentelemetry_util_http-0.49b2-py3-none-any.whl (6.9 kB)
+#9 24.96 Collecting opentelemetry-instrumentation-requests~=0.46b0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 25.07   Downloading http://packages/opentelemetry-instrumentation-requests/opentelemetry_instrumentation_requests-0.49b1-py3-none-any.whl (12 kB)
+#9 25.09 Collecting opentelemetry-instrumentation==0.49b1 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.11   Downloading http://packages/opentelemetry-instrumentation/opentelemetry_instrumentation-0.49b1-py3-none-any.whl (30 kB)
+#9 25.13 Collecting opentelemetry-semantic-conventions==0.49b1 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.15   Downloading http://packages/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.49b1-py3-none-any.whl (159 kB)
+#9 25.17 Collecting opentelemetry-util-http==0.49b1 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.19   Downloading http://packages/opentelemetry-util-http/opentelemetry_util_http-0.49b1-py3-none-any.whl (6.9 kB)
+#9 25.21 Collecting opentelemetry-instrumentation-requests~=0.46b0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 25.31   Downloading http://packages/opentelemetry-instrumentation-requests/opentelemetry_instrumentation_requests-0.49b0-py3-none-any.whl (12 kB)
+#9 25.33 Collecting opentelemetry-instrumentation==0.49b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.35   Downloading http://packages/opentelemetry-instrumentation/opentelemetry_instrumentation-0.49b0-py3-none-any.whl (30 kB)
+#9 25.37 Collecting opentelemetry-semantic-conventions==0.49b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.39   Downloading http://packages/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.49b0-py3-none-any.whl (159 kB)
+#9 25.41 Collecting opentelemetry-util-http==0.49b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.43   Downloading http://packages/opentelemetry-util-http/opentelemetry_util_http-0.49b0-py3-none-any.whl (6.9 kB)
+#9 25.46 Collecting opentelemetry-instrumentation-requests~=0.46b0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 25.55   Downloading http://packages/opentelemetry-instrumentation-requests/opentelemetry_instrumentation_requests-0.48b0-py3-none-any.whl (12 kB)
+#9 25.57 Collecting opentelemetry-instrumentation==0.48b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.59   Downloading http://packages/opentelemetry-instrumentation/opentelemetry_instrumentation-0.48b0-py3-none-any.whl (29 kB)
+#9 25.60 Collecting opentelemetry-semantic-conventions==0.48b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.63   Downloading http://packages/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.48b0-py3-none-any.whl (149 kB)
+#9 25.66 Collecting opentelemetry-util-http==0.48b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.68   Downloading http://packages/opentelemetry-util-http/opentelemetry_util_http-0.48b0-py3-none-any.whl (6.9 kB)
+#9 25.69 Requirement already satisfied: setuptools>=16.0 in /usr/local/lib/python3.10/site-packages (from opentelemetry-instrumentation==0.48b0->opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0) (65.5.1)
+#9 25.70 Collecting opentelemetry-instrumentation-requests~=0.46b0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 25.78   Downloading http://packages/opentelemetry-instrumentation-requests/opentelemetry_instrumentation_requests-0.47b0-py3-none-any.whl (12 kB)
+#9 25.80 Collecting opentelemetry-instrumentation==0.47b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.88   Downloading http://packages/opentelemetry-instrumentation/opentelemetry_instrumentation-0.47b0-py3-none-any.whl (29 kB)
+#9 25.89 Collecting opentelemetry-semantic-conventions==0.47b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 25.91   Downloading http://packages/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.47b0-py3-none-any.whl (138 kB)
+#9 25.94 Collecting opentelemetry-util-http==0.47b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.09   Downloading http://packages/opentelemetry-util-http/opentelemetry_util_http-0.47b0-py3-none-any.whl (6.9 kB)
+#9 26.11 Collecting opentelemetry-instrumentation-requests~=0.46b0 (from semgrep>=1.78.0->invariant==0.1.0)
+#9 26.13   Downloading http://packages/opentelemetry-instrumentation-requests/opentelemetry_instrumentation_requests-0.46b0-py3-none-any.whl (12 kB)
+#9 26.15 Collecting opentelemetry-instrumentation==0.46b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.18   Downloading http://packages/opentelemetry-instrumentation/opentelemetry_instrumentation-0.46b0-py3-none-any.whl (29 kB)
+#9 26.19 Collecting opentelemetry-semantic-conventions==0.46b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.22   Downloading http://packages/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.46b0-py3-none-any.whl (130 kB)
+#9 26.24 Collecting opentelemetry-util-http==0.46b0 (from opentelemetry-instrumentation-requests~=0.46b0->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.26   Downloading http://packages/opentelemetry-util-http/opentelemetry_util_http-0.46b0-py3-none-any.whl (6.9 kB)
+#9 26.47 Collecting charset-normalizer<4,>=2 (from requests~=2.22->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.47   Using cached http://packages/charset-normalizer/charset_normalizer-3.4.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (146 kB)
+#9 26.51 Collecting idna<4,>=2.5 (from requests~=2.22->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.51   Using cached http://packages/idna/idna-3.10-py3-none-any.whl (70 kB)
+#9 26.72 Collecting certifi>=2017.4.17 (from requests~=2.22->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.72   Using cached http://packages/certifi/certifi-2024.12.14-py3-none-any.whl (164 kB)
+#9 26.77 Collecting markdown-it-py>=2.2.0 (from rich~=13.5.2->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.80   Downloading http://packages/markdown-it-py/markdown_it_py-3.0.0-py3-none-any.whl (87 kB)
+#9 26.88 Collecting pygments<3.0.0,>=2.13.0 (from rich~=13.5.2->semgrep>=1.78.0->invariant==0.1.0)
+#9 26.90   Downloading http://packages/pygments/pygments-2.19.1-py3-none-any.whl (1.2 MB)
+#9 26.95      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 29.5 MB/s eta 0:00:00
+#9 27.04 Collecting ruamel.yaml.clib>=0.2.7 (from ruamel.yaml>=0.18.5->semgrep>=1.78.0->invariant==0.1.0)
+#9 27.06   Downloading http://packages/ruamel-yaml-clib/ruamel.yaml.clib-0.2.12-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (722 kB)
+#9 27.09      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 722.2/722.2 kB 40.1 MB/s eta 0:00:00
+#9 27.13 Collecting bracex>=2.1.1 (from wcmatch~=8.3->semgrep>=1.78.0->invariant==0.1.0)
+#9 27.15   Downloading http://packages/bracex/bracex-2.5.post1-py3-none-any.whl (11 kB)
+#9 27.32 Collecting zipp>=0.5 (from importlib-metadata<=7.1,>=6.0->opentelemetry-api~=1.25.0->semgrep>=1.78.0->invariant==0.1.0)
+#9 27.32   Using cached http://packages/zipp/zipp-3.21.0-py3-none-any.whl (9.6 kB)
+#9 27.36 Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich~=13.5.2->semgrep>=1.78.0->invariant==0.1.0)
+#9 27.38   Downloading http://packages/mdurl/mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+#9 27.45 Building wheels for collected packages: invariant, peewee
+#9 27.45   Building editable for invariant (pyproject.toml): started
+#9 27.50   Building editable for invariant (pyproject.toml): finished with status 'done'
+#9 27.50   Created wheel for invariant: filename=invariant-0.1.0-py3-none-any.whl size=12740 sha256=9dbbca43975cc3bb167dd690c69caa3f6de35396e6758eb379023bf3d969dcd6
+#9 27.50   Stored in directory: /tmp/pip-ephem-wheel-cache-ejcnh4ey/wheels/e5/0f/c4/c10b9c58d01a834f4c1ab67294acdab5531e21bf6fba4c2063
+#9 27.51   Building wheel for peewee (pyproject.toml): started
+#9 47.93   Building wheel for peewee (pyproject.toml): finished with status 'done'
+#9 47.94   Created wheel for peewee: filename=peewee-3.17.8-cp310-cp310-linux_x86_64.whl size=971022 sha256=4c3e7a743c0a5faa782ec9eb150a266b776503e3c2ed11a9dccfeb441082d8a8
+#9 47.94   Stored in directory: /root/.cache/pip/wheels/d4/7a/da/13bae369a8c088978bb81a660db4a09aa29fded3caa45528fa
+#9 47.94 Successfully built invariant peewee
+#9 48.09 Installing collected packages: peewee, boltons, zipp, wrapt, urllib3, typing-extensions, tomli, termcolor, ruamel.yaml.clib, rpds-py, pygments, protobuf, opentelemetry-util-http, mdurl, lark, idna, face, defusedxml, colorama, click, charset-normalizer, certifi, bracex, attrs, annotated-types, wcmatch, ruamel.yaml, requests, referencing, pydantic-core, opentelemetry-proto, markdown-it-py, importlib-metadata, googleapis-common-protos, glom, deprecated, click-option-group, rich, pydantic, opentelemetry-exporter-otlp-proto-common, opentelemetry-api, jsonschema-specifications, opentelemetry-semantic-conventions, opentelemetry-instrumentation, jsonschema, opentelemetry-sdk, opentelemetry-instrumentation-requests, opentelemetry-exporter-otlp-proto-http, semgrep, invariant
+#9 48.62   Attempting uninstall: tomli
+#9 48.62     Found existing installation: tomli 2.2.1
+#9 48.63     Uninstalling tomli-2.2.1:
+#9 48.63       Successfully uninstalled tomli-2.2.1
+#9 53.49 Successfully installed annotated-types-0.7.0 attrs-24.3.0 boltons-21.0.0 bracex-2.5.post1 certifi-2024.12.14 charset-normalizer-3.4.1 click-8.1.8 click-option-group-0.5.6 colorama-0.4.6 defusedxml-0.7.1 deprecated-1.2.15 face-24.0.0 glom-22.1.0 googleapis-common-protos-1.66.0 idna-3.10 importlib-metadata-7.1.0 invariant-0.1.0 jsonschema-4.23.0 jsonschema-specifications-2024.10.1 lark-1.2.2 markdown-it-py-3.0.0 mdurl-0.1.2 opentelemetry-api-1.25.0 opentelemetry-exporter-otlp-proto-common-1.25.0 opentelemetry-exporter-otlp-proto-http-1.25.0 opentelemetry-instrumentation-0.46b0 opentelemetry-instrumentation-requests-0.46b0 opentelemetry-proto-1.25.0 opentelemetry-sdk-1.25.0 opentelemetry-semantic-conventions-0.46b0 opentelemetry-util-http-0.46b0 peewee-3.17.8 protobuf-4.25.5 pydantic-2.10.4 pydantic-core-2.27.2 pygments-2.19.1 referencing-0.35.1 requests-2.32.3 rich-13.5.3 rpds-py-0.22.3 ruamel.yaml-0.18.10 ruamel.yaml.clib-0.2.12 semgrep-1.101.0 termcolor-2.5.0 tomli-2.0.2 typing-extensions-4.12.2 urllib3-2.3.0 wcmatch-8.5.2 wrapt-1.17.0 zipp-3.21.0
+#9 53.50 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 55.03 Looking in indexes: http://simple/
+#9 55.08 Collecting nltk==3.9.1
+#9 55.10   Downloading http://packages/nltk/nltk-3.9.1-py3-none-any.whl (1.5 MB)
+#9 55.16      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 28.2 MB/s eta 0:00:00
+#9 55.18 Requirement already satisfied: click in /usr/local/lib/python3.10/site-packages (from nltk==3.9.1) (8.1.8)
+#9 55.24 Collecting joblib (from nltk==3.9.1)
+#9 55.30   Downloading http://packages/joblib/joblib-1.4.2-py3-none-any.whl (301 kB)
+#9 56.10 Collecting regex>=2021.8.3 (from nltk==3.9.1)
+#9 56.12   Downloading http://packages/regex/regex-2024.11.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (781 kB)
+#9 56.16      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 781.7/781.7 kB 31.2 MB/s eta 0:00:00
+#9 56.29 Collecting tqdm (from nltk==3.9.1)
+#9 56.31   Downloading http://packages/tqdm/tqdm-4.67.1-py3-none-any.whl (78 kB)
+#9 56.47 Installing collected packages: tqdm, regex, joblib, nltk
+#9 58.26 Successfully installed joblib-1.4.2 nltk-3.9.1 regex-2024.11.6 tqdm-4.67.1
+#9 58.27 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 59.39 Looking in indexes: http://simple/
+#9 59.43 Collecting invariant_sdk==0.0.4
+#9 59.54   Downloading http://packages/invariant-sdk/invariant_sdk-0.0.4-py3-none-any.whl (8.6 kB)
+#9 59.55 Requirement already satisfied: pydantic<3.0.0,>=2.9.2 in /usr/local/lib/python3.10/site-packages (from invariant_sdk==0.0.4) (2.10.4)
+#9 59.55 Requirement already satisfied: requests<3.0.0,>=2.32.3 in /usr/local/lib/python3.10/site-packages (from invariant_sdk==0.0.4) (2.32.3)
+#9 59.55 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.9.2->invariant_sdk==0.0.4) (0.7.0)
+#9 59.56 Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.9.2->invariant_sdk==0.0.4) (2.27.2)
+#9 59.56 Requirement already satisfied: typing-extensions>=4.12.2 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.9.2->invariant_sdk==0.0.4) (4.12.2)
+#9 59.56 Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/site-packages (from requests<3.0.0,>=2.32.3->invariant_sdk==0.0.4) (3.4.1)
+#9 59.56 Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/site-packages (from requests<3.0.0,>=2.32.3->invariant_sdk==0.0.4) (3.10)
+#9 59.56 Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/site-packages (from requests<3.0.0,>=2.32.3->invariant_sdk==0.0.4) (2.3.0)
+#9 59.56 Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/site-packages (from requests<3.0.0,>=2.32.3->invariant_sdk==0.0.4) (2024.12.14)
+#9 59.71 Installing collected packages: invariant_sdk
+#9 59.73 Successfully installed invariant_sdk-0.0.4
+#9 59.73 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 60.49 Looking in indexes: http://simple/
+#9 60.66 Collecting openai==1.58.1
+#9 60.68   Downloading http://packages/openai/openai-1.58.1-py3-none-any.whl (454 kB)
+#9 60.77 Collecting anyio<5,>=3.5.0 (from openai==1.58.1)
+#9 60.79   Downloading http://packages/anyio/anyio-4.8.0-py3-none-any.whl (96 kB)
+#9 60.83 Collecting distro<2,>=1.7.0 (from openai==1.58.1)
+#9 60.85   Downloading http://packages/distro/distro-1.9.0-py3-none-any.whl (20 kB)
+#9 60.91 Collecting httpx<1,>=0.23.0 (from openai==1.58.1)
+#9 60.93   Downloading http://packages/httpx/httpx-0.28.1-py3-none-any.whl (73 kB)
+#9 61.07 Collecting jiter<1,>=0.4.0 (from openai==1.58.1)
+#9 61.09   Downloading http://packages/jiter/jiter-0.8.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (345 kB)
+#9 61.11 Requirement already satisfied: pydantic<3,>=1.9.0 in /usr/local/lib/python3.10/site-packages (from openai==1.58.1) (2.10.4)
+#9 61.13 Collecting sniffio (from openai==1.58.1)
+#9 61.16   Downloading http://packages/sniffio/sniffio-1.3.1-py3-none-any.whl (10 kB)
+#9 61.17 Requirement already satisfied: tqdm>4 in /usr/local/lib/python3.10/site-packages (from openai==1.58.1) (4.67.1)
+#9 61.17 Requirement already satisfied: typing-extensions<5,>=4.11 in /usr/local/lib/python3.10/site-packages (from openai==1.58.1) (4.12.2)
+#9 61.17 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.5.0->openai==1.58.1) (1.2.2)
+#9 61.17 Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.5.0->openai==1.58.1) (3.10)
+#9 61.18 Requirement already satisfied: certifi in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->openai==1.58.1) (2024.12.14)
+#9 61.23 Collecting httpcore==1.* (from httpx<1,>=0.23.0->openai==1.58.1)
+#9 61.25   Downloading http://packages/httpcore/httpcore-1.0.7-py3-none-any.whl (78 kB)
+#9 61.29 Collecting h11<0.15,>=0.13 (from httpcore==1.*->httpx<1,>=0.23.0->openai==1.58.1)
+#9 61.31   Downloading http://packages/h11/h11-0.14.0-py3-none-any.whl (58 kB)
+#9 61.32 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic<3,>=1.9.0->openai==1.58.1) (0.7.0)
+#9 61.32 Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/site-packages (from pydantic<3,>=1.9.0->openai==1.58.1) (2.27.2)
+#9 61.48 Installing collected packages: sniffio, jiter, h11, distro, httpcore, anyio, httpx, openai
+#9 62.32 Successfully installed anyio-4.8.0 distro-1.9.0 h11-0.14.0 httpcore-1.0.7 httpx-0.28.1 jiter-0.8.2 openai-1.58.1 sniffio-1.3.1
+#9 62.32 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 63.15 Looking in indexes: http://simple/
+#9 63.20 Collecting diskcache==5.6.3
+#9 63.22   Downloading http://packages/diskcache/diskcache-5.6.3-py3-none-any.whl (45 kB)
+#9 63.39 Installing collected packages: diskcache
+#9 63.45 Successfully installed diskcache-5.6.3
+#9 63.45 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 63.72 * Succeed Patch:
+#9 63.72 --- arepoanalyzerinvariantcustom_typesmatchers.py
+#9 63.72 +++ brepoanalyzerinvariantcustom_typesmatchers.py
+#9 63.72 @@ -1,6 +1,6 @@
+#9 63.72  """Defines the expect functions."""
+#9 63.72  
+#9 63.72 -from enum import StrEnum
+#9 63.72 +from enum import Enum
+#9 63.72  from typing import Any
+#9 63.72  
+#9 63.72  from invariant.scorers.llm.classifier import Classifier
+#9 63.72 
+#9 63.72 
+#9 63.79 * Succeed Patch:
+#9 63.79 --- arepoanalyzerinvariantscorersllmclientsclient.py
+#9 63.79 +++ brepoanalyzerinvariantscorersllmclientsclient.py
+#9 63.79 @@ -1,7 +1,7 @@
+#9 63.79  """Abstract base class for LLM clients."""
+#9 63.79  
+#9 63.79  from abc import ABC, abstractmethod
+#9 63.79 -from enum import StrEnum
+#9 63.79 +from enum import Enum
+#9 63.79  from typing import Any
+#9 63.79  
+#9 63.79  
+#9 63.79 
+#9 63.79 
+#9 63.85 * Succeed Patch:
+#9 63.85 --- arepoanalyzerinvariantscorersllmclientsclient.py
+#9 63.85 +++ brepoanalyzerinvariantscorersllmclientsclient.py
+#9 63.85 @@ -5,7 +5,7 @@
+#9 63.85  from typing import Any
+#9 63.85  
+#9 63.85  
+#9 63.85 -class SupportedClients(StrEnum):
+#9 63.85 +class SupportedClients(Enum):
+#9 63.85      """Enumeration of supported LLM clients."""
+#9 63.85  
+#9 63.85      OPENAI = "OpenAI"
+#9 63.85 
+#9 63.85 
+#9 63.92 * Succeed Patch:
+#9 63.92 --- arepoanalyzerinvariantcustom_typesmatchers.py
+#9 63.92 +++ brepoanalyzerinvariantcustom_typesmatchers.py
+#9 63.92 @@ -86,7 +86,7 @@
+#9 63.92  class IsFactuallyEqual(Matcher):
+#9 63.92      """Matcher for checking if the output is close to expected using llm"""
+#9 63.92  
+#9 63.92 -    class Agreement(StrEnum):
+#9 63.92 +    class Agreement(Enum):
+#9 63.92          """Enum for different levels of agreement."""
+#9 63.92  
+#9 63.92          SUPER_STRICT_AGREEMENT = "super strict agreement"
+#9 63.92 
+#9 63.92 
+#9 64.48 Looking in indexes: http://simple/
+#9 64.94 Collecting Pillow==11.0.0
+#9 64.96   Downloading http://packages/pillow/pillow-11.0.0-cp310-cp310-manylinux_2_28_x86_64.whl (4.4 MB)
+#9 65.02      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 100.8 MB/s eta 0:00:00
+#9 65.21 Installing collected packages: Pillow
+#9 65.62 Successfully installed Pillow-11.0.0
+#9 65.62 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 66.47 Looking in indexes: http://simple/
+#9 66.65 Collecting langchain_core==0.3.28
+#9 66.75   Downloading http://packages/langchain-core/langchain_core-0.3.28-py3-none-any.whl (411 kB)
+#9 66.87 Collecting PyYAML>=5.3 (from langchain_core==0.3.28)
+#9 66.90   Downloading http://packages/pyyaml/PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (751 kB)
+#9 66.93      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 751.2/751.2 kB 29.1 MB/s eta 0:00:00
+#9 66.98 Collecting jsonpatch<2.0,>=1.33 (from langchain_core==0.3.28)
+#9 67.01   Downloading http://packages/jsonpatch/jsonpatch-1.33-py2.py3-none-any.whl (12 kB)
+#9 67.20 Collecting langsmith<0.3,>=0.1.125 (from langchain_core==0.3.28)
+#9 67.22   Downloading http://packages/langsmith/langsmith-0.2.10-py3-none-any.whl (326 kB)
+#9 67.24 Requirement already satisfied: packaging<25,>=23.2 in /usr/local/lib/python3.10/site-packages (from langchain_core==0.3.28) (24.2)
+#9 67.24 Requirement already satisfied: pydantic<3.0.0,>=2.5.2 in /usr/local/lib/python3.10/site-packages (from langchain_core==0.3.28) (2.10.4)
+#9 67.28 Collecting tenacity!=8.4.0,<10.0.0,>=8.1.0 (from langchain_core==0.3.28)
+#9 67.30   Downloading http://packages/tenacity/tenacity-9.0.0-py3-none-any.whl (28 kB)
+#9 67.31 Requirement already satisfied: typing-extensions>=4.7 in /usr/local/lib/python3.10/site-packages (from langchain_core==0.3.28) (4.12.2)
+#9 67.34 Collecting jsonpointer>=1.9 (from jsonpatch<2.0,>=1.33->langchain_core==0.3.28)
+#9 67.36   Downloading http://packages/jsonpointer/jsonpointer-3.0.0-py2.py3-none-any.whl (7.6 kB)
+#9 67.37 Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.10/site-packages (from langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (0.28.1)
+#9 67.90 Collecting orjson<4.0.0,>=3.9.14 (from langsmith<0.3,>=0.1.125->langchain_core==0.3.28)
+#9 67.92   Downloading http://packages/orjson/orjson-3.10.13-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (131 kB)
+#9 67.94 Requirement already satisfied: requests<3,>=2 in /usr/local/lib/python3.10/site-packages (from langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (2.32.3)
+#9 67.97 Collecting requests-toolbelt<2.0.0,>=1.0.0 (from langsmith<0.3,>=0.1.125->langchain_core==0.3.28)
+#9 67.97   Using cached http://packages/requests-toolbelt/requests_toolbelt-1.0.0-py2.py3-none-any.whl (54 kB)
+#9 67.98 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.5.2->langchain_core==0.3.28) (0.7.0)
+#9 67.98 Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.5.2->langchain_core==0.3.28) (2.27.2)
+#9 67.99 Requirement already satisfied: anyio in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (4.8.0)
+#9 67.99 Requirement already satisfied: certifi in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (2024.12.14)
+#9 68.00 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (1.0.7)
+#9 68.00 Requirement already satisfied: idna in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (3.10)
+#9 68.00 Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx<1,>=0.23.0->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (0.14.0)
+#9 68.01 Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/site-packages (from requests<3,>=2->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (3.4.1)
+#9 68.01 Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/site-packages (from requests<3,>=2->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (2.3.0)
+#9 68.03 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio->httpx<1,>=0.23.0->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (1.2.2)
+#9 68.03 Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.10/site-packages (from anyio->httpx<1,>=0.23.0->langsmith<0.3,>=0.1.125->langchain_core==0.3.28) (1.3.1)
+#9 68.18 Installing collected packages: tenacity, PyYAML, orjson, jsonpointer, requests-toolbelt, jsonpatch, langsmith, langchain_core
+#9 69.02 Successfully installed PyYAML-6.0.2 jsonpatch-1.33 jsonpointer-3.0.0 langchain_core-0.3.28 langsmith-0.2.10 orjson-3.10.13 requests-toolbelt-1.0.0 tenacity-9.0.0
+#9 69.02 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 69.92 Looking in indexes: http://simple/
+#9 69.99 Collecting langchain_openai==0.2.14
+#9 70.01   Downloading http://packages/langchain-openai/langchain_openai-0.2.14-py3-none-any.whl (50 kB)
+#9 70.03 Requirement already satisfied: langchain-core<0.4.0,>=0.3.27 in /usr/local/lib/python3.10/site-packages (from langchain_openai==0.2.14) (0.3.28)
+#9 70.03 Requirement already satisfied: openai<2.0.0,>=1.58.1 in /usr/local/lib/python3.10/site-packages (from langchain_openai==0.2.14) (1.58.1)
+#9 70.14 Collecting tiktoken<1,>=0.7 (from langchain_openai==0.2.14)
+#9 70.16   Downloading http://packages/tiktoken/tiktoken-0.8.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.2 MB)
+#9 70.19      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 52.7 MB/s eta 0:00:00
+#9 70.20 Requirement already satisfied: PyYAML>=5.3 in /usr/local/lib/python3.10/site-packages (from langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (6.0.2)
+#9 70.21 Requirement already satisfied: jsonpatch<2.0,>=1.33 in /usr/local/lib/python3.10/site-packages (from langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (1.33)
+#9 70.21 Requirement already satisfied: langsmith<0.3,>=0.1.125 in /usr/local/lib/python3.10/site-packages (from langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (0.2.10)
+#9 70.21 Requirement already satisfied: packaging<25,>=23.2 in /usr/local/lib/python3.10/site-packages (from langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (24.2)
+#9 70.21 Requirement already satisfied: pydantic<3.0.0,>=2.5.2 in /usr/local/lib/python3.10/site-packages (from langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (2.10.4)
+#9 70.21 Requirement already satisfied: tenacity!=8.4.0,<10.0.0,>=8.1.0 in /usr/local/lib/python3.10/site-packages (from langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (9.0.0)
+#9 70.21 Requirement already satisfied: typing-extensions>=4.7 in /usr/local/lib/python3.10/site-packages (from langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (4.12.2)
+#9 70.22 Requirement already satisfied: anyio<5,>=3.5.0 in /usr/local/lib/python3.10/site-packages (from openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (4.8.0)
+#9 70.22 Requirement already satisfied: distro<2,>=1.7.0 in /usr/local/lib/python3.10/site-packages (from openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (1.9.0)
+#9 70.22 Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.10/site-packages (from openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (0.28.1)
+#9 70.22 Requirement already satisfied: jiter<1,>=0.4.0 in /usr/local/lib/python3.10/site-packages (from openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (0.8.2)
+#9 70.22 Requirement already satisfied: sniffio in /usr/local/lib/python3.10/site-packages (from openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (1.3.1)
+#9 70.22 Requirement already satisfied: tqdm>4 in /usr/local/lib/python3.10/site-packages (from openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (4.67.1)
+#9 70.22 Requirement already satisfied: regex>=2022.1.18 in /usr/local/lib/python3.10/site-packages (from tiktoken<1,>=0.7->langchain_openai==0.2.14) (2024.11.6)
+#9 70.22 Requirement already satisfied: requests>=2.26.0 in /usr/local/lib/python3.10/site-packages (from tiktoken<1,>=0.7->langchain_openai==0.2.14) (2.32.3)
+#9 70.23 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.5.0->openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (1.2.2)
+#9 70.23 Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.5.0->openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (3.10)
+#9 70.24 Requirement already satisfied: certifi in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (2024.12.14)
+#9 70.24 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (1.0.7)
+#9 70.24 Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx<1,>=0.23.0->openai<2.0.0,>=1.58.1->langchain_openai==0.2.14) (0.14.0)
+#9 70.25 Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.10/site-packages (from jsonpatch<2.0,>=1.33->langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (3.0.0)
+#9 70.25 Requirement already satisfied: orjson<4.0.0,>=3.9.14 in /usr/local/lib/python3.10/site-packages (from langsmith<0.3,>=0.1.125->langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (3.10.13)
+#9 70.25 Requirement already satisfied: requests-toolbelt<2.0.0,>=1.0.0 in /usr/local/lib/python3.10/site-packages (from langsmith<0.3,>=0.1.125->langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (1.0.0)
+#9 70.26 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.5.2->langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (0.7.0)
+#9 70.26 Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.5.2->langchain-core<0.4.0,>=0.3.27->langchain_openai==0.2.14) (2.27.2)
+#9 70.27 Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/site-packages (from requests>=2.26.0->tiktoken<1,>=0.7->langchain_openai==0.2.14) (3.4.1)
+#9 70.27 Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/site-packages (from requests>=2.26.0->tiktoken<1,>=0.7->langchain_openai==0.2.14) (2.3.0)
+#9 70.41 Installing collected packages: tiktoken, langchain_openai
+#9 70.51 Successfully installed langchain_openai-0.2.14 tiktoken-0.8.0
+#9 70.51 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 71.34 Looking in indexes: http://simple/
+#9 71.38 Collecting swarm
+#9 71.53   Downloading http://packages/swarm/Swarm-0.0.2-py3-none-any.whl (10 kB)
+#9 71.88 Collecting pygame (from swarm)
+#9 72.15   Downloading http://packages/pygame/pygame-2.6.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (14.0 MB)
+#9 72.27      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.0/14.0 MB 143.0 MB/s eta 0:00:00
+#9 72.48 Installing collected packages: pygame, swarm
+#9 73.54 Successfully installed pygame-2.6.1 swarm-0.0.2
+#9 73.54 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 74.37 Looking in indexes: http://simple/
+#9 74.52 Collecting langgraph==0.2.60
+#9 74.63   Downloading http://packages/langgraph/langgraph-0.2.60-py3-none-any.whl (135 kB)
+#9 74.66 Requirement already satisfied: langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43 in /usr/local/lib/python3.10/site-packages (from langgraph==0.2.60) (0.3.28)
+#9 74.69 Collecting langgraph-checkpoint<3.0.0,>=2.0.4 (from langgraph==0.2.60)
+#9 74.78   Downloading http://packages/langgraph-checkpoint/langgraph_checkpoint-2.0.9-py3-none-any.whl (37 kB)
+#9 74.85 Collecting langgraph-sdk<0.2.0,>=0.1.42 (from langgraph==0.2.60)
+#9 74.87   Downloading http://packages/langgraph-sdk/langgraph_sdk-0.1.48-py3-none-any.whl (43 kB)
+#9 74.89 Requirement already satisfied: PyYAML>=5.3 in /usr/local/lib/python3.10/site-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (6.0.2)
+#9 74.89 Requirement already satisfied: jsonpatch<2.0,>=1.33 in /usr/local/lib/python3.10/site-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (1.33)
+#9 74.89 Requirement already satisfied: langsmith<0.3,>=0.1.125 in /usr/local/lib/python3.10/site-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (0.2.10)
+#9 74.89 Requirement already satisfied: packaging<25,>=23.2 in /usr/local/lib/python3.10/site-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (24.2)
+#9 74.89 Requirement already satisfied: pydantic<3.0.0,>=2.5.2 in /usr/local/lib/python3.10/site-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (2.10.4)
+#9 74.89 Requirement already satisfied: tenacity!=8.4.0,<10.0.0,>=8.1.0 in /usr/local/lib/python3.10/site-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (9.0.0)
+#9 74.90 Requirement already satisfied: typing-extensions>=4.7 in /usr/local/lib/python3.10/site-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (4.12.2)
+#9 75.04 Collecting msgpack<2.0.0,>=1.1.0 (from langgraph-checkpoint<3.0.0,>=2.0.4->langgraph==0.2.60)
+#9 75.04   Using cached http://packages/msgpack/msgpack-1.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (378 kB)
+#9 75.05 Requirement already satisfied: httpx>=0.25.2 in /usr/local/lib/python3.10/site-packages (from langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (0.28.1)
+#9 75.06 Requirement already satisfied: orjson>=3.10.1 in /usr/local/lib/python3.10/site-packages (from langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (3.10.13)
+#9 75.06 Requirement already satisfied: anyio in /usr/local/lib/python3.10/site-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (4.8.0)
+#9 75.07 Requirement already satisfied: certifi in /usr/local/lib/python3.10/site-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (2024.12.14)
+#9 75.07 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (1.0.7)
+#9 75.07 Requirement already satisfied: idna in /usr/local/lib/python3.10/site-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (3.10)
+#9 75.07 Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (0.14.0)
+#9 75.07 Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.10/site-packages (from jsonpatch<2.0,>=1.33->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (3.0.0)
+#9 75.08 Requirement already satisfied: requests<3,>=2 in /usr/local/lib/python3.10/site-packages (from langsmith<0.3,>=0.1.125->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (2.32.3)
+#9 75.08 Requirement already satisfied: requests-toolbelt<2.0.0,>=1.0.0 in /usr/local/lib/python3.10/site-packages (from langsmith<0.3,>=0.1.125->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (1.0.0)
+#9 75.09 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.5.2->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (0.7.0)
+#9 75.09 Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/site-packages (from pydantic<3.0.0,>=2.5.2->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (2.27.2)
+#9 75.11 Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/site-packages (from requests<3,>=2->langsmith<0.3,>=0.1.125->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (3.4.1)
+#9 75.11 Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/site-packages (from requests<3,>=2->langsmith<0.3,>=0.1.125->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.15,!=0.3.16,!=0.3.17,!=0.3.18,!=0.3.19,!=0.3.2,!=0.3.20,!=0.3.21,!=0.3.22,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langgraph==0.2.60) (2.3.0)
+#9 75.13 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio->httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (1.2.2)
+#9 75.13 Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.10/site-packages (from anyio->httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph==0.2.60) (1.3.1)
+#9 75.29 Installing collected packages: msgpack, langgraph-sdk, langgraph-checkpoint, langgraph
+#9 75.59 Successfully installed langgraph-0.2.60 langgraph-checkpoint-2.0.9 langgraph-sdk-0.1.48 msgpack-1.1.0
+#9 75.59 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 76.26 Package                                  Version    Editable project location
+#9 76.26 ---------------------------------------- ---------- -------------------------
+#9 76.26 annotated-types                          0.7.0
+#9 76.26 anyio                                    4.8.0
+#9 76.26 attrs                                    24.3.0
+#9 76.26 boltons                                  21.0.0
+#9 76.26 bracex                                   2.5.post1
+#9 76.26 certifi                                  2024.12.14
+#9 76.26 charset-normalizer                       3.4.1
+#9 76.26 click                                    8.1.8
+#9 76.26 click-option-group                       0.5.6
+#9 76.26 colorama                                 0.4.6
+#9 76.26 defusedxml                               0.7.1
+#9 76.26 Deprecated                               1.2.15
+#9 76.26 diskcache                                5.6.3
+#9 76.26 distro                                   1.9.0
+#9 76.26 exceptiongroup                           1.2.2
+#9 76.26 execnet                                  2.1.1
+#9 76.26 face                                     24.0.0
+#9 76.26 glom                                     22.1.0
+#9 76.26 googleapis-common-protos                 1.66.0
+#9 76.26 h11                                      0.14.0
+#9 76.26 httpcore                                 1.0.7
+#9 76.26 httpx                                    0.28.1
+#9 76.26 idna                                     3.10
+#9 76.26 importlib_metadata                       7.1.0
+#9 76.26 iniconfig                                2.0.0
+#9 76.26 invariant                                0.1.0      /repo/analyzer
+#9 76.26 invariant-sdk                            0.0.4
+#9 76.26 jiter                                    0.8.2
+#9 76.26 joblib                                   1.4.2
+#9 76.26 jsonpatch                                1.33
+#9 76.26 jsonpointer                              3.0.0
+#9 76.26 jsonschema                               4.23.0
+#9 76.27 jsonschema-specifications                2024.10.1
+#9 76.27 langchain-core                           0.3.28
+#9 76.27 langchain-openai                         0.2.14
+#9 76.27 langgraph                                0.2.60
+#9 76.27 langgraph-checkpoint                     2.0.9
+#9 76.27 langgraph-sdk                            0.1.48
+#9 76.27 langsmith                                0.2.10
+#9 76.27 lark                                     1.2.2
+#9 76.27 markdown-it-py                           3.0.0
+#9 76.27 mdurl                                    0.1.2
+#9 76.27 msgpack                                  1.1.0
+#9 76.27 nltk                                     3.9.1
+#9 76.27 openai                                   1.58.1
+#9 76.27 opentelemetry-api                        1.25.0
+#9 76.27 opentelemetry-exporter-otlp-proto-common 1.25.0
+#9 76.27 opentelemetry-exporter-otlp-proto-http   1.25.0
+#9 76.27 opentelemetry-instrumentation            0.46b0
+#9 76.27 opentelemetry-instrumentation-requests   0.46b0
+#9 76.27 opentelemetry-proto                      1.25.0
+#9 76.27 opentelemetry-sdk                        1.25.0
+#9 76.27 opentelemetry-semantic-conventions       0.46b0
+#9 76.27 opentelemetry-util-http                  0.46b0
+#9 76.27 orjson                                   3.10.13
+#9 76.27 packaging                                24.2
+#9 76.27 peewee                                   3.17.8
+#9 76.27 pillow                                   11.0.0
+#9 76.27 pip                                      24.3.1
+#9 76.27 pipdeptree                               2.24.0
+#9 76.27 pluggy                                   1.5.0
+#9 76.27 protobuf                                 4.25.5
+#9 76.27 pydantic                                 2.10.4
+#9 76.27 pydantic_core                            2.27.2
+#9 76.27 pygame                                   2.6.1
+#9 76.28 Pygments                                 2.19.1
+#9 76.28 pytest                                   8.3.4
+#9 76.28 pytest-xdist                             3.6.1
+#9 76.28 PyYAML                                   6.0.2
+#9 76.28 referencing                              0.35.1
+#9 76.28 regex                                    2024.11.6
+#9 76.28 requests                                 2.32.3
+#9 76.28 requests-toolbelt                        1.0.0
+#9 76.28 rich                                     13.5.3
+#9 76.28 rpds-py                                  0.22.3
+#9 76.28 ruamel.yaml                              0.18.10
+#9 76.28 ruamel.yaml.clib                         0.2.12
+#9 76.28 semgrep                                  1.101.0
+#9 76.28 setuptools                               65.5.1
+#9 76.28 sniffio                                  1.3.1
+#9 76.28 Swarm                                    0.0.2
+#9 76.28 tenacity                                 9.0.0
+#9 76.28 termcolor                                2.5.0
+#9 76.28 tiktoken                                 0.8.0
+#9 76.28 tomli                                    2.0.2
+#9 76.28 tqdm                                     4.67.1
+#9 76.28 typing_extensions                        4.12.2
+#9 76.28 urllib3                                  2.3.0
+#9 76.28 wcmatch                                  8.5.2
+#9 76.28 wheel                                    0.45.1
+#9 76.28 wrapt                                    1.17.0
+#9 76.28 zipp                                     3.21.0
+#9 76.92 Found existing installation: Swarm 0.0.2
+#9 76.92 Uninstalling Swarm-0.0.2:
+#9 76.92   Successfully uninstalled Swarm-0.0.2
+#9 76.92 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 77.59 Looking in indexes: http://simple/
+#9 77.70 Collecting swarm
+#9 77.70   Using cached http://packages/swarm/Swarm-0.0.2-py3-none-any.whl (10 kB)
+#9 77.71 Requirement already satisfied: pygame in /usr/local/lib/python3.10/site-packages (from swarm) (2.6.1)
+#9 77.90 Installing collected packages: swarm
+#9 77.93 Successfully installed swarm-0.0.2
+#9 77.93 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 78.60 Name: Swarm
+#9 78.60 Version: 0.0.2
+#9 78.60 Summary: Swarm is a strategy rouge-like space simulator game written with `pygame/python3`.
+#9 78.60 Home-page: https://github.com/Wykleph/Swarm
+#9 78.60 Author: py-am-i
+#9 78.60 Author-email: duckpuncherirl@gmail.com
+#9 78.60 License: UNKNOWN
+#9 78.60 Location: /usr/local/lib/python3.10/site-packages
+#9 78.60 Requires: pygame
+#9 78.60 Required-by: 
+#9 78.60 Files:
+#9 78.60   Swarm-0.0.2.dist-info/INSTALLER
+#9 78.60   Swarm-0.0.2.dist-info/LICENSE
+#9 78.60   Swarm-0.0.2.dist-info/METADATA
+#9 78.60   Swarm-0.0.2.dist-info/RECORD
+#9 78.60   Swarm-0.0.2.dist-info/REQUESTED
+#9 78.60   Swarm-0.0.2.dist-info/WHEEL
+#9 78.60   Swarm-0.0.2.dist-info/top_level.txt
+#9 78.60   Swarm/__init__.py
+#9 78.61   Swarm/__pycache__/__init__.cpython-310.pyc
+#9 78.61   Swarm/__pycache__/bots.cpython-310.pyc
+#9 78.61   Swarm/__pycache__/game.cpython-310.pyc
+#9 78.61   Swarm/__pycache__/main.cpython-310.pyc
+#9 78.61   Swarm/__pycache__/sim.cpython-310.pyc
+#9 78.61   Swarm/bots.py
+#9 78.61   Swarm/game.py
+#9 78.61   Swarm/main.py
+#9 78.61   Swarm/sim.py
+#9 78.75 * Succeed Patch:
+#9 78.75 Create and write /repo/requirements.txt!
+#9 78.75 
+#9 78.77 No module named 'swarm'
+#9 79.24 Name: Swarm
+#9 79.24 Version: 0.0.2
+#9 79.24 Summary: Swarm is a strategy rouge-like space simulator game written with `pygame/python3`.
+#9 79.24 Home-page: https://github.com/Wykleph/Swarm
+#9 79.24 Author: py-am-i
+#9 79.24 Author-email: duckpuncherirl@gmail.com
+#9 79.24 License: UNKNOWN
+#9 79.24 Location: /usr/local/lib/python3.10/site-packages
+#9 79.24 Requires: pygame
+#9 79.24 Required-by: 
+#9 79.85 Found existing installation: Swarm 0.0.2
+#9 79.86 Uninstalling Swarm-0.0.2:
+#9 79.86   Successfully uninstalled Swarm-0.0.2
+#9 79.86 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 80.62 Looking in indexes: http://simple/
+#9 80.66 Collecting openai-swarm==0.1.1
+#9 80.77   Downloading http://packages/openai-swarm/openai_swarm-0.1.1-py3-none-any.whl (12 kB)
+#9 81.21 Collecting numpy (from openai-swarm==0.1.1)
+#9 81.22   Downloading http://packages/numpy/numpy-2.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.4 MB)
+#9 81.41      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.4/16.4 MB 98.8 MB/s eta 0:00:00
+#9 81.48 Requirement already satisfied: openai>=1.33.0 in /usr/local/lib/python3.10/site-packages (from openai-swarm==0.1.1) (1.58.1)
+#9 81.48 Requirement already satisfied: pytest in /usr/local/lib/python3.10/site-packages (from openai-swarm==0.1.1) (8.3.4)
+#9 81.48 Requirement already satisfied: requests in /usr/local/lib/python3.10/site-packages (from openai-swarm==0.1.1) (2.32.3)
+#9 81.48 Requirement already satisfied: tqdm in /usr/local/lib/python3.10/site-packages (from openai-swarm==0.1.1) (4.67.1)
+#9 81.58 Collecting pre-commit (from openai-swarm==0.1.1)
+#9 81.60   Downloading http://packages/pre-commit/pre_commit-4.0.1-py2.py3-none-any.whl (218 kB)
+#9 81.68 Collecting instructor (from openai-swarm==0.1.1)
+#9 81.78   Downloading http://packages/instructor/instructor-1.7.2-py3-none-any.whl (71 kB)
+#9 81.81 Requirement already satisfied: anyio<5,>=3.5.0 in /usr/local/lib/python3.10/site-packages (from openai>=1.33.0->openai-swarm==0.1.1) (4.8.0)
+#9 81.81 Requirement already satisfied: distro<2,>=1.7.0 in /usr/local/lib/python3.10/site-packages (from openai>=1.33.0->openai-swarm==0.1.1) (1.9.0)
+#9 81.81 Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.10/site-packages (from openai>=1.33.0->openai-swarm==0.1.1) (0.28.1)
+#9 81.81 Requirement already satisfied: jiter<1,>=0.4.0 in /usr/local/lib/python3.10/site-packages (from openai>=1.33.0->openai-swarm==0.1.1) (0.8.2)
+#9 81.81 Requirement already satisfied: pydantic<3,>=1.9.0 in /usr/local/lib/python3.10/site-packages (from openai>=1.33.0->openai-swarm==0.1.1) (2.10.4)
+#9 81.81 Requirement already satisfied: sniffio in /usr/local/lib/python3.10/site-packages (from openai>=1.33.0->openai-swarm==0.1.1) (1.3.1)
+#9 81.81 Requirement already satisfied: typing-extensions<5,>=4.11 in /usr/local/lib/python3.10/site-packages (from openai>=1.33.0->openai-swarm==0.1.1) (4.12.2)
+#9 82.66 Collecting aiohttp<4.0.0,>=3.9.1 (from instructor->openai-swarm==0.1.1)
+#9 82.68   Downloading http://packages/aiohttp/aiohttp-3.11.11-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.6 MB)
+#9 82.72      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 53.4 MB/s eta 0:00:00
+#9 82.76 Collecting docstring-parser<1.0,>=0.16 (from instructor->openai-swarm==0.1.1)
+#9 82.78   Downloading http://packages/docstring-parser/docstring_parser-0.16-py3-none-any.whl (36 kB)
+#9 82.83 Collecting jinja2<4.0.0,>=3.1.4 (from instructor->openai-swarm==0.1.1)
+#9 82.85   Downloading http://packages/jinja2/jinja2-3.1.5-py3-none-any.whl (134 kB)
+#9 82.87 Requirement already satisfied: pydantic-core<3.0.0,>=2.18.0 in /usr/local/lib/python3.10/site-packages (from instructor->openai-swarm==0.1.1) (2.27.2)
+#9 83.07 Collecting rich<14.0.0,>=13.7.0 (from instructor->openai-swarm==0.1.1)
+#9 83.11   Downloading http://packages/rich/rich-13.9.4-py3-none-any.whl (242 kB)
+#9 83.13 Requirement already satisfied: tenacity<10.0.0,>=9.0.0 in /usr/local/lib/python3.10/site-packages (from instructor->openai-swarm==0.1.1) (9.0.0)
+#9 83.18 Collecting typer<1.0.0,>=0.9.0 (from instructor->openai-swarm==0.1.1)
+#9 83.20   Downloading http://packages/typer/typer-0.15.1-py3-none-any.whl (44 kB)
+#9 83.22 Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/site-packages (from requests->openai-swarm==0.1.1) (3.4.1)
+#9 83.22 Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/site-packages (from requests->openai-swarm==0.1.1) (3.10)
+#9 83.22 Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/site-packages (from requests->openai-swarm==0.1.1) (2.3.0)
+#9 83.22 Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/site-packages (from requests->openai-swarm==0.1.1) (2024.12.14)
+#9 83.26 Collecting cfgv>=2.0.0 (from pre-commit->openai-swarm==0.1.1)
+#9 83.28   Downloading http://packages/cfgv/cfgv-3.4.0-py2.py3-none-any.whl (7.2 kB)
+#9 83.42 Collecting identify>=1.0.0 (from pre-commit->openai-swarm==0.1.1)
+#9 83.45   Downloading http://packages/identify/identify-2.6.5-py2.py3-none-any.whl (99 kB)
+#9 83.50 Collecting nodeenv>=0.11.1 (from pre-commit->openai-swarm==0.1.1)
+#9 83.52   Downloading http://packages/nodeenv/nodeenv-1.9.1-py2.py3-none-any.whl (22 kB)
+#9 83.53 Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.10/site-packages (from pre-commit->openai-swarm==0.1.1) (6.0.2)
+#9 83.71 Collecting virtualenv>=20.10.0 (from pre-commit->openai-swarm==0.1.1)
+#9 83.71   Using cached http://packages/virtualenv/virtualenv-20.28.1-py3-none-any.whl (4.3 MB)
+#9 83.75 Requirement already satisfied: exceptiongroup>=1.0.0rc8 in /usr/local/lib/python3.10/site-packages (from pytest->openai-swarm==0.1.1) (1.2.2)
+#9 83.75 Requirement already satisfied: iniconfig in /usr/local/lib/python3.10/site-packages (from pytest->openai-swarm==0.1.1) (2.0.0)
+#9 83.75 Requirement already satisfied: packaging in /usr/local/lib/python3.10/site-packages (from pytest->openai-swarm==0.1.1) (24.2)
+#9 83.75 Requirement already satisfied: pluggy<2,>=1.5 in /usr/local/lib/python3.10/site-packages (from pytest->openai-swarm==0.1.1) (1.5.0)
+#9 83.75 Requirement already satisfied: tomli>=1 in /usr/local/lib/python3.10/site-packages (from pytest->openai-swarm==0.1.1) (2.0.2)
+#9 83.80 Collecting aiohappyeyeballs>=2.3.0 (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1)
+#9 83.82   Downloading http://packages/aiohappyeyeballs/aiohappyeyeballs-2.4.4-py3-none-any.whl (14 kB)
+#9 83.85 Collecting aiosignal>=1.1.2 (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1)
+#9 83.88   Downloading http://packages/aiosignal/aiosignal-1.3.2-py2.py3-none-any.whl (7.6 kB)
+#9 83.92 Collecting async-timeout<6.0,>=4.0 (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1)
+#9 83.94   Downloading http://packages/async-timeout/async_timeout-5.0.1-py3-none-any.whl (6.2 kB)
+#9 83.95 Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.10/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1) (24.3.0)
+#9 84.07 Collecting frozenlist>=1.1.1 (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1)
+#9 84.09   Downloading http://packages/frozenlist/frozenlist-1.5.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+#9 84.47 Collecting multidict<7.0,>=4.5 (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1)
+#9 84.49   Downloading http://packages/multidict/multidict-6.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (124 kB)
+#9 84.58 Collecting propcache>=0.2.0 (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1)
+#9 84.60   Downloading http://packages/propcache/propcache-0.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (205 kB)
+#9 85.20 Collecting yarl<2.0,>=1.17.0 (from aiohttp<4.0.0,>=3.9.1->instructor->openai-swarm==0.1.1)
+#9 85.22   Downloading http://packages/yarl/yarl-1.18.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (319 kB)
+#9 85.40 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->openai>=1.33.0->openai-swarm==0.1.1) (1.0.7)
+#9 85.41 Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx<1,>=0.23.0->openai>=1.33.0->openai-swarm==0.1.1) (0.14.0)
+#9 85.54 Collecting MarkupSafe>=2.0 (from jinja2<4.0.0,>=3.1.4->instructor->openai-swarm==0.1.1)
+#9 85.56   Downloading http://packages/markupsafe/MarkupSafe-3.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20 kB)
+#9 85.59 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic<3,>=1.9.0->openai>=1.33.0->openai-swarm==0.1.1) (0.7.0)
+#9 85.61 Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.10/site-packages (from rich<14.0.0,>=13.7.0->instructor->openai-swarm==0.1.1) (3.0.0)
+#9 85.61 Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.10/site-packages (from rich<14.0.0,>=13.7.0->instructor->openai-swarm==0.1.1) (2.19.1)
+#9 85.62 Requirement already satisfied: click>=8.0.0 in /usr/local/lib/python3.10/site-packages (from typer<1.0.0,>=0.9.0->instructor->openai-swarm==0.1.1) (8.1.8)
+#9 85.67 Collecting shellingham>=1.3.0 (from typer<1.0.0,>=0.9.0->instructor->openai-swarm==0.1.1)
+#9 85.68   Using cached http://packages/shellingham/shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+#9 85.75 Collecting distlib<1,>=0.3.7 (from virtualenv>=20.10.0->pre-commit->openai-swarm==0.1.1)
+#9 85.75   Using cached http://packages/distlib/distlib-0.3.9-py2.py3-none-any.whl (468 kB)
+#9 85.81 Collecting filelock<4,>=3.12.2 (from virtualenv>=20.10.0->pre-commit->openai-swarm==0.1.1)
+#9 85.81   Using cached http://packages/filelock/filelock-3.16.1-py3-none-any.whl (16 kB)
+#9 85.87 Collecting platformdirs<5,>=3.9.1 (from virtualenv>=20.10.0->pre-commit->openai-swarm==0.1.1)
+#9 85.87   Using cached http://packages/platformdirs/platformdirs-4.3.6-py3-none-any.whl (18 kB)
+#9 85.93 Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.10/site-packages (from markdown-it-py>=2.2.0->rich<14.0.0,>=13.7.0->instructor->openai-swarm==0.1.1) (0.1.2)
+#9 86.18 Installing collected packages: distlib, shellingham, propcache, platformdirs, numpy, nodeenv, multidict, MarkupSafe, identify, frozenlist, filelock, docstring-parser, cfgv, async-timeout, aiohappyeyeballs, yarl, virtualenv, rich, jinja2, aiosignal, typer, pre-commit, aiohttp, instructor, openai-swarm
+#9 89.51   Attempting uninstall: rich
+#9 89.51     Found existing installation: rich 13.5.3
+#9 89.52     Uninstalling rich-13.5.3:
+#9 89.52       Successfully uninstalled rich-13.5.3
+#9 90.39 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+#9 90.39 semgrep 1.101.0 requires rich~=13.5.2, but you have rich 13.9.4 which is incompatible.
+#9 90.40 Successfully installed MarkupSafe-3.0.2 aiohappyeyeballs-2.4.4 aiohttp-3.11.11 aiosignal-1.3.2 async-timeout-5.0.1 cfgv-3.4.0 distlib-0.3.9 docstring-parser-0.16 filelock-3.16.1 frozenlist-1.5.0 identify-2.6.5 instructor-1.7.2 jinja2-3.1.5 multidict-6.1.0 nodeenv-1.9.1 numpy-2.2.1 openai-swarm-0.1.1 platformdirs-4.3.6 pre-commit-4.0.1 propcache-0.2.1 rich-13.9.4 shellingham-1.5.4 typer-0.15.1 virtualenv-20.28.1 yarl-1.18.3
+#9 90.40 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 DONE 91.5s
+
+#10 [6/7] RUN cd /repo && pytest --collect-only -q
+#10 5.167 analyzer/tests/test_constants.py::TestConstants::test_ref
+#10 5.167 analyzer/tests/test_constants.py::TestConstants::test_simple
+#10 5.167 analyzer/tests/test_derived_variables.py::TestDerivedVariables::test_exclude_submodels
+#10 5.167 analyzer/tests/test_derived_variables.py::TestDerivedVariables::test_multiple
+#10 5.167 analyzer/tests/test_derived_variables.py::TestDerivedVariables::test_predicate_derived
+#10 5.167 analyzer/tests/test_derived_variables.py::TestDerivedVariables::test_subselect
+#10 5.167 analyzer/tests/test_derived_variables.py::TestDerivedVariables::test_twolevel_subselect
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_assistant_to_tool
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_inverted
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_moderated_to_tool
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_multipath
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_separate_path
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_simple
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_stateful_vs_stateless
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_user_message_to_answer
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_user_message_to_tool
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_user_message_to_tool_wo_abc
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_with_intermediate_step
+#10 5.167 analyzer/tests/test_flow.py::TestFlow::test_with_intermediate_step_nonmatching_tool
+#10 5.167 analyzer/tests/test_html_parsing.py::TestHTMLParsing::test_broken_html
+#10 5.167 analyzer/tests/test_html_parsing.py::TestHTMLParsing::test_broken_html_with_injection
+#10 5.167 analyzer/tests/test_html_parsing.py::TestHTMLParsing::test_html_parsing
+#10 5.167 analyzer/tests/test_html_parsing.py::TestHTMLParsing::test_links
+#10 5.167 analyzer/tests/test_html_parsing.py::TestHTMLParsing::test_links_from_text
+#10 5.167 analyzer/tests/test_monitor.py::TestMonitor::test_analyze_pending
+#10 5.167 analyzer/tests/test_monitor.py::TestMonitor::test_append_action
+#10 5.167 analyzer/tests/test_monitor.py::TestMonitor::test_objects
+#10 5.167 analyzer/tests/test_monitor.py::TestMonitor::test_simple
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_assign_in
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_float_value
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_function
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_import
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_import_from
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_in_with_member
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_in_with_member_three_components
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_ml_strings
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_modified_strings
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_multi_binary
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_negated_with_args
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_negated_without_args
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_quantifier_with_args
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_quantifier_without_args
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_raise
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_raise2
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_raise_str
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_rule
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_string_ops
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_strings
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_three_messages
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_tool_reference
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_unary_func_call_precedence
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_variable
+#10 5.167 analyzer/tests/test_parser.py::TestParser::test_with_member_access_call_in_addition
+#10 5.167 analyzer/tests/test_parser_errors.py::TestParser::test_error_localization_declaration
+#10 5.167 analyzer/tests/test_parser_errors.py::TestParser::test_error_localization_in_expr
+#10 5.167 analyzer/tests/test_parser_errors.py::TestParser::test_error_localization_indented
+#10 5.167 analyzer/tests/test_parser_errors.py::TestParser::test_failed_import
+#10 5.167 analyzer/tests/test_parser_errors.py::TestParser::test_localization_single_indent
+#10 5.167 analyzer/tests/test_parser_errors.py::TestParser::test_policy_load_fails
+#10 5.167 analyzer/tests/test_parser_semantic_patterns.py::TestParser::test_semantic_patterns
+#10 5.167 analyzer/tests/test_parser_semantic_patterns.py::TestParser::test_value_references
+#10 5.167 analyzer/tests/test_parser_semantic_patterns.py::TestParser::test_value_references_disallowed
+#10 5.167 analyzer/tests/test_parser_semantic_patterns.py::TestParser::test_wildcards_disallowed
+#10 5.167 analyzer/tests/test_policy_parameters.py::TestPolicyParameters::test_monitor_parameters
+#10 5.167 analyzer/tests/test_policy_parameters.py::TestPolicyParameters::test_parameter_missing
+#10 5.167 analyzer/tests/test_policy_parameters.py::TestPolicyParameters::test_simple
+#10 5.167 analyzer/tests/test_predicates.py::TestConstants::test_call_two_level
+#10 5.167 analyzer/tests/test_predicates.py::TestConstants::test_predicate_and_constant
+#10 5.167 analyzer/tests/test_predicates.py::TestConstants::test_simple
+#10 5.167 analyzer/tests/test_predicates.py::TestConstants::test_string_contain
+#10 5.167 analyzer/tests/test_predicates.py::TestConstants::test_two_level
+#10 5.167 analyzer/tests/test_predicates.py::TestConstants::test_variables_and_predicates
+#10 5.167 analyzer/tests/test_predicates.py::TestConstants::test_variables_and_predicates_disjunction
+#10 5.167 analyzer/tests/test_quantifiers.py::TestQuantifiers::test_negated_quantifier_without_args_notrigger
+#10 5.167 analyzer/tests/test_quantifiers.py::TestQuantifiers::test_quantifier_closure
+#10 5.167 analyzer/tests/test_quantifiers.py::TestQuantifiers::test_quantifier_closure_neg
+#10 5.167 analyzer/tests/test_quantifiers.py::TestQuantifiers::test_quantifier_with_args
+#10 5.167 analyzer/tests/test_quantifiers.py::TestQuantifiers::test_quantifier_with_args_notrigger
+#10 5.167 analyzer/tests/test_quantifiers.py::TestQuantifiers::test_quantifier_without_args
+#10 5.167 analyzer/tests/test_quantifiers.py::TestQuantifiers::test_quantifier_without_args_notrigger
+#10 5.167 analyzer/tests/test_ranges.py::TestBasicRanges::test_masking
+#10 5.167 analyzer/tests/test_ranges.py::TestBasicRanges::test_match
+#10 5.167 analyzer/tests/test_ranges.py::TestBasicRanges::test_pii
+#10 5.167 analyzer/tests/test_ranges.py::TestBasicRanges::test_simple
+#10 5.167 analyzer/tests/test_ranges.py::TestBasicRanges::test_tool_call_name
+#10 5.167 analyzer/tests/test_readme_examples.py::TestReadmeExamples::test_code_check
+#10 5.167 analyzer/tests/test_readme_examples.py::TestReadmeExamples::test_custom_checker
+#10 5.167 analyzer/tests/test_readme_examples.py::TestReadmeExamples::test_getting_started
+#10 5.167 analyzer/tests/test_readme_examples.py::TestReadmeExamples::test_productivity
+#10 5.167 analyzer/tests/test_readme_examples.py::TestReadmeExamples::test_rag
+#10 5.167 analyzer/tests/test_semantic_patterns.py::TestConstants::test_nested_args
+#10 5.167 analyzer/tests/test_semantic_patterns.py::TestConstants::test_regex
+#10 5.167 analyzer/tests/test_semantic_patterns.py::TestConstants::test_simple
+#10 5.167 analyzer/tests/test_semantic_patterns.py::TestConstants::test_value_type
+#10 5.167 analyzer/tests/test_semantic_patterns.py::TestConstants::test_wildcard
+#10 5.167 analyzer/tests/test_stdlib_functions.py::TestStdlibFunctions::test_simple
+#10 5.167 analyzer/tests/test_stdlib_functions.py::TestFiles::test_sensitive_contents
+#10 5.167 analyzer/tests/test_stdlib_functions.py::TestFiles::test_sensitive_types
+#10 5.167 analyzer/tests/test_utils.py::TestPII::test_any_pii
+#10 5.167 analyzer/tests/test_utils.py::TestPII::test_specific_pii
+#10 5.167 analyzer/tests/test_utils.py::TestModerated::test_moderated
+#10 5.167 analyzer/tests/test_utils.py::TestPromptInjection::test_prompt_injection
+#10 5.167 analyzer/tests/test_utils.py::TestUnicodeDetector::test_detect_allow
+#10 5.167 analyzer/tests/test_utils.py::TestUnicodeDetector::test_detect_deny
+#10 5.167 analyzer/tests/test_utils.py::TestSecrets::test_detect_valid_secrets
+#10 5.167 analyzer/tests/test_utils.py::TestPythonDetector::test_builtins
+#10 5.167 analyzer/tests/test_utils.py::TestPythonDetector::test_imports
+#10 5.167 analyzer/tests/test_utils.py::TestPythonDetector::test_syntax_error
+#10 5.167 analyzer/tests/test_utils.py::TestSemgrep::test_bash
+#10 5.167 analyzer/tests/test_utils.py::TestSemgrep::test_python
+#10 5.167 analyzer/tests/test_utils.py::TestCopyrightDetector::test_general_copyright
+#10 5.167 analyzer/tests/test_utils.py::TestCopyrightDetector::test_software_license
+#10 5.167 testing/sample_tests/langgraph/weather_agent/test_weather_agent.py::test_weather_agent_with_only_sf
+#10 5.167 testing/sample_tests/langgraph/weather_agent/test_weather_agent.py::test_weather_agent_with_sf_and_nyc
+#10 5.167 testing/sample_tests/openai/test_python_agent.py::test_python_question
+#10 5.167 testing/sample_tests/openai/test_python_agent.py::test_python_question_invalid
+#10 5.167 testing/sample_tests/openai/test_python_agent.py::test_java_question
+#10 5.167 testing/sample_tests/swarm/capital_finder_agent/test_capital_finder_agent.py::test_capital_finder_agent_when_capital_found
+#10 5.167 testing/sample_tests/swarm/capital_finder_agent/test_capital_finder_agent.py::test_capital_finder_agent_when_capital_not_found
+#10 5.167 testing/sample_tests/test_agent.py::test_another_agent_response
+#10 5.167 testing/sample_tests/test_agent.py::test_big_trace
+#10 5.167 testing/sample_tests/test_agent.py::test_trace_rules
+#10 5.167 testing/sample_tests/test_agent.py::test_custom_trace
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_request[Alice-True]
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_request[Alice-False]
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_request[Bob-False]
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_request[Bob-True]
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_env[Jacob-True]
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_env[Jacob-False]
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_env[Alfred-False]
+#10 5.167 testing/sample_tests/test_agent.py::test_get_test_name_and_parameters_from_env[Alfred-True]
+#10 5.167 testing/sample_tests/test_agent.py::test_something
+#10 5.167 testing/tests/cache/test_cache_manager.py::test_cache_manager_set_and_get
+#10 5.167 testing/tests/cache/test_cache_manager.py::test_cache_manager_get_default
+#10 5.167 testing/tests/cache/test_cache_manager.py::test_cache_manager_generate_cache_key
+#10 5.167 testing/tests/cache/test_cache_manager.py::test_cache_manager_generate_cache_key_with_non_serializable_data
+#10 5.167 testing/tests/cache/test_cache_manager.py::test_cache_manager_expiry
+#10 5.167 testing/tests/cache/test_cache_manager.py::test_cache_manager_expiry_with_small_ttl
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool10-bool20-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool11-bool21-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool12-bool22-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool13-bool23-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool14-True-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[True-bool25-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[False-bool26-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool17-False-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[True-bool28-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool19-True-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[bool110-False-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_equality[False-bool211-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool10-bool20-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool11-bool21-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool12-bool22-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool13-bool23-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool14-True-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[True-bool25-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[False-bool26-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool17-False-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[True-bool28-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool19-True-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[bool110-False-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_inequality[False-bool211-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool10-bool20-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool11-bool21-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool12-bool22-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool13-bool23-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool14-True-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[True-bool25-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[False-bool26-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool17-False-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[True-bool28-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool19-True-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[bool110-False-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_and[False-bool211-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool10-bool20-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool11-bool21-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool12-bool22-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool13-bool23-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool14-True-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[True-bool25-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[False-bool26-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool17-False-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[True-bool28-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool19-True-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[bool110-False-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_or[False-bool211-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_not[bool10-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_not[bool11-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_identity_and[bool10-expected0]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_identity_and[bool11-expected1]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_identity_or[bool10-expected0]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_identity_or[bool11-expected1]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_idempotent[bool10]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_idempotent[bool11]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_commutative[bool10-bool20]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_commutative[bool11-bool21]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_commutative[bool12-bool22]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_commutative[bool13-bool23]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_with_addresses
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_truthiness[invariant_bool0-True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_truthiness[invariant_bool1-False]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_str
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_invalid_value[1]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_invalid_value[True]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_invalid_value[None]
+#10 5.167 testing/tests/custom_types/test_invariant_bool.py::test_invariant_bool_invalid_value[invalid_value3]
+#10 5.167 testing/tests/custom_types/test_invariant_dict.py::test_invariant_dict_initialization
+#10 5.167 testing/tests/custom_types/test_invariant_dict.py::test_invariant_dict_str
+#10 5.167 testing/tests/custom_types/test_invariant_dict.py::test_invariant_dict_get
+#10 5.167 testing/tests/custom_types/test_invariant_dict.py::test_invariant_dict_matches
+#10 5.167 testing/tests/custom_types/test_invariant_image.py::test_vision_classifier[gpt-4o-OpenAI]
+#10 5.167 testing/tests/custom_types/test_invariant_image.py::test_vision_classifier[claude-3-5-sonnet-20241022-Anthropic]
+#10 5.167 testing/tests/custom_types/test_invariant_image.py::test_ocr_detector
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_initialization
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5-right0-==-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left1-5-==-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left2-right2-==-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5-right3-==-False]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5.0-right4-==-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left5-3.14-==-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left6-right6-==-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5-right7-!=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left8-3.0-!=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left9-right9-!=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[3.14-right10-!=-False]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5-right11->-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left12-3.0->-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left13-right13->-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[3-right14->-False]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[3-right15-<-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left16-5.0-<-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left17-right17-<-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5.5-right18-<-False]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5-right19->=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left20-5.0->=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left21-right21->=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[3-right22->=-False]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[3-right23-<=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left24-5.0-<=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[left25-right25-<=-True]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_comparisons[5.5-right26-<=-False]
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_invariant_number_str_and_repr
+#10 5.167 testing/tests/custom_types/test_invariant_number.py::test_mod_operator
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_initialization
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_equality[value10-Hello-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_equality[value11-World-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_equality[value12-value22-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_equality[value13-value23-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_inequality[value10-Hello-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_inequality[value11-World-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_inequality[value12-value22-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_inequality[value13-value23-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains[value0-World-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains[value1-world-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains[value2-Hell-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains[value3-o-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains[value4-Goodbye-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_all[value0-substrings0-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_all[value1-substrings1-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_all[value2-substrings2-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_all[value3-substrings3-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_any[value0-substrings0-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_any[value1-substrings1-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_any[value2-substrings2-True]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_contains_any[value3-substrings3-False]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_concatenation[value10-World-HelloWorld-expected_addresses0]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_concatenation[value11-value21-HelloWorld-expected_addresses1]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_concatenation[World-value22-WorldHello-expected_addresses2]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_len_not_implemented
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_get_item
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_count
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_invariant_string_str_and_repr
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_contains
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_contains_ignores_case_by_default
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_match
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_levenshtein
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_is_valid_code
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_is_similar
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_moderation
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_llm[gpt-4o-OpenAI]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_llm[claude-3-5-sonnet-20241022-Anthropic]
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_extract
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_execute_without_detect_packages
+#10 5.167 testing/tests/custom_types/test_invariant_string.py::test_execute_with_detect_packages
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_initialization
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_of
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_equals
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_str
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_repr
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_bool
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_float
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_eq
+#10 5.168 testing/tests/custom_types/test_invariant_value.py::test_invariant_value_matches
+#10 5.168 testing/tests/custom_types/test_trace.py::test_push_to_explorer
+#10 5.168 testing/tests/test_assertion_args.py::test_wrong_order
+#10 5.168 testing/tests/test_assertion_args.py::test_right_order
+#10 5.168 testing/tests/test_assertion_args.py::test_expect_wrong_order
+#10 5.168 testing/tests/test_assertion_args.py::test_expect_right_order
+#10 5.168 testing/tests/test_code.py::test_is_valid_json
+#10 5.168 testing/tests/test_code.py::test_is_valid_python
+#10 5.168 testing/tests/test_contains.py::test_in
+#10 5.168 testing/tests/test_contains.py::test_in_word_level
+#10 5.168 testing/tests/test_display.py::test_assertion_points_to_substring
+#10 5.168 testing/tests/test_display.py::test_assertion_points_to_message_content_string
+#10 5.168 testing/tests/test_display.py::test_assertion_points_to_message_content_dict
+#10 5.168 testing/tests/test_display.py::test_assertion_points_to_message_tool_call
+#10 5.168 testing/tests/test_display.py::test_assertion_points_to_tool_call
+#10 5.168 testing/tests/test_error_propagation.py::test_trace_complex_agent
+#10 5.168 testing/tests/test_factuality.py::test_is_factually_equal
+#10 5.168 testing/tests/test_lists.py::test_list_index_access
+#10 5.168 testing/tests/test_lists.py::test_list_length
+#10 5.168 testing/tests/test_lists.py::test_list_iteration
+#10 5.168 testing/tests/test_lists.py::test_map_applies_function
+#10 5.168 testing/tests/test_lists.py::test_map_maintains_addresses
+#10 5.168 testing/tests/test_lists.py::test_reduce
+#10 5.168 testing/tests/test_lists.py::test_reduce_raw
+#10 5.168 testing/tests/test_lists.py::test_min_helper
+#10 5.168 testing/tests/test_lists.py::test_max_helper
+#10 5.168 testing/tests/test_lists.py::test_sum_helper
+#10 5.168 testing/tests/test_lists.py::test_count_helper_with_value
+#10 5.168 testing/tests/test_lists.py::test_count_helper_with_lambda
+#10 5.168 testing/tests/test_lists.py::test_any_helper
+#10 5.168 testing/tests/test_lists.py::test_all_helper
+#10 5.168 testing/tests/test_lists.py::test_invariant_filter
+#10 5.168 testing/tests/test_lists.py::test_invariant_find
+#10 5.168 testing/tests/test_lists.py::test_invariant_min
+#10 5.168 testing/tests/test_lists.py::test_invariant_max
+#10 5.168 testing/tests/test_lists.py::test_match
+#10 5.168 testing/tests/test_lists.py::test_len_helper_returns_correct_length
+#10 5.168 testing/tests/test_lists.py::test_len_helper_maintains_addresses
+#10 5.168 testing/tests/test_lists.py::test_len_helper_returns_invariant_number
+#10 5.168 testing/tests/test_lists.py::test_len_helper_works_without_addresses
+#10 5.168 testing/tests/test_lists.py::test_check_window_with_builtin_value
+#10 5.168 testing/tests/test_lists.py::test_check_window_with_invariant_value
+#10 5.168 testing/tests/test_lists.py::test_check_window_with_lambda
+#10 5.168 testing/tests/test_lists.py::test_check_window_returns_false
+#10 5.168 testing/tests/test_lists.py::test_check_window_returns_last_match_address[checks0-address0]
+#10 5.168 testing/tests/test_lists.py::test_check_window_returns_last_match_address[checks1-address1]
+#10 5.168 testing/tests/test_lists.py::test_check_window_returns_first_address_if_no_matches_found
+#10 5.168 testing/tests/test_lists.py::test_check_window_works_over_trace_with_filtering
+#10 5.168 testing/tests/test_lists.py::test_check_order_returns_expected
+#10 5.168 testing/tests/test_lists.py::test_check_order_returns_false
+#10 5.168 testing/tests/test_lists.py::test_check_order_returns_last_match_address
+#10 5.168 testing/tests/test_lists.py::test_check_order_returns_first_address_if_no_matches_found
+#10 5.168 testing/tests/test_lists.py::test_check_order_works_with_callable
+#10 5.168 testing/tests/test_lists.py::test_check_returns_first_match_address
+#10 5.168 testing/tests/test_lists.py::test_check_handles_duplicate_values
+#10 5.168 testing/tests/test_lists.py::test_check_order_handles_empty_checks
+#10 5.168 testing/tests/test_lists.py::test_check_order_handles_check_longer_than_trace
+#10 5.168 testing/tests/test_lists.py::test_check_order_handles_iterable
+#10 5.168 testing/tests/test_lists.py::test_check_window_handles_iterable
+#10 5.168 testing/tests/test_lists.py::test_check_window_handles_empty_values
+#10 5.168 testing/tests/test_moderation.py::test_moderation
+#10 5.168 testing/tests/test_modes.py::test_pytest_no_context
+#10 5.168 testing/tests/test_modes.py::test_pytest_no_context_regular_assertions
+#10 5.168 testing/tests/test_modes.py::test_pytest_with_context
+#10 5.168 testing/tests/test_modes.py::test_pytest_with_context_regular_assertions
+#10 5.168 testing/tests/test_modes.py::test_invariant_no_context
+#10 5.168 testing/tests/test_modes.py::test_invariant_no_context_regular_assertions
+#10 5.168 testing/tests/test_modes.py::test_invariant_with_context
+#10 5.168 testing/tests/test_modes.py::test_invariant_with_context_regular_assertions
+#10 5.168 testing/tests/test_runner.py::test_create_config_with_push_and_api_key_env_var
+#10 5.168 testing/tests/test_runner.py::test_create_config_with_timestamp_dataset_name
+#10 5.168 testing/tests/test_runner.py::test_create_config_with_no_api_key_and_push_true_fails
+#10 5.168 testing/tests/test_runner.py::test_main_execution_with_pytest_args
+#10 5.168 testing/tests/test_runner.py::test_main_via_command
+#10 5.168 testing/tests/test_selectors.py::test_messages_list_select
+#10 5.168 testing/tests/test_selectors.py::tests_messages_index_select
+#10 5.168 testing/tests/test_selectors.py::test_messages_filter
+#10 5.168 testing/tests/test_selectors.py::test_messages_filter_callable
+#10 5.168 testing/tests/test_selectors.py::test_messages_filter_callable_user
+#10 5.168 testing/tests/test_selectors.py::test_messages_filter_callable_user_with_string_upper
+#10 5.168 testing/tests/test_selectors.py::test_messages_filter_callable_user_with_string_lower
+#10 5.168 testing/tests/test_selectors.py::test_messages_filter_callable_multiple
+#10 5.168 testing/tests/test_selectors.py::test_messages_filter_callable_multiple_2
+#10 5.168 testing/tests/test_selectors.py::test_tool_calls
+#10 5.168 testing/tests/test_selectors.py::test_tool_calls_filter
+#10 5.168 testing/tests/test_selectors.py::test_tool_calls_filter_callable
+#10 5.168 testing/tests/test_selectors.py::test_tool_calls_filter_name
+#10 5.168 testing/tests/test_selectors.py::test_tool_calls_filter_name_callable
+#10 5.168 testing/tests/test_selectors.py::test_tool_calls_filter_name_callable_2
+#10 5.168 testing/tests/test_selectors.py::test_filter_on_image_returns_correct_number
+#10 5.168 testing/tests/test_selectors.py::test_filter_on_image_returns_correct_image
+#10 5.168 testing/tests/test_selectors.py::test_filter_on_images_works_with_kw_selector[tool_1]
+#10 5.168 testing/tests/test_selectors.py::test_filter_on_images_works_with_kw_selector[tool_2]
+#10 5.168 testing/tests/test_selectors.py::test_filter_on_images_works_with_dict_selector[tool_1]
+#10 5.168 testing/tests/test_selectors.py::test_filter_on_images_works_with_dict_selector[tool_2]
+#10 5.168 testing/tests/test_selectors.py::test_trace_with_nones
+#10 5.168 testing/tests/test_selectors.py::test_dict_selector_with_and_without_function_dot
+#10 5.168 testing/tests/test_selectors.py::test_dict_selector_finds_top_field_for_tool_calls
+#10 5.168 testing/tests/test_selectors.py::test_tool_pairs
+#10 5.168 testing/tests/test_similar.py::test_is_similar_levenshtein
+#10 5.168 testing/tests/test_similar.py::test_is_similar_levenshtein_1
+#10 5.168 testing/tests/test_similar.py::test_is_similar_levenshtein_2
+#10 5.168 testing/tests/test_similar.py::test_is_similar_levenshtein_3
+#10 5.168 testing/tests/test_similar.py::test_is_similar_levenshtein_4
+#10 5.168 testing/tests/test_similar.py::test_is_similar_levenshtein_5
+#10 5.168 testing/tests/test_similar.py::test_is_similar_levenshtein_6
+#10 5.168 testing/tests/test_similar.py::test_is_similar_embedding_passing
+#10 5.168 testing/tests/test_similar.py::test_is_similar_embedding_1
+#10 5.168 testing/tests/test_similar.py::test_is_similar_embedding_2
+#10 5.168 testing/tests/test_strings.py::test_levenshtein
+#10 5.168 testing/tests/test_strings.py::test_embedding_similarity
+#10 5.168 testing/tests/test_strings.py::test_contains
+#10 5.168 testing/tests/test_strings.py::test_classifier[gpt-4o-OpenAI]
+#10 5.168 testing/tests/test_strings.py::test_classifier[claude-3-5-sonnet-20241022-Anthropic]
+#10 5.168 testing/tests/test_strings.py::test_detector[gpt-4o-OpenAI]
+#10 5.168 testing/tests/test_strings.py::test_detector[claude-3-5-sonnet-20241022-Anthropic]
+#10 5.168 testing/tests/test_strings.py::test_vision_classifier[gpt-4o-OpenAI]
+#10 5.171 testing/tests/test_strings.py::test_vision_classifier[claude-3-5-sonnet-20241022-Anthropic]
+#10 5.171 testing/tests/test_strings.py::test_OCRDetector
+#10 5.171 testing/tests/test_test_naming.py::test_my_test
+#10 5.171 testing/tests/test_test_naming.py::test_param[hello]
+#10 5.171 testing/tests/test_test_naming.py::test_param_with_spaces[hello there]
+#10 5.171 testing/tests/test_test_naming.py::test_param_with_colons[hello :: there]
+#10 5.171 testing/tests/test_tool_calls.py::test_argument
+#10 5.171 testing/tests/test_trace.py::test_trace_iterable
+#10 5.171 testing/tests/test_trace.py::test_trace_iterable_maintains_order
+#10 5.171 testing/tests/test_trace.py::test_trace_messages_with_index
+#10 5.171 testing/tests/test_trace.py::test_traverse_dot_path_found_match
+#10 5.171 testing/tests/test_trace.py::test_traverse_dot_path_no_found_match_with_function_prefix
+#10 5.171 testing/tests/test_trace.py::test_traverse_dot_path_found_match_with_function_prefix
+#10 5.171 testing/tests/test_trace.py::test_traverse_dot_path_testing_none
+#10 5.171 
+#10 5.171 =============================== warnings summary ===============================
+#10 5.171 analyzer/invariant/custom_types/test_result.py:9
+#10 5.171   /repo/analyzer/invariant/custom_types/test_result.py:9: PytestCollectionWarning: cannot collect test class 'TestResult' because it has a __init__ constructor (from: analyzer/invariant/custom_types/test_result.py)
+#10 5.171     class TestResult(BaseModel):
+#10 5.171 
+#10 5.171 analyzer/invariant/custom_types/test_result.py:9
+#10 5.171   /repo/analyzer/invariant/custom_types/test_result.py:9: PytestCollectionWarning: cannot collect test class 'TestResult' because it has a __init__ constructor (from: testing/invariant/custom_types/test_result.py)
+#10 5.171     class TestResult(BaseModel):
+#10 5.171 
+#10 5.171 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#10 5.171 423 tests collected in 4.12s
+#10 DONE 5.9s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 3.5s done
+#11 writing image sha256:4bfeed3f218bdd25873ad4c7c5f2af3dcf72ccb35aef0085105497b980164fb4 done
+#11 naming to docker.io/library/tmp:tmp done
+#11 DONE 3.5s

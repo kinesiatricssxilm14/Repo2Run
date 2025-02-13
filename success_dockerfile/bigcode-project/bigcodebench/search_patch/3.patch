@@ -1,0 +1,48 @@
+
+/repo/bigcodebench/legacy_sanitize.py
+<<<<<<< SEARCH
+=======
+def has_return_statement(node: Node) -> bool:
+    traverse_nodes = traverse_tree(node)
+    for node in traverse_nodes:
+        if node.type == RETURN_TYPE:
+            return True
+    return False
+
+def extract_target_code_or_empty(code: str, entrypoint: Optional[str] = None) -> str:
+    code = code_extract(code.strip())
+    code_bytes = bytes(code, "utf8")
+    parser = Parser(Language(tree_sitter_python.language()))
+    tree = parser.parse(code_bytes)
+    class_names = set()
+    function_names = set()
+    variable_names = set()
+    root_node = tree.root_node
+    import_nodes = []
+    definition_nodes = []
+    for child in root_node.children:
+        if child.type in IMPORT_TYPE:
+            import_nodes.append(child)
+        elif child.type == CLASS_TYPE:
+            name = get_definition_name(child)
+            if not (
+                name in class_names or name in variable_names or name in function_names
+            ):
+                definition_nodes.append((name, child))
+                class_names.add(name)
+        elif child.type == FUNCTION_TYPE:
+            name = get_definition_name(child)
+            if not (
+                name in function_names or name in variable_names or name in class_names
+            ):
+                definition_nodes.append((name, child))
+                function_names.add(get_definition_name(child))
+        elif (
+            child.type == EXPRESSION_TYPE and child.children[0].type == ASSIGNMENT_TYPE
+        ):
+            subchild = child.children[0]
+            name = get_definition_name(subchild)
+            if not (
+                name in variable_names or name in function_names or name in class_names
+>>>>>>> REPLACE
+

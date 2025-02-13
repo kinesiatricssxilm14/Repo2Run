@@ -1,0 +1,2782 @@
+Nike-Inc/koheesio
+9bd29ec553cc6306520926a89d5e6405641b5994
+Container affectionate_yalow c0af6f708d59 started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought:
+I need to understand the structure of the root directory to identify any configuration files or folders necessary for setting up the environment.
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+CONTRIBUTING.md  README.md  makefile	pyproject.toml	tests
+LICENSE.txt	 docs	    mkdocs.yml	src
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I see several important files, including `README.md`, `pyproject.toml`, and some folders like `tests` and `src`. The presence of `pyproject.toml` suggests that this project may use Poetry for dependency management. I will inspect the `pyproject.toml` file to understand the dependencies and other configurations.
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /repo/pyproject.toml`...
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[project]
+name = "koheesio"
+dynamic = ["version"]
+description = 'The steps-based Koheesio framework'
+readme = "README.md"
+requires-python = ">=3.9, <3.13" # 3.10 is the minimum recommended version
+license = "Apache-2.0"
+keywords = [
+  # TODO: add keywords
+]
+authors = [
+  # TODO: add other contributors
+  { name = "Danny Meijer", email = "danny.meijer@nike.com" },
+  { name = "Mikita Sakalouski", email = "mikita.sakalouski@nike.com" },
+  { name = "Maxim Mityutko", email = "maxim.mityutko@nike.com" },
+  { name = "Tone Vanden Bergh", email = "tone.vandenbergh@nike.com"},
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "cryptography>=42.0.4", # to address CVE-2024-26130
+  "jsonpickle>2.1.0",
+  "pydantic>=2",
+  "python-decouple>=3.8",
+  "pytz>=2023.3",
+  "pyyaml>=6.0",
+  "tomli>=2.0.1",
+]
+[project.urls]
+Documentation = "https://github.com/Nike-Inc/koheesio#readme"
+Issues = "https://github.com/Nike-Inc/koheesio/issues"
+Source = "https://github.com/Nike-Inc/koheesio"
+Project = "https://github.com/orgs/Nike-Inc/projects/4"
+[project.optional-dependencies]
+async = ["nest-asyncio>=1.6.0"]
+async_http = [
+  "aiohttp[speedups]>=3.9.5",
+  "aiohttp-retry>=2.8.3",
+  "nest-asyncio>=1.6.0",
+]
+box = ["boxsdk[jwt]==3.8.1"]
+pandas = ["pandas>=1.3", "setuptools", "numpy<2.0.0", "pandas-stubs"]
+pyspark = ["pyspark>=3.2.0", "pyarrow>13"]
+pyspark_connect = ["pyspark[connect]>=3.5"]
+sftp = ["paramiko>=2.6.0"]
+delta = ["delta-spark>=2.2"]
+excel = ["openpyxl>=3.0.0"]
+tableau = ["tableauhyperapi>=0.0.19484", "tableauserverclient>=0.25"]
+snowflake = ["snowflake-connector-python>=3.12.0"]
+dev = ["ruff", "mypy", "pylint", "colorama", "types-PyYAML", "types-requests"]
+test = [
+  "chispa",
+  "coverage[toml]",
+  "pytest",
+  "pytest-asyncio",
+  "pytest-cov",
+  "pytest-mock",
+  "pytest-order",
+  "pytest-sftpserver",
+  "pytest-xdist",
+  "pytest-randomly",
+  "requests_mock",
+  "time_machine",
+]
+docs = [
+  "markdown>=3.5.2",
+  "mike>=2.0.0",
+  "mkdocs>=1.5.3",
+  "mkdocs-click>=0.8.0",
+  "mkdocs-gen-files>=0.5.0",
+  "mkdocs-git-revision-date-localized-plugin>=1.2.2",
+  "mkdocs-glightbox>=0.3.4",
+  "mkdocs-include-markdown-plugin>=6.0.4",
+  "mkdocs-literate-nav>=0.6.0",
+  "mkdocs-material>=9.5.13",
+  "mkdocs-material-extensions>=1.3.1",
+  "mkdocs-redirects>=1.2.1",
+  "mkdocs-section-index>=0.3.8",
+  "mkdocstrings-python>=1.7.5",
+  "pygments>=2.17.2",
+  "pymdown-extensions>=10.7.0",
+  "black",
+]
+se = ["spark-expectations>=2.2.1,<2.3.0"]
+[tool.hatch.metadata]
+allow-direct-references = true
+###  ~~~~~~~~~~~~~~~  ###
+#  Hatch Configuration  #
+###  ~~~~~~~~~~~~~~~  ###
+#
+[tool.hatch.version]
+description = """
+The version of the package is dynamically set and is maintained in the top-level `__init__.py` file of the package.
+---
+Bump by running `hatch version` with one of the following release types:
+- `major`                     - breaking changes, i.e. 2.0.0
+- `minor`                     - new features, i.e. 1.1.0
+- `micro` `fix` or `patch`    - bug fixes, i.e. 1.0.1
+- `a` or `alpha`              - alpha release, i.e. 1.0.0a1
+- `b` or `beta`               - beta release, i.e. 1.0.0b1
+- `c` `rc` `pre` or `preview` - release candidate, i.e. 1.0.0rc1
+- `r` `rev` or `post`         - post release, i.e. 1.0.0.post1
+- `dev`                       - development release, i.e. 1.0.0.dev1
+"""
+path = "src/koheesio/__about__.py"
+#[tool.hatch.envs.hatch-static-analysis.scripts]
+##TODO: move scripts from linting and style here
+#format-check = "black --check --diff ."
+#format-fix = "black ."
+#lint-check = "ruff check ."
+#lint-fix = "echo 'No formatting is required for this project.'"
+[tool.hatch.envs.default]
+description = """
+The default environment is used for development and general use.
+---
+We use the `uv` installer by default. This is a superfast, Rust-based installer.
+Run `hatch run` to run scripts in the default environment.
+# Code Quality
+To check and format the codebase, we use:
+ - `ruff` for linting, formtting and sorting imports
+ - `mypy` for static type checking.
+ - `pylint` for code quality checks.
+---
+There are several ways to run style checks and formatting:
+- `hatch run black-check` will check the codebase with black without applying fixes.
+- `hatch run black-fmt` will format the codebase using black.
+- `hatch run ruff-check` will check the codebase with ruff without applying fixes.
+- `hatch run ruff-fmt` will format the codebase using ruff.
+- `hatch run mypy-check` will check the codebase with mypy.
+- `hatch run pylint-check` will check the codebase with pylint.
+- `hatch run check` will run all the above checks (including pylint and mypy).
+- `hatch run fmt` or `hatch run fix` will format the codebase using ruff.
+- `hatch run lint` will run ruff, mypy, and pylint.
+# Testing and Coverage
+To run the test suite, use:
+- `hatch run all-tests` to run the full test suite.
+- `hatch run spark-tests` to run the Spark test suite.
+- `hatch run log-versions` to log the Python and PySpark versions.
+- `hatch run coverage` or `hatch run cov` to run the test suite with coverage.
+Note: the full test suite is will run all tests in all specified Python and PySpark versions. If you want to run tests
+against specific versions, you can add `+py=3.10` or `+version=pyspark34` to the command (replace the versions with the
+desired ones).
+For lighter / fast
+...[Truncation]...
+hatch shell dev`.
+Available scripts:
+- `black-check` - check the codebase with black without applying fixes.
+- `black-fmt` - format the codebase using black.
+- `isort-check` - check the codebase with isort without applying fixes.
+- `isort-fmt` - format the codebase using isort.
+- `ruff-check` - check the codebase with ruff without applying fixes.
+- `ruff-fmt` - format the codebase using ruff.
+- `mypy-check` - check the codebase with mypy.
+- `pylint-check` - check the codebase with pylint.
+- `check` - run all the above checks (including pylint and mypy).
+- `fmt` or `fix` - format the codebase using black, isort, and ruff.
+- `lint` - run ruff, mypy, and pylint.
+- `log-versions` - log the Python and PySpark versions.
+- `all-tests` - run the full test suite.
+- `spark-tests` - run the Spark test suite.
+- `coverage` or `cov` - run the test suite with coverage.
+"""
+path = ".venv"
+python = "3.10"
+template = "default"
+features = [
+  "async",
+  "async_http",
+  "box",
+  "pandas",
+  "pyspark",
+  "se",
+  "sftp",
+  "snowflake",
+  "delta",
+  "excel",
+  "tableau",
+  "dev",
+  "test",
+  "docs",
+]
+###  ~~~~~~~~~~~~~~~~~~  ###
+#  Code Quality and Style  #
+###  ~~~~~~~~~~~~~~~~~~  ###
+#
+[tool.ruff]
+# https://docs.astral.sh/ruff/configuration/#using-pyprojecttoml
+# https://docs.astral.sh/ruff/settings/
+target-version = "py310"
+line-length = 120 # Same as Black.
+exclude = [
+  # Exclude a variety of commonly ignored directories.
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".pants.d",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".venv",
+  ".venvs",
+  "__pypackages__",
+  "__notebooks__",
+  "__research__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "venv",
+]
+[tool.ruff.format]
+# https://docs.astral.sh/ruff/formatter/#docstring-formatting
+docstring-code-format = true
+docstring-code-line-length = 70
+[tool.ruff.lint]
+select = [
+  ## pycodestyle
+  "E",
+  ## Pyflakes
+  "F",
+  ## flake8-bugbear
+  # "B",
+  ## flake8-annotations
+  # "ANN",
+  ## pyupgrade
+  # "UP",
+  ## flake8-simplify
+  # "SIM",
+  ## pep8-naming
+  # "N",
+  ## isort
+  "I",
+]
+ignore = [
+  "F405", # To avoid errors like '`ConfigDict` may be undefined, or defined from star imports: `pydantic`'
+  "E501", # To avoid errors like 'line too long (120 > 79 characters)' -> let Black handle this instead
+  "F401", # To avoid errors like 'module imported but unused' -> there are too many false positives
+  "F403", # To avoid errors like 'import * used; unable to detect undefined names' -> leads to false positives
+]
+# Unlike Flake8, default to a complexity level of 10.
+mccabe.max-complexity = 10
+# Allow autofix for all enabled rules (when `--fix` is provided).
+fixable = [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "I",
+  "N",
+  "Q",
+  "S",
+  "T",
+  "W",
+  "ANN",
+  "ARG",
+  "BLE",
+  "COM",
+  "DJ",
+  "DTZ",
+  "EM",
+  "ERA",
+  "EXE",
+  "FBT",
+  "ICN",
+  "INP",
+  "ISC",
+  "NPY",
+  "PD",
+  "PGH",
+  "PIE",
+  "PL",
+  "PT",
+  "PTH",
+  "PYI",
+  "RET",
+  "RSE",
+  "RUF",
+  "SIM",
+  "SLF",
+  "TCH",
+  "TID",
+  "TRY",
+  "UP",
+  "YTT",
+]
+unfixable = []
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+[tool.ruff.lint.isort]
+force-to-top = ["__future__", "typing"]
+section-order = [
+  "future",
+  "standard-library",
+  "third-party",
+  "pydantic",
+  "pyspark",
+  "first-party",
+  "local-folder",
+]
+sections.pydantic = ["pydantic"]
+sections.pyspark = ["pyspark"]
+detect-same-package = true
+force-sort-within-sections = true
+[tool.mypy]
+python_version = "3.10"
+files = ["koheesio/**/*.py"]
+plugins = ["pydantic.mypy"]
+pretty = true
+warn_unused_configs = true
+check_untyped_defs = false
+disallow_untyped_calls = false
+disallow_untyped_defs = true
+warn_no_return = false
+implicit_optional = true
+allow_untyped_globals = true
+disable_error_code = ["attr-defined", "return-value", "union-attr", "override"]
+[tool.pylint.main]
+fail-under = 9.5
+py-version = "3.10"
+[tool.pylint.basic]
+# require docstrings for all functions except magic methods (those starting and ending with __) and test methods (those starting with test_).
+no-docstring-rgx = "__.*__|test_.*"
+[tool.pylint.classes]
+exclude-protected = [
+  "_asdict",
+  "_fields",
+  "_replace",
+  "_source",
+  "_make",
+  "os._exit",
+  "_jsc",
+]
+[tool.pylint.design]
+max-attributes = 25
+max-bool-expr = 5
+max-locals = 16
+max-parents = 25
+min-public-methods = 1
+[tool.pylint.format]
+# Same as Black.
+max-line-length = 120
+# Maximum number of lines in a module.
+max-module-lines = 1200
+# Allow the body of a class to be on the same line as the declaration if body contains single statement.
+single-line-class-stmt = true
+# Allow the body of an if to be on the same line as the test if there is no else.
+single-line-if-stmt = true
+[tool.pylint.logging]
+# The type of string formatting that logging methods do. old means using % formatting, new is for {} formatting.
+logging-format-style = "new"
+[tool.pylint."messages control"]
+confidence = [
+  "HIGH",
+  "CONTROL_FLOW",
+  "INFERENCE",
+  "INFERENCE_FAILURE",
+  "UNDEFINED",
+]
+disable = [
+  "raw-checker-failed",
+  "bad-inline-option",
+  "locally-disabled",
+  "file-ignored",
+  "suppressed-message",
+  "useless-suppression",
+  "deprecated-pragma",
+  "use-symbolic-message-instead",
+  "use-implicit-booleaness-not-comparison-to-string",
+  "use-implicit-booleaness-not-comparison-to-zero",
+  "no-member",
+  "arguments-differ",
+  "consider-using-set-comprehension",
+  "duplicate-code",
+  "import-outside-toplevel",
+  "inconsistent-return-statements",
+  "invalid-name",
+  "line-too-long",
+  "logging-fstring-interpolation",
+  "no-else-return",
+  "no-self-argument",
+  "protected-access",
+  "too-few-public-methods",
+  "too-many-arguments",
+  "too-many-branches",
+  "too-many-instance-attributes",
+  "too-many-statements",
+  "useless-object-inheritance",
+  "unnecessary-ellipsis",
+]
+enable = ["logging-not-lazy", "c-extension-no-member"]
+[tool.pylint.miscellaneous]
+notes = ["FIXME", "TODO"]
+[tool.pylint.refactoring]
+max-nested-blocks = 3
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `pyproject.toml` file indicates that this repository uses Poetry for dependency management, and it provides a list of dependencies and optional dependencies. These dependencies need to be installed to properly configure the environment. I will proceed to install the dependencies using Poetry.
+
+### Action:
+```bash
+cd /repo && poetry install
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install`...
+[31;1m[tool.poetry] section not found in /repo/pyproject.toml[39;22m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetry install` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `poetry install` command failed because the `pyproject.toml` file does not contain a `[tool.poetry]` section, which is required for Poetry. This suggests that Poetry is not the intended tool for managing dependencies in this project. Instead, the `pyproject.toml` file indicates usage of `hatchling` as the build system.
+
+In order to proceed further, I will attempt to execute a round of tests to understand the current state and missing dependencies.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ImportError while loading conftest '/repo/tests/conftest.py'.
+tests/conftest.py:8: in <module>
+    from koheesio.logger import LoggingFactory
+E   ModuleNotFoundError: No module named 'koheesio'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The test execution indicates that there is a `ModuleNotFoundError` for the module `koheesio`. This suggests that the repository might be structured in such a way that the `koheesio` module is not being found due to its location or an improperly configured environment variable.
+
+To resolve this, I will inspect the directory structure under the `src` folder to locate the `koheesio` module.
+
+### Action:
+```bash
+ls /repo/src
+```
+### Observation:
+Running `ls /repo/src`...
+koheesio
+`ls /repo/src` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 195 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I found the `koheesio` module under the `src` directory. This suggests that I need to add the `src` directory to the `PYTHONPATH` so that the `koheesio` module can be found during the test execution.
+
+I will set the `PYTHONPATH` environment variable to include the `src` directory and then attempt to run the tests again.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ImportError while loading conftest '/repo/tests/conftest.py'.
+tests/conftest.py:8: in <module>
+    from koheesio.logger import LoggingFactory
+src/koheesio/__init__.py:5: in <module>
+    from koheesio.context import Context
+src/koheesio/context.py:21: in <module>
+    import jsonpickle  # type: ignore[import-untyped]
+E   ModuleNotFoundError: No module named 'jsonpickle'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 194 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution now indicates a `ModuleNotFoundError` for the `jsonpickle` module. To resolve this, I will add the `jsonpickle` package to the waiting list and download it. This will ensure that the required dependency is installed.
+
+### Action:
+```bash
+waitinglist add -p jsonpickle -t pip
+```
+### Observation:
+Running `waitinglist add -p jsonpickle -t pip`...
+'jsonpickle' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 193 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+Since we have added the `jsonpickle` module to the waiting list, the next logical step is to download it. This will ensure that the `jsonpickle` dependency is installed and available for the tests.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'jsonpickle' has been removed from the waiting list.
+"jsonpickle" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+jsonpickle (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 192 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+---------------------------
+### Thought:
+The `jsonpickle` module has been successfully downloaded. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ImportError while loading conftest '/repo/tests/conftest.py'.
+tests/conftest.py:8: in <module>
+    from koheesio.logger import LoggingFactory
+src/koheesio/__init__.py:5: in <module>
+    from koheesio.context import Context
+src/koheesio/context.py:23: in <module>
+    import yaml
+E   ModuleNotFoundError: No module named 'yaml'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 191 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution now indicates a `ModuleNotFoundError` for the `yaml` module. To resolve this, I will add the `pyyaml` package, which provides `yaml` functionalities, to the waiting list and download it.
+
+### Action:
+```bash
+waitinglist add -p pyyaml -t pip
+```
+### Observation:
+Running `waitinglist add -p pyyaml -t pip`...
+'pyyaml' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 190 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+Since we have added the `pyyaml` module to the waiting list, the next logical step is to download it. This will ensure that the `yaml` dependency is installed and available for the tests.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'pyyaml' has been removed from the waiting list.
+"pyyaml" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+pyyaml (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 189 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+---------------------------
+### Thought:
+The `pyyaml` module has been successfully downloaded. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ImportError while loading conftest '/repo/tests/conftest.py'.
+tests/conftest.py:8: in <module>
+    from koheesio.logger import LoggingFactory
+src/koheesio/__init__.py:7: in <module>
+    from koheesio.models import BaseModel, ExtraParamsMixin
+src/koheesio/models/__init__.py:20: in <module>
+    from pydantic import BaseModel as PydanticBaseModel
+E   ModuleNotFoundError: No module named 'pydantic'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 188 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution now indicates a `ModuleNotFoundError` for the `pydantic` module. To resolve this, I will add the `pydantic` package to the waiting list and download it. This will ensure that the `pydantic` dependency is installed and available for the tests.
+
+### Action:
+```bash
+waitinglist add -p pydantic -t pip
+```
+### Observation:
+Running `waitinglist add -p pydantic -t pip`...
+'pydantic' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 187 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+Since we have added the `pydantic` module to the waiting list, the next logical step is to download it. This will ensure that the `pydantic` dependency is installed and available for the tests.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'pydantic' has been removed from the waiting list.
+"pydantic" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+pydantic (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 186 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+---------------------------
+### Thought:
+The `pydantic` module has been successfully downloaded. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+      KK\  KK\          HH\                                     II\
+     KK  |KK  |         HH |                                    \__|
+    KK  /KK  / OOOOOO\  HHHHHHH\   EEEEEE\   EEEEEE\   SSSSSSS\ II\  OOOOOO\
+   KK  /KK  / OO  __OO\ HH  __HH\ EE  __EE\ EE  __EE\ SS  _____|II |OO  __OO\
+  KK  / \KK\  OO /  OO |HH |  HH |EEEEEEEE |EEEEEEEE |\SSSSSS\  II |OO /  OO |
+ KK  /   \KK\ OO |  OO |HH |  HH |EE   ____|EE   ____| \____SS\ II |OO |  OO |
+KK  /     \KK\\OOOOOO  |HH |  HH |\EEEEEEE\ \EEEEEEE\ SSSSSSS  |II |\OOOOOO  |
+\__/       \__|\______/ \__|  \__| \_______| \_______|\_______/ \__| \______/
+╭───────────────────────────────────────────────────────────────────────────╮
+│                             Koheesio - v0.9.0                             │
+│    A type-safe Python framework for building efficient data pipelines     │
+│                          Licensed as Apache 2.0                           │
+│               Source: https://github.com/Nike-Inc/koheesio                │
+╰───────────────────────────────────────────────────────────────────────────╯
+ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
+pytest: error: unrecognized arguments: --order-scope=module
+  inifile: /repo/pyproject.toml
+  rootdir: /repo
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 185 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution now indicates an error related to an unrecognized argument `--order-scope=module` for pytest. This suggests that the pytest order plugin might be configured incorrectly or not installed.
+
+Given that the project lists `pytest-order` as an optional dependency under the `test` section, I will add this package to the waiting list and download it.
+
+### Action:
+```bash
+waitinglist add -p pytest-order -t pip
+```
+### Observation:
+Running `waitinglist add -p pytest-order -t pip`...
+'pytest-order' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 184 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+Since we have added the `pytest-order` plugin to the waiting list, the next logical step is to download it. This will ensure that the `pytest-order` dependency is installed and available for the tests.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'pytest-order' has been removed from the waiting list.
+"pytest-order" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+pytest-order (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 183 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+---------------------------
+### Thought:
+The `pytest-order` plugin has been successfully downloaded. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/core/test_context.py: 25
+tests/core/test_init.py: 1
+tests/core/test_logger.py: 4
+tests/models/test_models.py: 32
+tests/steps/test_steps.py: 26
+tests/utils/test_utils.py: 3
+==================================== ERRORS ====================================
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/asyncio/test_asyncio_http.py:3: in <module>
+    from aiohttp import ClientResponseError, ClientSession, TCPConnector
+E   ModuleNotFoundError: No module named 'aiohttp'[0m
+------------------------------- Captured stdout --------------------------------
+      KK\  KK\          HH\                                     II\
+     KK  |KK  |         HH |                                    \__|
+    KK  /KK  / OOOOOO\  HHHHHHH\   EEEEEE\   EEEEEE\   SSSSSSS\ II\  OOOOOO\
+   KK  /KK  / OO  __OO\ HH  __HH\ EE  __EE\ EE  __EE\ SS  _____|II |OO  __OO\
+  KK  / \KK\  OO /  OO |HH |  HH |EEEEEEEE |EEEEEEEE |\SSSSSS\  II |OO /  OO |
+ KK  /   \KK\ OO |  OO |HH |  HH |EE   ____|EE   ____| \____SS\ II |OO |  OO |
+KK  /     \KK\\OOOOOO  |HH |  HH |\EEEEEEE\ \EEEEEEE\ SSSSSSS  |II |\OOOOOO  |
+\__/       \__|\______/ \__|  \__| \_______| \_______|\_______/ \__| \______/
+╭───────────────────────────────────────────────────────────────────────────╮
+│                             Koheesio - v0.9.0                             │
+│    A type-safe Python framework for building efficient data pipelines     │
+│                          Licensed as Apache 2.0                           │
+│               Source: https://github.com/Nike-Inc/koheesio                │
+╰───────────────────────────────────────────────────────────────────────────╯
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/notifications/test_slack.py:3: in <module>
+    from requests_mock.mocker import Mocker
+E   ModuleNotFoundError: No module named 'requests_mock'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/pandas/readers/test_pandas_excel.py:5: in <module>
+    from koheesio.pandas.readers.excel import ExcelReader
+src/koheesio/pandas/__init__.py:13: in <module>
+    from koheesio.spark.utils import import_pandas_based_on_pyspark_version
+src/koheesio/spark/__init__.py:15: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/__init__.py:1: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/common.py:12: in <module>
+    from pyspark import sql
+E   ModuleNotFoundError: No module named 'pyspark'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/snowflake/test_snowflake.py:10: in <module>
+    from koheesio.integrations.snowflake import (
+src/koheesio/integrations/snowflake/__init__.py:66: in <module>
+    from koheesio.spark.utils.common import on_databricks
+src/koheesio/spark/__init__.py:15: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/__init__.py:1: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/common.py:12: in <module>
+    from pyspark import sql
+E   ModuleNotFoundError: No module named 'pyspark'[0m
+[1m[31m/usr/local/lib/python3.10/importlib/__init__.py[0m:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+[1m[31m<frozen importlib._bootstrap>[0m:1050: in _gcd_import
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:1027: in _find_and_load
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:1006: in _find_and_load_unlocked
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:688: in _load_unlocked
+    ???
+[1m[31m/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py[0m:184: in exec_module
+    exec(co, module.__dict__)
+[1m[31mtests/spark/conftest.py[0m:12: in <module>
+    from delta import configure_spark_with_delta_pip
+[1m[31mE   ModuleNotFoundError: No module named 'delta'[0m
+[31m[1m___________________ ERROR collecting tests/sso/test_okta.py ____________________[0m
+[31mImportError while importing test module '/repo/tests/sso/test_okta.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/sso/test_okta.py:5: in <module>
+    from requests_mock.mocker import Mocker
+E   ModuleNotFoundError: No module named 'requests_mock'[0m
+[31m[1m__________________ ERROR collecting tests/steps/test_http.py ___________________[0m
+[31mImportError while importing test module '/repo/tests/steps/test_http.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/steps/test_http.py:2: in <module>
+    import requests
+E   ModuleNotFoundError: No module named 'requests'[0m
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m tests/asyncio/test_asyncio_http.py
+[31mERROR[0m tests/notifications/test_slack.py
+[31mERROR[0m tests/pandas/readers/test_pandas_excel.py
+[31mERROR[0m tests/snowflake/test_snowflake.py
+[31mERROR[0m tests/spark - ModuleNotFoun
+...[Truncation]...
+tils/test_utils.py: 3
+==================================== ERRORS ====================================
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/asyncio/test_asyncio_http.py:3: in <module>
+    from aiohttp import ClientResponseError, ClientSession, TCPConnector
+E   ModuleNotFoundError: No module named 'aiohttp'[0m
+------------------------------- Captured stdout --------------------------------
+      KK\  KK\          HH\                                     II\
+     KK  |KK  |         HH |                                    \__|
+    KK  /KK  / OOOOOO\  HHHHHHH\   EEEEEE\   EEEEEE\   SSSSSSS\ II\  OOOOOO\
+   KK  /KK  / OO  __OO\ HH  __HH\ EE  __EE\ EE  __EE\ SS  _____|II |OO  __OO\
+  KK  / \KK\  OO /  OO |HH |  HH |EEEEEEEE |EEEEEEEE |\SSSSSS\  II |OO /  OO |
+ KK  /   \KK\ OO |  OO |HH |  HH |EE   ____|EE   ____| \____SS\ II |OO |  OO |
+KK  /     \KK\\OOOOOO  |HH |  HH |\EEEEEEE\ \EEEEEEE\ SSSSSSS  |II |\OOOOOO  |
+\__/       \__|\______/ \__|  \__| \_______| \_______|\_______/ \__| \______/
+╭───────────────────────────────────────────────────────────────────────────╮
+│                             Koheesio - v0.9.0                             │
+│    A type-safe Python framework for building efficient data pipelines     │
+│                          Licensed as Apache 2.0                           │
+│               Source: https://github.com/Nike-Inc/koheesio                │
+╰───────────────────────────────────────────────────────────────────────────╯
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/notifications/test_slack.py:3: in <module>
+    from requests_mock.mocker import Mocker
+E   ModuleNotFoundError: No module named 'requests_mock'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/pandas/readers/test_pandas_excel.py:5: in <module>
+    from koheesio.pandas.readers.excel import ExcelReader
+src/koheesio/pandas/__init__.py:13: in <module>
+    from koheesio.spark.utils import import_pandas_based_on_pyspark_version
+src/koheesio/spark/__init__.py:15: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/__init__.py:1: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/common.py:12: in <module>
+    from pyspark import sql
+E   ModuleNotFoundError: No module named 'pyspark'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/snowflake/test_snowflake.py:10: in <module>
+    from koheesio.integrations.snowflake import (
+src/koheesio/integrations/snowflake/__init__.py:66: in <module>
+    from koheesio.spark.utils.common import on_databricks
+src/koheesio/spark/__init__.py:15: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/__init__.py:1: in <module>
+    from koheesio.spark.utils.common import (
+src/koheesio/spark/utils/common.py:12: in <module>
+    from pyspark import sql
+E   ModuleNotFoundError: No module named 'pyspark'[0m
+[1m[31m/usr/local/lib/python3.10/importlib/__init__.py[0m:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+[1m[31m<frozen importlib._bootstrap>[0m:1050: in _gcd_import
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:1027: in _find_and_load
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:1006: in _find_and_load_unlocked
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:688: in _load_unlocked
+    ???
+[1m[31m/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py[0m:184: in exec_module
+    exec(co, module.__dict__)
+[1m[31mtests/spark/conftest.py[0m:12: in <module>
+    from delta import configure_spark_with_delta_pip
+[1m[31mE   ModuleNotFoundError: No module named 'delta'[0m
+[31m[1m___________________ ERROR collecting tests/sso/test_okta.py ____________________[0m
+[31mImportError while importing test module '/repo/tests/sso/test_okta.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/sso/test_okta.py:5: in <module>
+    from requests_mock.mocker import Mocker
+E   ModuleNotFoundError: No module named 'requests_mock'[0m
+[31m[1m__________________ ERROR collecting tests/steps/test_http.py ___________________[0m
+[31mImportError while importing test module '/repo/tests/steps/test_http.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/steps/test_http.py:2: in <module>
+    import requests
+E   ModuleNotFoundError: No module named 'requests'[0m
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m tests/asyncio/test_asyncio_http.py
+[31mERROR[0m tests/notifications/test_slack.py
+[31mERROR[0m tests/pandas/readers/test_pandas_excel.py
+[31mERROR[0m tests/snowflake/test_snowflake.py
+[31mERROR[0m tests/spark - ModuleNotFoundError: No module named 'delta'
+[31mERROR[0m tests/sso/test_okta.py
+[31mERROR[0m tests/steps/test_http.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!!
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 182 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution indicates multiple `ModuleNotFoundError` errors for the following modules: `aiohttp`, `requests_mock`, `pyspark`, `delta`, and `requests`. These modules need to be added to the waiting list and downloaded in order to resolve the missing dependencies.
+
+I will add `aiohttp`, `requests_mock`, `pyspark`, `delta-spark`, and `requests` modules to the waiting list and then proceed to install them.
+
+### Action:
+```bash
+waitinglist add -p aiohttp -t pip && waitinglist add -p requests_mock -t pip && waitinglist add -p pyspark -t pip && waitinglist add -p delta-spark -t pip && waitinglist add -p requests -t pip
+```
+### Observation:
+Running `waitinglist add -p aiohttp -t pip`...
+'aiohttp' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p requests_mock -t pip`...
+'requests_mock' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p pyspark -t pip`...
+'pyspark' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p delta-spark -t pip`...
+'delta-spark' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p requests -t pip`...
+'requests' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 181 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+Since we have added the necessary modules (`aiohttp`, `requests_mock`, `pyspark`, `delta-spark`, and `requests`) to the waiting list, the next logical step is to download them. This will ensure that all the mentioned dependencies are installed and available for the tests.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'aiohttp' has been removed from the waiting list.
+"aiohttp" installed successfully.
+'requests_mock' has been removed from the waiting list.
+"requests_mock" installed successfully.
+'pyspark' has been removed from the waiting list.
+"pyspark" installed successfully.
+'delta-spark' has been removed from the waiting list.
+"delta-spark" installed successfully.
+'requests' has been removed from the waiting list.
+"requests" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+aiohttp (using tool pip)
+requests_mock (using tool pip)
+pyspark (using tool pip)
+delta-spark (using tool pip)
+requests (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 180 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+---------------------------
+### Thought:
+All necessary modules have been successfully downloaded. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/core/test_context.py: 25
+tests/core/test_init.py: 1
+tests/core/test_logger.py: 4
+tests/models/test_models.py: 32
+tests/notifications/test_slack.py: 3
+tests/sso/test_okta.py: 6
+tests/steps/test_http.py: 23
+tests/steps/test_steps.py: 26
+tests/utils/test_utils.py: 3
+==================================== ERRORS ====================================
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/asyncio/test_asyncio_http.py:4: in <module>
+    from aiohttp_retry import ExponentialRetry
+E   ModuleNotFoundError: No module named 'aiohttp_retry'[0m
+------------------------------- Captured stdout --------------------------------
+      KK\  KK\          HH\                                     II\
+     KK  |KK  |         HH |                                    \__|
+    KK  /KK  / OOOOOO\  HHHHHHH\   EEEEEE\   EEEEEE\   SSSSSSS\ II\  OOOOOO\
+   KK  /KK  / OO  __OO\ HH  __HH\ EE  __EE\ EE  __EE\ SS  _____|II |OO  __OO\
+  KK  / \KK\  OO /  OO |HH |  HH |EEEEEEEE |EEEEEEEE |\SSSSSS\  II |OO /  OO |
+ KK  /   \KK\ OO |  OO |HH |  HH |EE   ____|EE   ____| \____SS\ II |OO |  OO |
+KK  /     \KK\\OOOOOO  |HH |  HH |\EEEEEEE\ \EEEEEEE\ SSSSSSS  |II |\OOOOOO  |
+\__/       \__|\______/ \__|  \__| \_______| \_______|\_______/ \__| \______/
+╭───────────────────────────────────────────────────────────────────────────╮
+│                             Koheesio - v0.9.0                             │
+│    A type-safe Python framework for building efficient data pipelines     │
+│                          Licensed as Apache 2.0                           │
+│               Source: https://github.com/Nike-Inc/koheesio                │
+╰───────────────────────────────────────────────────────────────────────────╯
+    from koheesio.pandas.readers.excel import ExcelReader
+    from koheesio.spark.utils import import_pandas_based_on_pyspark_version
+    from koheesio.spark.utils.common import (
+    from koheesio.spark.utils.common import (
+    if check_if_pyspark_connect_is_supported():
+    from pyspark.sql.connect.column import Column
+    check_dependencies(__name__)
+    require_minimum_pandas_version()
+    if LooseVersion(pandas.__version__) < LooseVersion(minimum_pandas_version):
+    from koheesio.integrations.snowflake import (
+    from koheesio.spark.utils.common import on_databricks
+    from koheesio.spark.utils.common import (
+    from koheesio.spark.utils.common import (
+    if check_if_pyspark_connect_is_supported():
+    from pyspark.sql.connect.column import Column
+    check_dependencies(__name__)
+    require_minimum_pandas_version()
+    if LooseVersion(pandas.__version__) < LooseVersion(minimum_pandas_version):
+[1m[31m/usr/local/lib/python3.10/importlib/__init__.py[0m:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+[1m[31m<frozen importlib._bootstrap>[0m:1050: in _gcd_import
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:1027: in _find_and_load
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:1006: in _find_and_load_unlocked
+    ???
+[1m[31m<frozen importlib._bootstrap>[0m:688: in _load_unlocked
+    ???
+[1m[31m/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py[0m:184: in exec_module
+    exec(co, module.__dict__)
+[1m[31mtests/spark/conftest.py[0m:37: in <module>
+    from koheesio.spark.readers.dummy import DummyReader
+[1m[31msrc/koheesio/spark/__init__.py[0m:15: in <module>
+    from koheesio.spark.utils.common import (
+[1m[31msrc/koheesio/spark/utils/__init__.py[0m:1: in <module>
+    from koheesio.spark.utils.common import (
+[1m[31msrc/koheesio/spark/utils/common.py[0m:94: in <module>
+    if check_if_pyspark_connect_is_supported():
+[1m[31msrc/koheesio/spark/utils/common.py[0m:85: in check_if_pyspark_connect_is_supported
+    from pyspark.sql.connect.column import Column
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/sql/connect/column.py[0m:19: in <module>
+    check_dependencies(__name__)
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/sql/connect/utils.py[0m:33: in check_dependencies
+    require_minimum_pandas_version()
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/sql/pandas/utils.py[0m:37: in require_minimum_pandas_version
+    if LooseVersion(pandas.__version__) < LooseVersion(minimum_pandas_version):
+[1m[31mE   AttributeError: module 'pandas' has no attribute '__version__'[0m
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m tests/asyncio/test_asyncio_http.py
+[31mERROR[0m tests/pandas/readers/test_pandas_excel.py - AttributeError: module 'pandas' has no attribute '__version__'
+[31mERROR[0m tests/snowflake/test_snowflake.py - AttributeError: module 'pandas' has no attribute '__version__'
+[31mERROR[0m tests/spark - AttributeError: module 'pandas' has no attribute '__version__'
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 179 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution now indicates a `ModuleNotFoundError` for the `aiohttp_retry` module, and an `AttributeError` for the `pandas` module suggesting that `pandas` might not be correctly installed or available.
+
+To resolve these, I will first add the `aiohttp-retry` and `pandas` packages to the waiting list and download them accordingly.
+
+### Action:
+```bash
+waitinglist add -p aiohttp-retry -t pip && waitinglist add -p pandas -t pip
+```
+### Observation:
+Running `waitinglist add -p aiohttp-retry -t pip`...
+'aiohttp-retry' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p pandas -t pip`...
+'pandas' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 178 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+Since we have added the necessary modules (`aiohttp-retry` and `pandas`) to the waiting list, the next logical step is to download them. This will ensure that all the mentioned dependencies are installed and available for the tests.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'aiohttp-retry' has been removed from the waiting list.
+"aiohttp-retry" installed successfully.
+'pandas' has been removed from the waiting list.
+"pandas" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+aiohttp-retry (using tool pip)
+pandas (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 177 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+---------------------------
+### Thought:
+The modules `aiohttp-retry` and `pandas` have been successfully downloaded. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/core/test_context.py: 25
+tests/core/test_init.py: 1
+tests/core/test_logger.py: 4
+tests/models/test_models.py: 32
+tests/notifications/test_slack.py: 3
+tests/pandas/readers/test_pandas_excel.py: 1
+tests/snowflake/test_snowflake.py: 17
+tests/spark/integrations/databrikcs/test_secrets.py: 3
+tests/spark/integrations/dq/test_spark_expectations.py: 6
+tests/spark/integrations/snowflake/test_spark_snowflake.py: 36
+tests/spark/readers/test_delta_reader.py: 11
+tests/spark/readers/test_file_loader.py: 8
+tests/spark/readers/test_hana.py: 1
+tests/spark/readers/test_jdbc.py: 5
+tests/spark/readers/test_metastore_reader.py: 1
+tests/spark/readers/test_reader.py: 2
+tests/spark/readers/test_spark_sql_reader.py: 2
+tests/spark/readers/test_teradata.py: 2
+tests/spark/tasks/test_etl_task.py: 4
+tests/spark/test_delta.py: 9
+tests/spark/test_spark.py: 5
+tests/spark/test_spark_utils.py: 16
+tests/spark/test_warnings.py: 1
+tests/spark/transformations/date_time/test_date_time.py: 8
+tests/spark/transformations/date_time/test_interval.py: 11
+tests/spark/transformations/strings/test_change_case.py: 2
+tests/spark/transformations/strings/test_concat.py: 11
+tests/spark/transformations/strings/test_pad.py: 5
+tests/spark/transformations/strings/test_regexp.py: 5
+tests/spark/transformations/strings/test_split.py: 7
+tests/spark/transformations/strings/test_string_replace.py: 3
+tests/spark/transformations/strings/test_substring.py: 4
+tests/spark/transformations/strings/test_trim.py: 4
+tests/spark/transformations/test_arrays.py: 36
+tests/spark/transformations/test_camel_to_snake_transform.py: 2
+tests/spark/transformations/test_cast_to_datatype.py: 38
+tests/spark/transformations/test_drop_column.py: 4
+tests/spark/transformations/test_get_item.py: 2
+tests/spark/transformations/test_hash.py: 6
+tests/spark/transformations/test_lookup.py: 6
+tests/spark/transformations/test_repartition.py: 5
+tests/spark/transformations/test_replace.py: 20
+tests/spark/transformations/test_row_number_dedup.py: 4
+tests/spark/transformations/test_sql_transform.py: 9
+tests/spark/transformations/test_transform.py: 8
+tests/spark/transformations/test_transformation.py: 11
+tests/spark/transformations/test_uuid5.py: 4
+tests/spark/writers/delta/test_delta_writer.py: 27
+tests/spark/writers/delta/test_scd.py: 2
+tests/spark/writers/test_dummy.py: 3
+tests/spark/writers/test_file_writer.py: 2
+tests/spark/writers/test_stream.py: 20
+tests/sso/test_okta.py: 6
+tests/steps/test_http.py: 23
+tests/steps/test_steps.py: 26
+tests/utils/test_utils.py: 3
+==================================== ERRORS ====================================
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/asyncio/test_asyncio_http.py:10: in <module>
+    from koheesio.asyncio.http import AsyncHttpStep
+src/koheesio/asyncio/http.py:13: in <module>
+    import nest_asyncio  # type: ignore[import-untyped]
+E   ModuleNotFoundError: No module named 'nest_asyncio'[0m
+------------------------------- Captured stdout --------------------------------
+      KK\  KK\          HH\                                     II\
+     KK  |KK  |         HH |                                    \__|
+    KK  /KK  / OOOOOO\  HHHHHHH\   EEEEEE\   EEEEEE\   SSSSSSS\ II\  OOOOOO\
+   KK  /KK  / OO  __OO\ HH  __HH\ EE  __EE\ EE  __EE\ SS  _____|II |OO  __OO\
+  KK  / \KK\  OO /  OO |HH |  HH |EEEEEEEE |EEEEEEEE |\SSSSSS\  II |OO /  OO |
+ KK  /   \KK\ OO |  OO |HH |  HH |EE   ____|EE   ____| \____SS\ II |OO |  OO |
+KK  /     \KK\\OOOOOO  |HH |  HH |\EEEEEEE\ \EEEEEEE\ SSSSSSS  |II |\OOOOOO  |
+\__/       \__|\______/ \__|  \__| \_______| \_______|\_______/ \__| \______/
+╭───────────────────────────────────────────────────────────────────────────╮
+│                             Koheesio - v0.9.0                             │
+│    A type-safe Python framework for building efficient data pipelines     │
+│                          Licensed as Apache 2.0                           │
+│               Source: https://github.com/Nike-Inc/koheesio                │
+╰───────────────────────────────────────────────────────────────────────────╯
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/integrations/box/test_box.py:9: in <module>
+    from koheesio.integrations.box import (
+src/koheesio/integrations/box.py:19: in <module>
+    from boxsdk import Client, JWTAuth
+E   ModuleNotFoundError: No module named 'boxsdk'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/integrations/snowflake/test_sync_task.py:5: in <module>
+    import chispa
+E   ModuleNotFoundError: No module named 'chispa'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/integrations/tableau/test_hyper.py:8: in <module>
+    from koheesio.integrations.spark.tableau.hyper import (
+src/koheesio/integrations/spark/tableau/hyper.py:7: in <module>
+    from tableauhyperapi import (
+E   ModuleNotFoundError: No module named 'tableauhyperapi'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/integrations/tableau/test_server.py:4: in <module>
+    from tableauservercli
+...[Truncation]...
+__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/integrations/tableau/test_hyper.py:8: in <module>
+    from koheesio.integrations.spark.tableau.hyper import (
+src/koheesio/integrations/spark/tableau/hyper.py:7: in <module>
+    from tableauhyperapi import (
+E   ModuleNotFoundError: No module named 'tableauhyperapi'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/integrations/tableau/test_server.py:4: in <module>
+    from tableauserverclient import DatasourceItem
+E   ModuleNotFoundError: No module named 'tableauserverclient'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/readers/test_auto_loader.py:1: in <module>
+    from chispa import assert_df_equality
+E   ModuleNotFoundError: No module named 'chispa'[0m
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/readers/test_memory.py:1: in <module>
+    from chispa import assert_df_equality
+E   ModuleNotFoundError: No module named 'chispa'[0m
+[31m[1m____________ ERROR collecting tests/spark/readers/test_rest_api.py _____________[0m
+[31mImportError while importing test module '/repo/tests/spark/readers/test_rest_api.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/readers/test_rest_api.py:9: in <module>
+    from koheesio.asyncio.http import AsyncHttpStep
+src/koheesio/asyncio/http.py:13: in <module>
+    import nest_asyncio  # type: ignore[import-untyped]
+E   ModuleNotFoundError: No module named 'nest_asyncio'[0m
+[31m[1m___________ ERROR collecting tests/spark/readers/test_spark_excel.py ___________[0m
+[31mImportError while importing test module '/repo/tests/spark/readers/test_spark_excel.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/site-packages/pyspark/sql/pandas/utils.py:53: in require_minimum_pyarrow_version
+    import pyarrow
+E   ModuleNotFoundError: No module named 'pyarrow'
+The above exception was the direct cause of the following exception:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/readers/test_spark_excel.py:4: in <module>
+    from koheesio.spark.readers.excel import ExcelReader
+src/koheesio/spark/readers/excel.py:16: in <module>
+    from pyspark.pandas import DataFrame as PandasDataFrame
+/usr/local/lib/python3.10/site-packages/pyspark/pandas/__init__.py:35: in <module>
+    require_minimum_pyarrow_version()
+/usr/local/lib/python3.10/site-packages/pyspark/sql/pandas/utils.py:60: in require_minimum_pyarrow_version
+    raise ImportError(
+E   ImportError: PyArrow >= 4.0.0 must be installed; however, it was not found.[0m
+[31m[1m_____________ ERROR collecting tests/spark/writers/test_buffer.py ______________[0m
+[31mImportError while importing test module '/repo/tests/spark/writers/test_buffer.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/site-packages/pyspark/sql/pandas/utils.py:53: in require_minimum_pyarrow_version
+    import pyarrow
+E   ModuleNotFoundError: No module named 'pyarrow'
+The above exception was the direct cause of the following exception:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/writers/test_buffer.py:16: in <module>
+    from koheesio.spark.writers.buffer import PandasCsvBufferWriter, PandasJsonBufferWriter
+src/koheesio/spark/writers/buffer.py:30: in <module>
+    from pyspark import pandas
+/usr/local/lib/python3.10/site-packages/pyspark/pandas/__init__.py:35: in <module>
+    require_minimum_pyarrow_version()
+/usr/local/lib/python3.10/site-packages/pyspark/sql/pandas/utils.py:60: in require_minimum_pyarrow_version
+    raise ImportError(
+E   ImportError: PyArrow >= 4.0.0 must be installed; however, it was not found.[0m
+[31m[1m______________ ERROR collecting tests/spark/writers/test_sftp.py _______________[0m
+[31mImportError while importing test module '/repo/tests/spark/writers/test_sftp.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/spark/writers/test_sftp.py:3: in <module>
+    import paramiko
+E   ModuleNotFoundError: No module named 'paramiko'[0m
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m tests/asyncio/test_asyncio_http.py
+[31mERROR[0m tests/spark/integrations/box/test_box.py
+[31mERROR[0m tests/spark/integrations/snowflake/test_sync_task.py
+[31mERROR[0m tests/spark/integrations/tableau/test_hyper.py
+[31mERROR[0m tests/spark/integrations/tableau/test_server.py
+[31mERROR[0m tests/spark/readers/test_auto_loader.py
+[31mERROR[0m tests/spark/readers/test_memory.py
+[31mERROR[0m tests/spark/readers/test_rest_api.py
+[31mERROR[0m tests/spark/readers/test_spark_excel.py
+[31mERROR[0m tests/spark/writers/test_buffer.py
+[31mERROR[0m tests/spark/writers/test_sftp.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 11 errors during collection !!!!!!!!!!!!!!!!!!!
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 176 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution indicates errors related to multiple missing packages including: `nest_asyncio`, `boxsdk`, `chispa`, `tableauhyperapi`, `tableauserverclient`, `pyarrow`, and `paramiko`. These modules need to be added to the waiting list and downloaded.
+
+I will add `nest_asyncio`, `boxsdk`, `chispa`, `tableauhyperapi`, `tableauserverclient`, `pyarrow`, and `paramiko` to the waiting list and download them accordingly.
+
+### Action:
+```bash
+waitinglist add -p nest_asyncio -t pip && waitinglist add -p boxsdk -t pip && waitinglist add -p chispa -t pip && waitinglist add -p tableauhyperapi -t pip && waitinglist add -p tableauserverclient -t pip && waitinglist add -p pyarrow -t pip && waitinglist add -p paramiko -t pip
+```
+### Observation:
+Running `waitinglist add -p nest_asyncio -t pip`...
+'nest_asyncio' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p boxsdk -t pip`...
+'boxsdk' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p chispa -t pip`...
+'chispa' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p tableauhyperapi -t pip`...
+'tableauhyperapi' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p tableauserverclient -t pip`...
+'tableauserverclient' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p pyarrow -t pip`...
+'pyarrow' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p paramiko -t pip`...
+'paramiko' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 175 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+Since we have added the necessary modules (`nest_asyncio`, `boxsdk`, `chispa`, `tableauhyperapi`, `tableauserverclient`, `pyarrow`, and `paramiko`) to the waiting list, the next logical step is to download them. This will ensure that all the mentioned dependencies are installed and available for the tests.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'nest_asyncio' has been removed from the waiting list.
+"nest_asyncio" installed successfully.
+'boxsdk' has been removed from the waiting list.
+"boxsdk" installed successfully.
+'chispa' has been removed from the waiting list.
+"chispa" installed successfully.
+'tableauhyperapi' has been removed from the waiting list.
+"tableauhyperapi" installed successfully.
+'tableauserverclient' has been removed from the waiting list.
+"tableauserverclient" installed successfully.
+'pyarrow' has been removed from the waiting list.
+"pyarrow" installed successfully.
+'paramiko' has been removed from the waiting list.
+"paramiko" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+nest_asyncio (using tool pip)
+boxsdk (using tool pip)
+chispa (using tool pip)
+tableauhyperapi (using tool pip)
+tableauserverclient (using tool pip)
+pyarrow (using tool pip)
+paramiko (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 174 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p nest_asyncio
+python /home/tools/pip_download.py -p boxsdk
+python /home/tools/pip_download.py -p chispa
+python /home/tools/pip_download.py -p tableauhyperapi
+python /home/tools/pip_download.py -p tableauserverclient
+python /home/tools/pip_download.py -p pyarrow
+python /home/tools/pip_download.py -p paramiko
+---------------------------
+### Thought:
+The modules `nest_asyncio`, `boxsdk`, `chispa`, `tableauhyperapi`, `tableauserverclient`, `pyarrow`, and `paramiko` have been successfully downloaded. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo/src`...
+`export PYTHONPATH=/repo/src` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/asyncio/test_asyncio_http.py: 14
+tests/core/test_context.py: 25
+tests/core/test_init.py: 1
+tests/core/test_logger.py: 4
+tests/models/test_models.py: 32
+tests/notifications/test_slack.py: 3
+tests/pandas/readers/test_pandas_excel.py: 1
+tests/snowflake/test_snowflake.py: 17
+tests/spark/integrations/box/test_box.py: 20
+tests/spark/integrations/databrikcs/test_secrets.py: 3
+tests/spark/integrations/dq/test_spark_expectations.py: 6
+tests/spark/integrations/snowflake/test_spark_snowflake.py: 36
+tests/spark/integrations/snowflake/test_sync_task.py: 26
+tests/spark/integrations/tableau/test_hyper.py: 5
+tests/spark/integrations/tableau/test_server.py: 7
+tests/spark/readers/test_auto_loader.py: 5
+tests/spark/readers/test_delta_reader.py: 11
+tests/spark/readers/test_file_loader.py: 8
+tests/spark/readers/test_hana.py: 1
+tests/spark/readers/test_jdbc.py: 5
+tests/spark/readers/test_memory.py: 5
+tests/spark/readers/test_metastore_reader.py: 1
+tests/spark/readers/test_reader.py: 2
+tests/spark/readers/test_rest_api.py: 2
+tests/spark/readers/test_spark_sql_reader.py: 2
+tests/spark/readers/test_teradata.py: 2
+tests/spark/tasks/test_etl_task.py: 4
+tests/spark/test_delta.py: 9
+tests/spark/test_spark.py: 5
+tests/spark/test_spark_utils.py: 16
+tests/spark/test_warnings.py: 1
+tests/spark/transformations/date_time/test_date_time.py: 8
+tests/spark/transformations/date_time/test_interval.py: 11
+tests/spark/transformations/strings/test_change_case.py: 2
+tests/spark/transformations/strings/test_concat.py: 11
+tests/spark/transformations/strings/test_pad.py: 5
+tests/spark/transformations/strings/test_regexp.py: 5
+tests/spark/transformations/strings/test_split.py: 7
+tests/spark/transformations/strings/test_string_replace.py: 3
+tests/spark/transformations/strings/test_substring.py: 4
+tests/spark/transformations/strings/test_trim.py: 4
+tests/spark/transformations/test_arrays.py: 36
+tests/spark/transformations/test_camel_to_snake_transform.py: 2
+tests/spark/transformations/test_cast_to_datatype.py: 38
+tests/spark/transformations/test_drop_column.py: 4
+tests/spark/transformations/test_get_item.py: 2
+tests/spark/transformations/test_hash.py: 6
+tests/spark/transformations/test_lookup.py: 6
+tests/spark/transformations/test_repartition.py: 5
+tests/spark/transformations/test_replace.py: 20
+tests/spark/transformations/test_row_number_dedup.py: 4
+tests/spark/transformations/test_sql_transform.py: 9
+tests/spark/transformations/test_transform.py: 8
+tests/spark/transformations/test_transformation.py: 11
+tests/spark/transformations/test_uuid5.py: 4
+tests/spark/writers/delta/test_delta_writer.py: 27
+tests/spark/writers/delta/test_scd.py: 2
+tests/spark/writers/test_dummy.py: 3
+tests/spark/writers/test_file_writer.py: 2
+tests/spark/writers/test_stream.py: 20
+tests/sso/test_okta.py: 6
+tests/steps/test_http.py: 23
+tests/steps/test_steps.py: 26
+tests/utils/test_utils.py: 3
+==================================== ERRORS ====================================
+    from koheesio.spark.readers.excel import ExcelReader
+    from pyspark.pandas import DataFrame as PandasDataFrame
+    from pyspark.pandas.indexes.base import Index
+    from pyspark.pandas.indexes.base import Index  # noqa: F401
+    from pyspark.pandas.series import Series, first_series
+    from pyspark.pandas.strings import StringMethods
+    class StringMethods:
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+    raise AttributeError(
+    from koheesio.spark.writers.buffer import PandasCsvBufferWriter, PandasJsonBufferWriter
+    from pyspark import pandas
+    from pyspark.pandas.indexes.base import Index
+    from pyspark.pandas.indexes.base import Index  # noqa: F401
+    from pyspark.pandas.series import Series, first_series
+    from pyspark.pandas.strings import StringMethods
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:44: in <module>
+    class StringMethods:
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:1332: in StringMethods
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+[1m[31m/usr/local/lib/python3.10/site-packages/numpy/__init__.py[0m:400: in __getattr__
+    raise AttributeError(
+[1m[31mE   AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan` instead.[0m
+[31m[1m______________ ERROR collecting tests/spark/writers/test_sftp.py _______________[0m
+[1m[31mtests/spark/writers/test_sftp.py[0m:7: in <module>
+    from koheesio.integrations.spark.sftp import (
+[1m[31msrc/koheesio/integrations/spark/sftp.py[0m:34: in <module>
+    from koheesio.spark.writers.buffer import (
+[1m[31msrc/koheesio/spark/writers/buffer.py[0m:30: in <module>
+    from pyspark import pandas
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/__init__.py[0m:60: in <module>
+    from pyspark.pandas.indexes.base import Index
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/indexes/__init__.py[0m:17: in <module>
+    from pyspark.pandas.indexes.base import Index  # noqa: F401
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/indexes/base.py[0m:66: in <module>
+    from pyspark.pandas.series import Series, first_series
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/series.py[0m:118: in <module>
+    from pyspark.pandas.strings import StringMethods
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:44: in <module>
+    class StringMethods:
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:1332: in StringMethods
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+[1m[31m/usr/local/lib/python3.10/site-packages/numpy/__init__.py[0m:400: in __getattr__
+    raise AttributeError(
+[1m[31mE   A
+...[Truncation]...
+ations/tableau/test_server.py: 7
+tests/spark/readers/test_auto_loader.py: 5
+tests/spark/readers/test_delta_reader.py: 11
+tests/spark/readers/test_file_loader.py: 8
+tests/spark/readers/test_hana.py: 1
+tests/spark/readers/test_jdbc.py: 5
+tests/spark/readers/test_memory.py: 5
+tests/spark/readers/test_metastore_reader.py: 1
+tests/spark/readers/test_reader.py: 2
+tests/spark/readers/test_rest_api.py: 2
+tests/spark/readers/test_spark_sql_reader.py: 2
+tests/spark/readers/test_teradata.py: 2
+tests/spark/tasks/test_etl_task.py: 4
+tests/spark/test_delta.py: 9
+tests/spark/test_spark.py: 5
+tests/spark/test_spark_utils.py: 16
+tests/spark/test_warnings.py: 1
+tests/spark/transformations/date_time/test_date_time.py: 8
+tests/spark/transformations/date_time/test_interval.py: 11
+tests/spark/transformations/strings/test_change_case.py: 2
+tests/spark/transformations/strings/test_concat.py: 11
+tests/spark/transformations/strings/test_pad.py: 5
+tests/spark/transformations/strings/test_regexp.py: 5
+tests/spark/transformations/strings/test_split.py: 7
+tests/spark/transformations/strings/test_string_replace.py: 3
+tests/spark/transformations/strings/test_substring.py: 4
+tests/spark/transformations/strings/test_trim.py: 4
+tests/spark/transformations/test_arrays.py: 36
+tests/spark/transformations/test_camel_to_snake_transform.py: 2
+tests/spark/transformations/test_cast_to_datatype.py: 38
+tests/spark/transformations/test_drop_column.py: 4
+tests/spark/transformations/test_get_item.py: 2
+tests/spark/transformations/test_hash.py: 6
+tests/spark/transformations/test_lookup.py: 6
+tests/spark/transformations/test_repartition.py: 5
+tests/spark/transformations/test_replace.py: 20
+tests/spark/transformations/test_row_number_dedup.py: 4
+tests/spark/transformations/test_sql_transform.py: 9
+tests/spark/transformations/test_transform.py: 8
+tests/spark/transformations/test_transformation.py: 11
+tests/spark/transformations/test_uuid5.py: 4
+tests/spark/writers/delta/test_delta_writer.py: 27
+tests/spark/writers/delta/test_scd.py: 2
+tests/spark/writers/test_dummy.py: 3
+tests/spark/writers/test_file_writer.py: 2
+tests/spark/writers/test_stream.py: 20
+tests/sso/test_okta.py: 6
+tests/steps/test_http.py: 23
+tests/steps/test_steps.py: 26
+tests/utils/test_utils.py: 3
+==================================== ERRORS ====================================
+    from koheesio.spark.readers.excel import ExcelReader
+    from pyspark.pandas import DataFrame as PandasDataFrame
+    from pyspark.pandas.indexes.base import Index
+    from pyspark.pandas.indexes.base import Index  # noqa: F401
+    from pyspark.pandas.series import Series, first_series
+    from pyspark.pandas.strings import StringMethods
+    class StringMethods:
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+    raise AttributeError(
+    from koheesio.spark.writers.buffer import PandasCsvBufferWriter, PandasJsonBufferWriter
+    from pyspark import pandas
+    from pyspark.pandas.indexes.base import Index
+    from pyspark.pandas.indexes.base import Index  # noqa: F401
+    from pyspark.pandas.series import Series, first_series
+    from pyspark.pandas.strings import StringMethods
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:44: in <module>
+    class StringMethods:
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:1332: in StringMethods
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+[1m[31m/usr/local/lib/python3.10/site-packages/numpy/__init__.py[0m:400: in __getattr__
+    raise AttributeError(
+[1m[31mE   AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan` instead.[0m
+[31m[1m______________ ERROR collecting tests/spark/writers/test_sftp.py _______________[0m
+[1m[31mtests/spark/writers/test_sftp.py[0m:7: in <module>
+    from koheesio.integrations.spark.sftp import (
+[1m[31msrc/koheesio/integrations/spark/sftp.py[0m:34: in <module>
+    from koheesio.spark.writers.buffer import (
+[1m[31msrc/koheesio/spark/writers/buffer.py[0m:30: in <module>
+    from pyspark import pandas
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/__init__.py[0m:60: in <module>
+    from pyspark.pandas.indexes.base import Index
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/indexes/__init__.py[0m:17: in <module>
+    from pyspark.pandas.indexes.base import Index  # noqa: F401
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/indexes/base.py[0m:66: in <module>
+    from pyspark.pandas.series import Series, first_series
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/series.py[0m:118: in <module>
+    from pyspark.pandas.strings import StringMethods
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:44: in <module>
+    class StringMethods:
+[1m[31m/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py[0m:1332: in StringMethods
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+[1m[31m/usr/local/lib/python3.10/site-packages/numpy/__init__.py[0m:400: in __getattr__
+    raise AttributeError(
+[1m[31mE   AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan` instead.[0m
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m tests/spark/readers/test_spark_excel.py - AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan`...
+[31mERROR[0m tests/spark/writers/test_buffer.py - AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan`...
+[31mERROR[0m tests/spark/writers/test_sftp.py - AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan`...
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 173 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p nest_asyncio
+python /home/tools/pip_download.py -p boxsdk
+python /home/tools/pip_download.py -p chispa
+python /home/tools/pip_download.py -p tableauhyperapi
+python /home/tools/pip_download.py -p tableauserverclient
+python /home/tools/pip_download.py -p pyarrow
+python /home/tools/pip_download.py -p paramiko
+export PYTHONPATH=/repo/src
+---------------------------
+### Thought:
+The test execution indicates errors related to the usage of `np.NaN`, which has been removed in the NumPy 2.0 release. The code should be updated to use `np.nan` instead.
+
+I'll need to replace instances of `np.NaN` with `np.nan` in the `psyspark.pandas.strings.StringMethods` class in the `pyspark` library to address this issue.
+
+### Action:
+```diff
+/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py
+<<<<<<< SEARCH
+class StringMethods:
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+=======
+class StringMethods:
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.nan) -> "ps.Series":
+>>>>>>> REPLACE
+```
+### Observation:
+Running Edit...
+[?2004l
+* Succeed Patch:
+* Fail Patch:
+#SEARCH/REPLACE block failed to match!
+
+## SearchReplaceNoExactMatch: This SEARCH block failed to exactly match lines in /usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py
+class StringMethods:
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+
+
+The SEARCH section must exactly match an existing block of lines including all white space, comments, indentation, docstrings, etc
+
+TIPS:
+* All patches must be based on the original code. Make sure it and try to provide more sufficient and unique old line(s) from snippet to facilitate matching.
+* Make sure your patch has right indentation.
+* Make sure your file path is correct.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 172 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p nest_asyncio
+python /home/tools/pip_download.py -p boxsdk
+python /home/tools/pip_download.py -p chispa
+python /home/tools/pip_download.py -p tableauhyperapi
+python /home/tools/pip_download.py -p tableauserverclient
+python /home/tools/pip_download.py -p pyarrow
+python /home/tools/pip_download.py -p paramiko
+export PYTHONPATH=/repo/src
+python /home/tools/code_edit.py -t '/tmp/patch/tmp0cvumxmw' -p '/tmp'
+---------------------------
+### Thought:
+The error indicates that the `SEARCH` block failed to exactly match the lines in the `/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py` file. This suggests that either the line indentation was incorrect or the match was not precise enough.
+
+I will read the contents of the `/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py` file to obtain the exact lines for making the necessary changes.
+
+### Action:
+```bash
+cat /usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py
+```
+### Observation:
+Running `cat /usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py`...
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""
+String functions on pandas-on-Spark Series
+"""
+import warnings
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Union,
+    cast,
+    no_type_check,
+)
+import numpy as np
+import pandas as pd
+from pyspark.sql.types import StringType, BinaryType, ArrayType, LongType, MapType
+from pyspark.sql import functions as F
+from pyspark.sql.functions import pandas_udf
+import pyspark.pandas as ps
+from pyspark.pandas.spark import functions as SF
+class StringMethods:
+    """String methods for pandas-on-Spark Series"""
+    def __init__(self, series: "ps.Series"):
+        if not isinstance(series.spark.data_type, (StringType, BinaryType, ArrayType)):
+            raise ValueError("Cannot call StringMethods on type {}".format(series.spark.data_type))
+        self._data = series
+    # Methods
+    def capitalize(self) -> "ps.Series":
+        """
+        Convert Strings in the series to be capitalized.
+        Examples
+        --------
+        >>> s = ps.Series(['lower', 'CAPITALS', 'this is a sentence', 'SwApCaSe'])
+        >>> s
+        0                 lower
+        1              CAPITALS
+        2    this is a sentence
+        3              SwApCaSe
+        dtype: object
+        >>> s.str.capitalize()
+        0                 Lower
+        1              Capitals
+        2    This is a sentence
+        3              Swapcase
+        dtype: object
+        """
+        def pandas_capitalize(s) -> ps.Series[str]:  # type: ignore[no-untyped-def]
+            return s.str.capitalize()
+        return self._data.pandas_on_spark.transform_batch(pandas_capitalize)
+    def title(self) -> "ps.Series":
+        """
+        Convert Strings in the series to be title case.
+        Examples
+        --------
+        >>> s = ps.Series(['lower', 'CAPITALS', 'this is a sentence', 'SwApCaSe'])
+        >>> s
+        0                 lower
+        1              CAPITALS
+        2    this is a sentence
+        3              SwApCaSe
+        dtype: object
+        >>> s.str.title()
+        0                 Lower
+        1              Capitals
+        2    This Is A Sentence
+        3              Swapcase
+        dtype: object
+        """
+        def pandas_title(s) -> ps.Series[str]:  # type: ignore[no-untyped-def]
+            return s.str.title()
+        return self._data.pandas_on_spark.transform_batch(pandas_title)
+    def lower(self) -> "ps.Series":
+        """
+        Convert strings in the Series/Index to all lowercase.
+        Examples
+        --------
+        >>> s = ps.Series(['lower', 'CAPITALS', 'this is a sentence', 'SwApCaSe'])
+        >>> s
+        0                 lower
+        1              CAPITALS
+        2    this is a sentence
+        3              SwApCaSe
+        dtype: object
+        >>> s.str.lower()
+        0                 lower
+        1              capitals
+        2    this is a sentence
+        3              swapcase
+        dtype: object
+        """
+        return self._data.spark.transform(F.lower)
+    def upper(self) -> "ps.Series":
+        """
+        Convert strings in the Series/Index to all uppercase.
+        Examples
+        --------
+        >>> s = ps.Series(['lower', 'CAPITALS', 'this is a sentence', 'SwApCaSe'])
+        >>> s
+        0                 lower
+        1              CAPITALS
+        2    this is a sentence
+        3              SwApCaSe
+        dtype: object
+        >>> s.str.upper()
+        0                 LOWER
+        1              CAPITALS
+        2    THIS IS A SENTENCE
+        3              SWAPCASE
+        dtype: object
+        """
+        return self._data.spark.transform(F.upper)
+    def swapcase(self) -> "ps.Series":
+        """
+        Convert strings in the Series/Index to be swap cased.
+        Examples
+        --------
+        >>> s = ps.Series(['lower', 'CAPITALS', 'this is a sentence', 'SwApCaSe'])
+        >>> s
+        0                 lower
+        1              CAPITALS
+        2    this is a sentence
+        3              SwApCaSe
+        dtype: object
+        >>> s.str.swapcase()
+        0                 LOWER
+        1              capitals
+        2    THIS IS A SENTENCE
+        3              sWaPcAsE
+        dtype: object
+        """
+        def pandas_swapcase(s) -> ps.Series[str]:  # type: ignore[no-untyped-def]
+            return s.str.swapcase()
+        return self._data.pandas_on_spark.transform_batch(pandas_swapcase)
+    def startswith(self, pattern: str, na: Optional[Any] = None) -> "ps.Series":
+        """
+        Test if the start of each string element matches a pattern.
+        Equivalent to :func:`str.startswith`.
+        Parameters
+        ----------
+        pattern : str
+            Character sequence. Regular expressions are not accepted.
+        na : object, default None
+            Object shown if element is not a string. NaN converted to None.
+        Returns
+        -------
+        Series of bool or object
+            pandas-on-Spark Series of booleans indicating whether the given pattern
+            matches the start of each string element.
+        Examples
+        --------
+        >>> s = ps.Series(['bat', 'Bear', 'cat', np.n
+...[Truncation]...
+t(Optional[List], column_labels),
+                data_fields=[
+                    self._data._internal.data_fields[0].copy(name=str(i), nullable=True)
+                    for i in range(n + 1)
+                ],
+            )
+            return DataFrame(internal)
+        else:
+            return psser
+    def translate(self, table: Dict) -> "ps.Series":
+        """
+        Map all characters in the string through the given mapping table.
+        Equivalent to standard :func:`str.translate`.
+        Parameters
+        ----------
+        table : dict
+            Table is a mapping of Unicode ordinals to Unicode ordinals,
+            strings, or None. Unmapped characters are left untouched.
+            Characters mapped to None are deleted. :func:`str.maketrans` is a
+            helper function for making translation tables.
+        Returns
+        -------
+        Series of object
+            Series with translated strings.
+        Examples
+        --------
+        >>> s = ps.Series(["dog", "cat", "bird"])
+        >>> m = str.maketrans({'a': 'X', 'i': 'Y', 'o': None})
+        >>> s.str.translate(m)
+        0      dg
+        1     cXt
+        2    bYrd
+        dtype: object
+        """
+        def pandas_translate(s) -> ps.Series[str]:  # type: ignore[no-untyped-def]
+            return s.str.translate(table)
+        return self._data.pandas_on_spark.transform_batch(pandas_translate)
+    def wrap(self, width: int, **kwargs: bool) -> "ps.Series":
+        """
+        Wrap long strings in the Series to be formatted in paragraphs with
+        length less than a given width.
+        This method has the same keyword parameters and defaults as
+        :class:`textwrap.TextWrapper`.
+        Parameters
+        ----------
+        width : int
+            Maximum line-width. Lines separated with newline char.
+        expand_tabs : bool, optional
+            If true, tab characters will be expanded to spaces (default: True).
+        replace_whitespace : bool, optional
+            If true, each whitespace character remaining after tab expansion
+            will be replaced by a single space (default: True).
+        drop_whitespace : bool, optional
+            If true, whitespace that, after wrapping, happens to end up at the
+            beginning or end of a line is dropped (default: True).
+        break_long_words : bool, optional
+            If true, then words longer than width will be broken to
+            ensure that no lines are longer than width. If it is false, long
+            words will not be broken, and some lines may be longer than width
+            (default: True).
+        break_on_hyphens : bool, optional
+            If true, wrapping will occur preferably on whitespace and right
+            after hyphens in compound words, as it is customary in English.
+            If false, only whitespaces will be considered as potentially good
+            places for line breaks, but you need to set break_long_words to
+            false if you want truly insecable words (default: True).
+        Returns
+        -------
+        Series of object
+            Series with wrapped strings.
+        Examples
+        --------
+        >>> s = ps.Series(['line to be wrapped', 'another line to be wrapped'])
+        >>> s.str.wrap(12)
+        0             line to be\\nwrapped
+        1    another line\\nto be\\nwrapped
+        dtype: object
+        """
+        def pandas_wrap(s) -> ps.Series[str]:  # type: ignore[no-untyped-def]
+            return s.str.wrap(width, **kwargs)
+        return self._data.pandas_on_spark.transform_batch(pandas_wrap)
+    def zfill(self, width: int) -> "ps.Series":
+        """
+        Pad strings in the Series by prepending ‘0’ characters.
+        Strings in the Series are padded with ‘0’ characters on the left of the
+        string to reach a total string length width. Strings in the Series with
+        length greater or equal to width are unchanged.
+        Differs from :func:`str.zfill` which has special handling for ‘+’/’-‘
+        in the string.
+        Parameters
+        ----------
+        width : int
+            Minimum length of resulting string; strings with length less than
+            width be prepended with ‘0’ characters.
+        Returns
+        -------
+        Series of object
+            Series with '0' left-padded strings.
+        Examples
+        --------
+        >>> s = ps.Series(['-1', '1', '1000', np.nan])
+        >>> s
+        0      -1
+        1       1
+        2    1000
+        3    None
+        dtype: object
+        Note that NaN is not a string, therefore it is converted to NaN. The
+        minus sign in '-1' is treated as a regular character and the zero is
+        added to the left of it (:func:`str.zfill` would have moved it to the
+        left). 1000 remains unchanged as it is longer than width.
+        >>> s.str.zfill(3)  # doctest: +SKIP
+        0     -01
+        1     001
+        2    1000
+        3    None
+        dtype: object
+        """
+        def pandas_zfill(s) -> ps.Series[str]:  # type: ignore[no-untyped-def]
+            return s.str.zfill(width)
+        return self._data.pandas_on_spark.transform_batch(pandas_zfill)
+    @no_type_check
+    def get_dummies(self, sep: str = "|") -> "ps.DataFrame":
+        """
+        Not supported.
+        """
+        raise NotImplementedError()
+def _test() -> None:
+    import os
+    import doctest
+    import sys
+    from pyspark.sql import SparkSession
+    import pyspark.pandas.strings
+    os.chdir(os.environ["SPARK_HOME"])
+    globs = pyspark.pandas.strings.__dict__.copy()
+    globs["ps"] = pyspark.pandas
+    spark = (
+        SparkSession.builder.master("local[4]")
+        .appName("pyspark.pandas.strings tests")
+        .getOrCreate()
+    )
+    (failure_count, test_count) = doctest.testmod(
+        pyspark.pandas.strings,
+        globs=globs,
+        optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE,
+    )
+    spark.stop()
+    if failure_count:
+        sys.exit(-1)
+if __name__ == "__main__":
+    _test()
+`cat /usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 171 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p nest_asyncio
+python /home/tools/pip_download.py -p boxsdk
+python /home/tools/pip_download.py -p chispa
+python /home/tools/pip_download.py -p tableauhyperapi
+python /home/tools/pip_download.py -p tableauserverclient
+python /home/tools/pip_download.py -p pyarrow
+python /home/tools/pip_download.py -p paramiko
+export PYTHONPATH=/repo/src
+python /home/tools/code_edit.py -t '/tmp/patch/tmp0cvumxmw' -p '/tmp'
+---------------------------
+### Thought:
+I have obtained the exact content of the `StringMethods` class in the `pyspark/pandas/strings.py` file. To address the issue, I will now replace `np.NaN` with `np.nan` to reflect the change in the updated NumPy version.
+
+### Action:
+```diff
+/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py
+<<<<<<< SEARCH
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
+=======
+    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.nan) -> "ps.Series":
+>>>>>>> REPLACE
+```
+### Observation:
+Running Edit...
+[?2004l
+* Succeed Patch:
+--- a/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py
++++ b/usr/local/lib/python3.10/site-packages/pyspark/pandas/strings.py
+@@ -1329,7 +1329,7 @@
+ 
+         return self._data.pandas_on_spark.transform_batch(pandas_ljust)
+ 
+-    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.NaN) -> "ps.Series":
++    def match(self, pat: str, case: bool = True, flags: int = 0, na: Any = np.nan) -> "ps.Series":
+         """
+         Determine if each string matches a regular expression.
+ 
+
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 170 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p jsonpickle
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pyyaml
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pydantic
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p pytest-order
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp
+python /home/tools/pip_download.py -p requests_mock
+python /home/tools/pip_download.py -p pyspark
+python /home/tools/pip_download.py -p delta-spark
+python /home/tools/pip_download.py -p requests
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p aiohttp-retry
+python /home/tools/pip_download.py -p pandas
+export PYTHONPATH=/repo/src
+python /home/tools/pip_download.py -p nest_asyncio
+python /home/tools/pip_download.py -p boxsdk
+python /home/tools/pip_download.py -p chispa
+python /home/tools/pip_download.py -p tableauhyperapi
+python /home/tools/pip_download.py -p tableauserverclient
+python /home/tools/pip_download.py -p pyarrow
+python /home/tools/pip_download.py -p paramiko
+export PYTHONPATH=/repo/src
+python /home/tools/code_edit.py -t '/tmp/patch/tmp0cvumxmw' -p '/tmp'
+python /home/tools/code_edit.py -t '/tmp/patch/tmpn8x338fk' -p '/tmp'
+---------------------------
+### Thought:
+The issue with `np.NaN` has been resolved by replacing it with `np.nan`. Now, I will run the tests again to check for any additional missing dependencies or issues.
+
+### Action:
+```bash
+export PYTHONPATH=/repo/src && runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/asyncio/test_asyncio_http.py: 14
+tests/core/test_context.py: 25
+tests/core/test_init.py: 1
+tests/core/test_logger.py: 4
+tests/models/test_models.py: 32
+tests/notifications/test_slack.py: 3
+tests/pandas/readers/test_pandas_excel.py: 1
+tests/snowflake/test_snowflake.py: 17
+tests/spark/integrations/box/test_box.py: 20
+tests/spark/integrations/databrikcs/test_secrets.py: 3
+tests/spark/integrations/dq/test_spark_expectations.py: 6
+tests/spark/integrations/snowflake/test_spark_snowflake.py: 36
+tests/spark/integrations/snowflake/test_sync_task.py: 26
+tests/spark/integrations/tableau/test_hyper.py: 5
+tests/spark/integrations/tableau/test_server.py: 7
+tests/spark/readers/test_auto_loader.py: 5
+tests/spark/readers/test_delta_reader.py: 11
+tests/spark/readers/test_file_loader.py: 8
+tests/spark/readers/test_hana.py: 1
+tests/spark/readers/test_jdbc.py: 5
+tests/spark/readers/test_memory.py: 5
+tests/spark/readers/test_metastore_reader.py: 1
+tests/spark/readers/test_reader.py: 2
+tests/spark/readers/test_rest_api.py: 2
+tests/spark/readers/test_spark_excel.py: 1
+tests/spark/readers/test_spark_sql_reader.py: 2
+tests/spark/readers/test_teradata.py: 2
+tests/spark/tasks/test_etl_task.py: 4
+tests/spark/test_delta.py: 9
+tests/spark/test_spark.py: 5
+tests/spark/test_spark_utils.py: 16
+tests/spark/test_warnings.py: 1
+tests/spark/transformations/date_time/test_date_time.py: 8
+tests/spark/transformations/date_time/test_interval.py: 11
+tests/spark/transformations/strings/test_change_case.py: 2
+tests/spark/transformations/strings/test_concat.py: 11
+tests/spark/transformations/strings/test_pad.py: 5
+tests/spark/transformations/strings/test_regexp.py: 5
+tests/spark/transformations/strings/test_split.py: 7
+tests/spark/transformations/strings/test_string_replace.py: 3
+tests/spark/transformations/strings/test_substring.py: 4
+tests/spark/transformations/strings/test_trim.py: 4
+tests/spark/transformations/test_arrays.py: 36
+tests/spark/transformations/test_camel_to_snake_transform.py: 2
+tests/spark/transformations/test_cast_to_datatype.py: 38
+tests/spark/transformations/test_drop_column.py: 4
+tests/spark/transformations/test_get_item.py: 2
+tests/spark/transformations/test_hash.py: 6
+tests/spark/transformations/test_lookup.py: 6
+tests/spark/transformations/test_repartition.py: 5
+tests/spark/transformations/test_replace.py: 20
+tests/spark/transformations/test_row_number_dedup.py: 4
+tests/spark/transformations/test_sql_transform.py: 9
+tests/spark/transformations/test_transform.py: 8
+tests/spark/transformations/test_transformation.py: 11
+tests/spark/transformations/test_uuid5.py: 4
+tests/spark/writers/delta/test_delta_writer.py: 27
+tests/spark/writers/delta/test_scd.py: 2
+tests/spark/writers/test_buffer.py: 15
+tests/spark/writers/test_dummy.py: 3
+tests/spark/writers/test_file_writer.py: 2
+tests/spark/writers/test_sftp.py: 20
+tests/spark/writers/test_stream.py: 20
+tests/sso/test_okta.py: 6
+tests/steps/test_http.py: 23
+tests/steps/test_steps.py: 26
+tests/utils/test_utils.py: 3
+
+Container faf4c8cc643b stopped and removed
+Spend totally 1098.4031600952148.

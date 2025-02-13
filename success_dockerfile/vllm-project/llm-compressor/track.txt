@@ -1,0 +1,1347 @@
+vllm-project/llm-compressor
+606aab2b57eb0931f93976f6011f2b2869ebdc60
+Container unruffled_leavitt 245d01e9a66b started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought:
+I need to understand the structure of the root directory.
+
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+CONTRIBUTING.md  MANIFEST.in  docker	pyproject.toml	tests
+DEVELOPING.md	 Makefile     docs	setup.py	utils
+LICENSE		 README.md    examples	src
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I need to check the content of `pyproject.toml` and `setup.py` to understand the dependencies and also to verify if a particular tool like poetry or pip is specified for installing dependencies.
+
+### Action:
+```bash
+cat /repo/pyproject.toml /repo/setup.py
+```
+### Observation:
+Running `cat /repo/pyproject.toml /repo/setup.py`...
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+[tool.black]
+line-length = 88
+target-version = ['py38']
+[tool.isort]
+profile = "black"
+[tool.mypy]
+files = "src/guidellm"
+[tool.ruff]
+exclude = ["build", "dist", "env", ".venv"]
+lint.select = ["E", "F", "W"]
+[tool.flake8]
+max-line-length = 88
+extend-ignore = 'E203'
+[tool.pytest.ini_options]
+markers = [
+    "smoke: quick tests to check basic functionality",
+    "sanity: tests to ensure that new changes do not break existing functionality",
+    "regression: detailed tests to ensure major functions work correctly",
+    "integration: tests which integrate with a third party service such as HF",
+    "unit: tests to ensure code correctness and regression test functionality",
+    "example: tests for content in the 'examples' folder",
+    "multi_gpu: tests that require multiple GPUs",
+]
+tmp_path_retention_policy = "failed"
+import os
+import sys
+from setuptools import find_packages, setup
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from utils.version_extractor import extract_version_info  # noqa isort:skip
+# load version info for the package
+package_path = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "src", "llmcompressor"
+)
+version_info = extract_version_info(package_path)
+if version_info.build_type == "release":
+    package_name = "llmcompressor"
+elif version_info.build_type == "dev":
+    package_name = "llmcompressor-dev"
+elif version_info.build_type == "nightly":
+    package_name = "llmcompressor-nightly"
+else:
+    raise ValueError(f"Unsupported build type {version_info.build_type}")
+setup(
+    name=package_name,
+    version=version_info.version,
+    author="Neuralmagic, Inc.",
+    author_email="support@neuralmagic.com",
+    description=(
+        "A library for compressing large language models utilizing the "
+        "latest techniques and research in the field for both "
+        "training aware and post training techniques. "
+        "The library is designed to be flexible and easy to use on top of "
+        "PyTorch and HuggingFace Transformers, allowing for quick experimentation."
+    ),
+    long_description=open("README.md", "r", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
+    keywords=(
+        "llmcompressor, llms, large language models, transformers, pytorch, "
+        "huggingface, compressors, compression, quantization, pruning, "
+        "sparsity, optimization, model optimization, model compression, "
+    ),
+    license="Apache",
+    url="https://github.com/neuralmagic/llm-compressor",
+    include_package_data=True,
+    package_dir={"": "src"},
+    packages=find_packages(
+        "src", include=["llmcompressor", "llmcompressor.*"], exclude=["*.__pycache__.*"]
+    ),
+    install_requires=[
+        "loguru",
+        "pyyaml>=5.0.0",
+        "numpy>=1.17.0,<2.0",
+        "requests>=2.0.0",
+        "tqdm>=4.0.0",
+        "click>=7.1.2,!=8.0.0",  # 8.0.0 blocked due to reported bug
+        "torch>=1.7.0",
+        "transformers>4.0,<5.0",
+        "datasets",
+        "accelerate>=0.20.3,!=1.1.0",
+        "pynvml==11.5.3",
+        "compressed-tensors"
+        if version_info.build_type == "release"
+        else "compressed-tensors-nightly",
+    ],
+    extras_require={
+        "dev": [
+            # testing framework
+            "pytest>=6.0.0",
+            "pytest-mock>=3.6.0",
+            "pytest-rerunfailures>=13.0",
+            "parameterized",
+            "lm_eval==0.4.5",
+            # example test dependencies
+            "beautifulsoup4~=4.12.3",
+            "cmarkgfm~=2024.1.14",
+            "trl>=0.10.1",
+            # linting, formatting, and type checking
+            "black~=24.4.2",
+            "isort~=5.13.2",
+            "mypy~=1.10.0",
+            "ruff~=0.4.8",
+            "flake8~=7.0.0",
+            # pre commit hooks
+            "pre-commit",
+        ]
+    },
+    entry_points={
+        "console_scripts": [
+            "llmcompressor.transformers.text_generation.apply=llmcompressor.transformers.finetune.text_generation:apply",  # noqa 501
+            "llmcompressor.transformers.text_generation.compress=llmcompressor.transformers.finetune.text_generation:apply",  # noqa 501
+            "llmcompressor.transformers.text_generation.train=llmcompressor.transformers.finetune.text_generation:train",  # noqa 501
+            "llmcompressor.transformers.text_generation.finetune=llmcompressor.transformers.finetune.text_generation:train",  # noqa 501
+            "llmcompressor.transformers.text_generation.eval=llmcompressor.transformers.finetune.text_generation:eval",  # noqa 501
+            "llmcompressor.transformers.text_generation.oneshot=llmcompressor.transformers.finetune.text_generation:oneshot",  # noqa 501
+        ]
+    },
+    python_requires=">=3.8",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Intended Audience :: Information Technology",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: POSIX :: Linux",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "Topic :: Software Development",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+)
+`cat /repo/pyproject.toml /repo/setup.py` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The repository uses setuptools for managing dependencies as specified in `setup.py`. There is also a `pyproject.toml` file specifying various configuration options for tools like `black`, `isort`, `mypy`, `ruff`, `flake8`, and `pytest`, but it doesn't specify poetry for dependency management. Hence, I should use the `setup.py` file for installing dependencies.
+
+Next, I will run `pip install -e .` to install the package and its dependencies in editable mode.
+
+### Action:
+```bash
+cd /repo && pip install -e .
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `pip install -e .`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install -e .`...
+Looking in indexes: http://simple/
+Obtaining file:///repo
+  Installing build dependencies ... [?25l- \ | / done
+  Downloading http://packages/loguru/loguru-0.7.3-py3-none-any.whl (61 kB)
+Collecting pyyaml>=5.0.0 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pyyaml/PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (751 kB)
+  Downloading http://packages/numpy/numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+  Using cached http://packages/requests/requests-2.32.3-py3-none-any.whl (64 kB)
+Collecting tqdm>=4.0.0 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/tqdm/tqdm-4.67.1-py3-none-any.whl (78 kB)
+Collecting click!=8.0.0,>=7.1.2 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/click/click-8.1.7-py3-none-any.whl (97 kB)
+Collecting torch>=1.7.0 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/torch/torch-2.5.1-cp310-cp310-manylinux1_x86_64.whl (906.4 MB)
+  Downloading http://packages/transformers/transformers-4.47.1-py3-none-any.whl (10.1 MB)
+  Downloading http://packages/datasets/datasets-3.2.0-py3-none-any.whl (480 kB)
+Collecting accelerate!=1.1.0,>=0.20.3 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/accelerate/accelerate-1.2.1-py3-none-any.whl (336 kB)
+Collecting pynvml==11.5.3 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pynvml/pynvml-11.5.3-py3-none-any.whl (53 kB)
+Collecting compressed-tensors-nightly (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/compressed-tensors-nightly/compressed_tensors_nightly-0.8.1.20241220-py3-none-any.whl (87 kB)
+Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.10/site-packages (from accelerate!=1.1.0,>=0.20.3->llmcompressor-dev==0.3.0.dev0) (24.2)
+Collecting psutil (from accelerate!=1.1.0,>=0.20.3->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/psutil/psutil-6.1.1-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (287 kB)
+Collecting huggingface-hub>=0.21.0 (from accelerate!=1.1.0,>=0.20.3->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/huggingface-hub/huggingface_hub-0.27.0-py3-none-any.whl (450 kB)
+Collecting safetensors>=0.4.3 (from accelerate!=1.1.0,>=0.20.3->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/safetensors/safetensors-0.4.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (435 kB)
+Collecting charset-normalizer<4,>=2 (from requests>=2.0.0->llmcompressor-dev==0.3.0.dev0)
+  Using cached http://packages/charset-normalizer/charset_normalizer-3.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (144 kB)
+Collecting idna<4,>=2.5 (from requests>=2.0.0->llmcompressor-dev==0.3.0.dev0)
+  Using cached http://packages/idna/idna-3.10-py3-none-any.whl (70 kB)
+Collecting urllib3<3,>=1.21.1 (from requests>=2.0.0->llmcompressor-dev==0.3.0.dev0)
+  Using cached http://packages/urllib3/urllib3-2.2.3-py3-none-any.whl (126 kB)
+Collecting certifi>=2017.4.17 (from requests>=2.0.0->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/certifi/certifi-2024.12.14-py3-none-any.whl (164 kB)
+Collecting filelock (from torch>=1.7.0->llmcompressor-dev==0.3.0.dev0)
+  Using cached http://packages/filelock/filelock-3.16.1-py3-none-any.whl (16 kB)
+Collecting typing-extensions>=4.8.0 (from torch>=1.7.0->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/typing-extensions/typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+Collecting networkx (from torch>=1.7.0->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/networkx/networkx-3.4.2-py3-none-any.whl (1.7 MB)
+  Downloading http://packages/jinja2/jinja2-3.1.4-py3-none-any.whl (133 kB)
+Collecting fsspec (from torch>=1.7.0->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/fsspec/fsspec-2024.12.0-py3-none-any.whl (183 kB)
+Collecting nvidia-cuda-nvrtc-cu12==12.4.127 (from torch>=1.7.0->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/nvidia-cuda-nvrtc-cu12/nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl (24.6 MB)
+  Downloading http://packages/nvidia-cuda-runtime-cu12/nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl (883 kB)
+  Downloading http://packages/nvidia-cuda-cupti-cu12/nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl (13.8 MB)
+  Downloading http://packages/nvidia-cudnn-cu12/nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl (664.8 MB)
+  Downloading http://packages/nvidia-cublas-cu12/nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_x86_64.whl (363.4 MB)
+  Downloading http://packages/nvidia-cufft-cu12/nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_x86_64.whl (211.5 MB)
+  Downloading http://packages/nvidia-curand-cu12/nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_x86_64.whl (56.3 MB)
+  Downloading http://packages/nvidia-cusolver-cu12/nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_x86_64.whl (127.9 MB)
+  Downloading http://packages/nvidia-cusparse-cu12/nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_x86_64.whl (207.5 MB)
+  Downloading http://packages/nvidia-nccl-cu12/nvidia_nccl_cu12-2.21.5-py3-none-manylinux2014_x86_64.whl (188.7 MB)
+  Downloading
+...[Truncation]...
+_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+Collecting multidict<7.0,>=4.5 (from aiohttp->datasets->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/multidict/multidict-6.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (124 kB)
+Collecting propcache>=0.2.0 (from aiohttp->datasets->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/propcache/propcache-0.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (205 kB)
+Collecting yarl<2.0,>=1.17.0 (from aiohttp->datasets->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/yarl/yarl-1.18.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (319 kB)
+Collecting annotated-types>=0.6.0 (from pydantic>=2.0->compressed-tensors-nightly->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/annotated-types/annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Collecting pydantic-core==2.27.2 (from pydantic>=2.0->compressed-tensors-nightly->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pydantic-core/pydantic_core-2.27.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+[?25l     [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/2.0 MB[0m [31m?[0m eta [36m-:--:--[0m
+[2K     [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m[90m━━━[0m [32m1.8/2.0 MB[0m [31m134.7 MB/s[0m eta [36m0:00:01[0m
+[2K     [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m[90m━━━[0m [32m1.8/2.0 MB[0m [31m134.7 MB/s[0m eta [36m0:00:01[0m
+[2K     [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m[90m━━━[0m [32m1.8/2.0 MB[0m [31m134.7 MB/s[0m eta [36m0:00:01[0m
+[2K     [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m[90m━━━[0m [32m1.8/2.0 MB[0m [31m134.7 MB/s[0m eta [36m0:00:01[0m
+[2K     [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m2.0/2.0 MB[0m [31m2.1 MB/s[0m eta [36m0:00:00[0m
+[?25hCollecting MarkupSafe>=2.0 (from jinja2->torch>=1.7.0->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/markupsafe/MarkupSafe-3.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20 kB)
+Collecting python-dateutil>=2.8.2 (from pandas->datasets->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/python-dateutil/python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Collecting pytz>=2020.1 (from pandas->datasets->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pytz/pytz-2024.2-py2.py3-none-any.whl (508 kB)
+Collecting tzdata>=2022.7 (from pandas->datasets->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/tzdata/tzdata-2024.2-py2.py3-none-any.whl (346 kB)
+Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas->datasets->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/six/six-1.17.0-py2.py3-none-any.whl (11 kB)
+Building wheels for collected packages: llmcompressor-dev
+  Building editable for llmcompressor-dev (pyproject.toml) ... [?25l- done
+[?25h  Created wheel for llmcompressor-dev: filename=llmcompressor_dev-0.3.0.dev0-0.editable-py3-none-any.whl size=8370 sha256=dbef1d79ef1020b856e0cc1458353a820566521e352432cdb6c8f75d88080c50
+  Stored in directory: /tmp/pip-ephem-wheel-cache-t02zlg7x/wheels/83/05/69/977b54e69478800cfcea8a9437a7ea4a9b1a48db334f824611
+Successfully built llmcompressor-dev
+Installing collected packages: pytz, mpmath, xxhash, urllib3, tzdata, typing-extensions, tqdm, sympy, six, safetensors, regex, pyyaml, pynvml, pyarrow, psutil, propcache, nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpy, networkx, MarkupSafe, loguru, idna, fsspec, frozenlist, filelock, dill, click, charset-normalizer, certifi, attrs, async-timeout, annotated-types, aiohappyeyeballs, triton, requests, python-dateutil, pydantic-core, nvidia-cusparse-cu12, nvidia-cudnn-cu12, multiprocess, multidict, jinja2, aiosignal, yarl, pydantic, pandas, nvidia-cusolver-cu12, huggingface-hub, torch, tokenizers, aiohttp, transformers, accelerate, datasets, compressed-tensors-nightly, llmcompressor-dev
+Successfully installed MarkupSafe-3.0.2 accelerate-1.2.1 aiohappyeyeballs-2.4.4 aiohttp-3.11.11 aiosignal-1.3.2 annotated-types-0.7.0 async-timeout-5.0.1 attrs-24.3.0 certifi-2024.12.14 charset-normalizer-3.4.0 click-8.1.7 compressed-tensors-nightly-0.8.1.20241220 datasets-3.2.0 dill-0.3.8 filelock-3.16.1 frozenlist-1.5.0 fsspec-2024.9.0 huggingface-hub-0.27.0 idna-3.10 jinja2-3.1.4 llmcompressor-dev-0.3.0.dev0 loguru-0.7.3 mpmath-1.3.0 multidict-6.1.0 multiprocess-0.70.16 networkx-3.4.2 numpy-1.26.4 nvidia-cublas-cu12-12.4.5.8 nvidia-cuda-cupti-cu12-12.4.127 nvidia-cuda-nvrtc-cu12-12.4.127 nvidia-cuda-runtime-cu12-12.4.127 nvidia-cudnn-cu12-9.1.0.70 nvidia-cufft-cu12-11.2.1.3 nvidia-curand-cu12-10.3.5.147 nvidia-cusolver-cu12-11.6.1.9 nvidia-cusparse-cu12-12.3.1.170 nvidia-nccl-cu12-2.21.5 nvidia-nvjitlink-cu12-12.4.127 nvidia-nvtx-cu12-12.4.127 pandas-2.2.3 propcache-0.2.1 psutil-6.1.1 pyarrow-18.1.0 pydantic-2.10.4 pydantic-core-2.27.2 pynvml-11.5.3 python-dateutil-2.9.0.post0 pytz-2024.2 pyyaml-6.0.2 regex-2024.11.6 requests-2.32.3 safetensors-0.4.5 six-1.17.0 sympy-1.13.1 tokenizers-0.21.0 torch-2.5.1 tqdm-4.67.1 transformers-4.47.1 triton-3.1.0 typing-extensions-4.12.2 tzdata-2024.2 urllib3-2.2.3 xxhash-3.5.0 yarl-1.18.3
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -e .` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+---------------------------
+### Thought:
+I have successfully installed the package and its dependencies using `pip install -e .`. Now, I will run the tests to check if the configuration is correct.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/custom_test.py::CustomIntegrationTest::test_custom_class
+tests/custom_test.py::CustomIntegrationTest::test_custom_scripts
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger4]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger4]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger4]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs0-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs1-expectation1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs2-expectation2]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs3-expectation3]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs4-expectation4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs5-expectation5]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs6-expectation6]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[0.1-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[0-expectation1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[-1-expectation2]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[True-expectation3]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[step4-expectation4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[step5-expectation5]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[0.1-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[0-expectation1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[-1-expectation2]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[True-expectation3]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[step4-expectation4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[step5-expectation5]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-None-None-None-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-None-1-1-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-1-None-1-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.2-None-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.2-None-True-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[None-1-2-3-False-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[None-1-2-3-True-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-1-1-0.1-False-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-1-1-0.1-True-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.1-0.3-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.1-0.1-True-True0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.1-0.1-True-True1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test__validate_log_frequency[0.1-epoch-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test__validate_log_frequency[0.1-step-expectation1]
+tests/llmcompressor/metric
+...[Truncation]...
+names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/llmcompressor/transformers/gptq/test_oneshot.py:5: in <module>
+    from parameterized import parameterized_class
+E   ModuleNotFoundError: No module named 'parameterized'
+_ ERROR collecting tests/llmcompressor/transformers/obcq/test_consecutive_runs.py _
+ImportError while importing test module '/repo/tests/llmcompressor/transformers/obcq/test_consecutive_runs.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/llmcompressor/transformers/obcq/test_consecutive_runs.py:7: in <module>
+    from parameterized import parameterized_class
+E   ModuleNotFoundError: No module named 'parameterized'
+_ ERROR collecting tests/llmcompressor/transformers/obcq/test_mask_structure_preservation.py _
+ImportError while importing test module '/repo/tests/llmcompressor/transformers/obcq/test_mask_structure_preservation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/llmcompressor/transformers/obcq/test_mask_structure_preservation.py:6: in <module>
+    from parameterized import parameterized_class
+E   ModuleNotFoundError: No module named 'parameterized'
+_ ERROR collecting tests/llmcompressor/transformers/obcq/test_obcq_completion.py _
+ImportError while importing test module '/repo/tests/llmcompressor/transformers/obcq/test_obcq_completion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/llmcompressor/transformers/obcq/test_obcq_completion.py:5: in <module>
+    from parameterized import parameterized_class
+E   ModuleNotFoundError: No module named 'parameterized'
+_ ERROR collecting tests/llmcompressor/transformers/obcq/test_obcq_sparsity.py _
+ImportError while importing test module '/repo/tests/llmcompressor/transformers/obcq/test_obcq_sparsity.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/llmcompressor/transformers/obcq/test_obcq_sparsity.py:6: in <module>
+    from parameterized import parameterized_class
+E   ModuleNotFoundError: No module named 'parameterized'
+_ ERROR collecting tests/llmcompressor/transformers/oneshot/test_api_inputs.py _
+ImportError while importing test module '/repo/tests/llmcompressor/transformers/oneshot/test_api_inputs.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/llmcompressor/transformers/oneshot/test_api_inputs.py:5: in <module>
+    from parameterized import parameterized_class
+E   ModuleNotFoundError: No module named 'parameterized'
+____ ERROR collecting tests/llmcompressor/transformers/oneshot/test_cli.py _____
+ImportError while importing test module '/repo/tests/llmcompressor/transformers/oneshot/test_cli.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/llmcompressor/transformers/oneshot/test_cli.py:5: in <module>
+    from parameterized import parameterized_class
+E   ModuleNotFoundError: No module named 'parameterized'
+=========================== short test summary info ============================
+ERROR tests/e2e/vLLM/test_lmeval.py
+ERROR tests/e2e/vLLM/test_vllm.py
+ERROR tests/examples/test_big_models_with_accelerate.py
+ERROR tests/examples/test_compressed_inference.py
+ERROR tests/examples/test_quantization_2of4_sparse_w4a16.py
+ERROR tests/examples/test_quantization_kv_cache.py
+ERROR tests/examples/test_quantization_w4a16.py
+ERROR tests/examples/test_quantization_w8a8_fp8.py
+ERROR tests/examples/test_quantization_w8a8_int8.py
+ERROR tests/examples/test_quantizing_moe.py
+ERROR tests/examples/test_trl_mixin.py
+ERROR tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py
+ERROR tests/llmcompressor/transformers/compression/test_quantization.py
+ERROR tests/llmcompressor/transformers/compression/test_run_compressed.py
+ERROR tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py
+ERROR tests/llmcompressor/transformers/finetune/test_finetune_no_recipe_custom_dataset.py
+ERROR tests/llmcompressor/transformers/finetune/test_finetune_oneshot_with_modifier.py
+ERROR tests/llmcompressor/transformers/finetune/test_finetune_without_recipe.py
+ERROR tests/llmcompressor/transformers/finetune/test_oneshot_and_finetune.py
+ERROR tests/llmcompressor/transformers/finetune/test_oneshot_and_finetune_with_tokenizer.py
+ERROR tests/llmcompressor/transformers/finetune/test_safetensors.py
+ERROR tests/llmcompressor/transformers/gptq/test_oneshot.py
+ERROR tests/llmcompressor/transformers/obcq/test_consecutive_runs.py
+ERROR tests/llmcompressor/transformers/obcq/test_mask_structure_preservation.py
+ERROR tests/llmcompressor/transformers/obcq/test_obcq_completion.py
+ERROR tests/llmcompressor/transformers/obcq/test_obcq_sparsity.py
+ERROR tests/llmcompressor/transformers/oneshot/test_api_inputs.py
+ERROR tests/llmcompressor/transformers/oneshot/test_cli.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 28 errors during collection !!!!!!!!!!!!!!!!!!!
+444 tests collected, 28 errors in 8.80s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+---------------------------
+### Thought:
+The error message indicates that the module `parameterized` is missing, which is used in multiple test files. This dependency is included in the `dev` extras in `setup.py`. I will install the `dev` dependencies to resolve these errors.
+
+### Action:
+```bash
+pip install -e .[dev]
+```
+### Observation:
+Running `pip install -e .[dev]`...
+Looking in indexes: http://simple/
+Obtaining file:///
+[31mERROR: file:/// does not appear to be a Python project: neither 'setup.py' nor 'pyproject.toml' found.[0m[31m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`pip install -e .[dev]` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 195 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+---------------------------
+### Thought:
+It looks like there was an issue with the command due to the directory context. I will navigate to `/repo` and then try to install the `dev` dependencies again.
+
+### Action:
+```bash
+cd /repo && pip install -e .[dev]
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `pip install -e .[dev]`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install -e .[dev]`...
+Looking in indexes: http://simple/
+Obtaining file:///repo
+  Installing build dependencies ... [?25l- \ | / done
+Requirement already satisfied: pyyaml>=5.0.0 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (6.0.2)
+Requirement already satisfied: numpy<2.0,>=1.17.0 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (1.26.4)
+Requirement already satisfied: requests>=2.0.0 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (2.32.3)
+Requirement already satisfied: tqdm>=4.0.0 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (4.67.1)
+Requirement already satisfied: click!=8.0.0,>=7.1.2 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (8.1.7)
+Requirement already satisfied: torch>=1.7.0 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (2.5.1)
+Requirement already satisfied: transformers<5.0,>4.0 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (4.47.1)
+Requirement already satisfied: datasets in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (3.2.0)
+Requirement already satisfied: accelerate!=1.1.0,>=0.20.3 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (1.2.1)
+Requirement already satisfied: pynvml==11.5.3 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (11.5.3)
+Requirement already satisfied: compressed-tensors-nightly in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (0.8.1.20241220)
+Requirement already satisfied: pytest>=6.0.0 in /usr/local/lib/python3.10/site-packages (from llmcompressor-dev==0.3.0.dev0) (8.3.4)
+Collecting pytest-mock>=3.6.0 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pytest-mock/pytest_mock-3.14.0-py3-none-any.whl (9.9 kB)
+Collecting pytest-rerunfailures>=13.0 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pytest-rerunfailures/pytest_rerunfailures-15.0-py3-none-any.whl (13 kB)
+Collecting parameterized (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/parameterized/parameterized-0.9.0-py2.py3-none-any.whl (20 kB)
+Collecting lm_eval==0.4.5 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/lm-eval/lm_eval-0.4.5-py3-none-any.whl (2.4 MB)
+  Downloading http://packages/beautifulsoup4/beautifulsoup4-4.12.3-py3-none-any.whl (147 kB)
+Collecting cmarkgfm~=2024.1.14 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/cmarkgfm/cmarkgfm-2024.1.14-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (444 kB)
+Collecting trl>=0.10.1 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/trl/trl-0.13.0-py3-none-any.whl (293 kB)
+Collecting black~=24.4.2 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/black/black-24.4.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.8 MB)
+  Downloading http://packages/isort/isort-5.13.2-py3-none-any.whl (92 kB)
+Collecting mypy~=1.10.0 (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/mypy/mypy-1.10.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (12.7 MB)
+  Downloading http://packages/ruff/ruff-0.4.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (10.0 MB)
+  Downloading http://packages/flake8/flake8-7.0.0-py2.py3-none-any.whl (57 kB)
+Collecting pre-commit (from llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pre-commit/pre_commit-4.0.1-py2.py3-none-any.whl (218 kB)
+Collecting evaluate (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/evaluate/evaluate-0.4.3-py3-none-any.whl (84 kB)
+Collecting jsonlines (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/jsonlines/jsonlines-4.0.0-py3-none-any.whl (8.7 kB)
+Collecting numexpr (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/numexpr/numexpr-2.10.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (397 kB)
+Collecting peft>=0.2.0 (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/peft/peft-0.14.0-py3-none-any.whl (374 kB)
+Collecting pybind11>=2.6.2 (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pybind11/pybind11-2.13.6-py3-none-any.whl (243 kB)
+Collecting pytablewriter (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pytablewriter/pytablewriter-1.2.0-py3-none-any.whl (111 kB)
+Collecting rouge-score>=0.0.4 (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/rouge-score/rouge_score-0.1.2.tar.gz (17 kB)
+  Preparing metadata (setup.py) ... [?25l- done
+  Downloading http://packages/sacrebleu/sacrebleu-2.4.3-py3-none-any.whl (103 kB)
+Collecting scikit-learn>=0.24.1 (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/scikit-learn/scikit_learn-1.6.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.5 MB)
+  Downloading http://packages/sqlitedict/sqlitedict-2.1.0.tar.gz (21 kB)
+  Preparing metadata (setup.py) ... [?25l- done
+  Downloading http://packages/tqdm-multiprocess/tqdm_multiprocess-0.0.11-py3-none-any.whl (9.8 kB)
+Collecting zstandard (from lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/zstandard/zstandard-0.23.0-cp310-cp310-manyli
+...[Truncation]...
+-none-any.whl (27 kB)
+Collecting mbstrdecoder<2,>=1.0.0 (from pytablewriter->lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/mbstrdecoder/mbstrdecoder-1.1.3-py3-none-any.whl (7.8 kB)
+Collecting pathvalidate<4,>=2.3.0 (from pytablewriter->lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pathvalidate/pathvalidate-3.2.1-py3-none-any.whl (23 kB)
+Collecting tabledata<2,>=1.3.1 (from pytablewriter->lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/tabledata/tabledata-1.3.3-py3-none-any.whl (11 kB)
+Collecting tcolorpy<1,>=0.0.5 (from pytablewriter->lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/tcolorpy/tcolorpy-0.1.6-py3-none-any.whl (8.1 kB)
+Collecting typepy<2,>=1.3.2 (from typepy[datetime]<2,>=1.3.2->pytablewriter->lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/typepy/typepy-1.3.2-py3-none-any.whl (31 kB)
+Collecting markdown-it-py>=2.2.0 (from rich->trl>=0.10.1->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/markdown-it-py/markdown_it_py-3.0.0-py3-none-any.whl (87 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich->trl>=0.10.1->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/pygments/pygments-2.18.0-py3-none-any.whl (1.2 MB)
+[?25l     [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/1.2 MB[0m [31m?[0m eta [36m-:--:--[0m
+[2K     [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.2/1.2 MB[0m [31m49.5 MB/s[0m eta [36m0:00:00[0m
+[?25hCollecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich->trl>=0.10.1->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/mdurl/mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Collecting chardet<6,>=3.0.4 (from mbstrdecoder<2,>=1.0.0->pytablewriter->lm_eval==0.4.5->llmcompressor-dev==0.3.0.dev0)
+  Downloading http://packages/chardet/chardet-5.2.0-py3-none-any.whl (199 kB)
+Building wheels for collected packages: llmcompressor-dev, rouge-score, sqlitedict, word2number
+  Building editable for llmcompressor-dev (pyproject.toml) ... [?25l- \ done
+[?25h  Created wheel for llmcompressor-dev: filename=llmcompressor_dev-0.3.0.dev0-0.editable-py3-none-any.whl size=8370 sha256=55644e14e4cfcf759f585c91d25798320944ff259c8028d1a28b18dbc2cbb168
+  Stored in directory: /tmp/pip-ephem-wheel-cache-fw8ywa25/wheels/83/05/69/977b54e69478800cfcea8a9437a7ea4a9b1a48db334f824611
+  Building wheel for rouge-score (setup.py) ... [?25l- \ done
+[?25h  Created wheel for rouge-score: filename=rouge_score-0.1.2-py3-none-any.whl size=24935 sha256=1d37035b3b2dee08c5b6772371b62d7a81d44a4dc2e091993706dcab19a5e63f
+  Stored in directory: /root/.cache/pip/wheels/83/ad/b7/e387d8bb8cc06430d6045feae9ad031a934c6bebc763ab1412
+  Building wheel for sqlitedict (setup.py) ... [?25l- done
+[?25h  Created wheel for sqlitedict: filename=sqlitedict-2.1.0-py3-none-any.whl size=16864 sha256=76e8b2cb4308cc67ab0db0c168219a938bad1eef6a16940a7e243229ec5a2b5b
+  Stored in directory: /root/.cache/pip/wheels/96/41/65/859171e5fb87dfc7b3b96634dcda98a3afda2b1d64b887dee7
+  Building wheel for word2number (setup.py) ... [?25l- done
+[?25h  Created wheel for word2number: filename=word2number-1.1-py3-none-any.whl size=5566 sha256=258fe94a9dbc651f7e603f9743c6927b46042527078454d4764a1b1da6e2f73e
+  Stored in directory: /root/.cache/pip/wheels/ca/5d/60/f3ed854f58369eaaed6335ef8fa1cb692cfe513f411498ef57
+Successfully built llmcompressor-dev rouge-score sqlitedict word2number
+Installing collected packages: word2number, sqlitedict, distlib, zstandard, threadpoolctl, tcolorpy, tabulate, soupsieve, scipy, ruff, pygments, pyflakes, pycparser, pycodestyle, pybind11, portalocker, platformdirs, pathvalidate, pathspec, parameterized, numexpr, nodeenv, mypy-extensions, more-itertools, mdurl, mccabe, lxml, jsonlines, joblib, isort, identify, colorama, chardet, cfgv, absl-py, virtualenv, tqdm-multiprocess, scikit-learn, sacrebleu, pytest-rerunfailures, pytest-mock, nltk, mypy, mbstrdecoder, markdown-it-py, flake8, cffi, black, beautifulsoup4, typepy, rouge-score, rich, pre-commit, cmarkgfm, peft, DataProperty, trl, tabledata, llmcompressor-dev, evaluate, pytablewriter, lm_eval
+  Attempting uninstall: llmcompressor-dev
+    Found existing installation: llmcompressor-dev 0.3.0.dev0
+    Uninstalling llmcompressor-dev-0.3.0.dev0:
+      Successfully uninstalled llmcompressor-dev-0.3.0.dev0
+Successfully installed DataProperty-1.0.1 absl-py-2.1.0 beautifulsoup4-4.12.3 black-24.4.2 cffi-1.17.1 cfgv-3.4.0 chardet-5.2.0 cmarkgfm-2024.1.14 colorama-0.4.6 distlib-0.3.9 evaluate-0.4.3 flake8-7.0.0 identify-2.6.3 isort-5.13.2 joblib-1.4.2 jsonlines-4.0.0 llmcompressor-dev-0.3.0.dev0 lm_eval-0.4.5 lxml-5.3.0 markdown-it-py-3.0.0 mbstrdecoder-1.1.3 mccabe-0.7.0 mdurl-0.1.2 more-itertools-10.5.0 mypy-1.10.1 mypy-extensions-1.0.0 nltk-3.9.1 nodeenv-1.9.1 numexpr-2.10.2 parameterized-0.9.0 pathspec-0.12.1 pathvalidate-3.2.1 peft-0.14.0 platformdirs-4.3.6 portalocker-3.0.0 pre-commit-4.0.1 pybind11-2.13.6 pycodestyle-2.11.1 pycparser-2.22 pyflakes-3.2.0 pygments-2.18.0 pytablewriter-1.2.0 pytest-mock-3.14.0 pytest-rerunfailures-15.0 rich-13.9.4 rouge-score-0.1.2 ruff-0.4.10 sacrebleu-2.4.3 scikit-learn-1.6.0 scipy-1.14.1 soupsieve-2.6 sqlitedict-2.1.0 tabledata-1.3.3 tabulate-0.9.0 tcolorpy-0.1.6 threadpoolctl-3.5.0 tqdm-multiprocess-0.0.11 trl-0.13.0 typepy-1.3.2 virtualenv-20.28.0 word2number-1.1 zstandard-0.23.0
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -e .[dev]` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 194 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+cd /repo && pip install -e .[dev]
+---------------------------
+### Thought:
+I have successfully installed the `dev` dependencies. Now, I will run the tests again to verify if the configuration is correct.
+
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/custom_test.py::CustomIntegrationTest::test_custom_class
+tests/custom_test.py::CustomIntegrationTest::test_custom_scripts
+tests/e2e/vLLM/test_lmeval.py::TestLMEval::test_lm_eval
+tests/e2e/vLLM/test_vllm.py::TestvLLM::test_vllm
+tests/examples/test_big_models_with_accelerate.py::TestBigModelsWithAccelerate::test_readme_has_install_command
+tests/examples/test_big_models_with_accelerate.py::TestBigModelsWithAccelerate::test_example_scripts[cpu_offloading]
+tests/examples/test_big_models_with_accelerate.py::TestBigModelsWithAccelerate::test_example_scripts[multi_gpu_int8]
+tests/examples/test_big_models_with_accelerate.py::TestBigModelsWithAccelerate::test_example_scripts[mult_gpus_int8_device_map]
+tests/examples/test_compressed_inference.py::TestCompressedInference::test_fp8_example_script
+tests/examples/test_quantization_2of4_sparse_w4a16.py::TestQuantization24SparseW4A16::test_doc_example_command
+tests/examples/test_quantization_2of4_sparse_w4a16.py::TestQuantization24SparseW4A16::test_alternative_recipe
+tests/examples/test_quantization_kv_cache.py::TestQuantizationKVCache::test_doc_example_command
+tests/examples/test_quantization_w4a16.py::TestQuantizationW4A16::test_doc_example_command
+tests/examples/test_quantization_w8a8_fp8.py::TestQuantizationW8A8_FP8::test_doc_example_command
+tests/examples/test_quantization_w8a8_fp8.py::TestQuantizationW8A8_FP8::test_gemma2_example_script
+tests/examples/test_quantization_w8a8_int8.py::TestQuantizationW8A8_Int8::test_doc_example_command
+tests/examples/test_quantization_w8a8_int8.py::TestQuantizationW8A8_Int8::test_gemma2_example_script
+tests/examples/test_trl_mixin.py::TestTRLMixin::test_example_scripts[ex_trl_constant.py]
+tests/examples/test_trl_mixin.py::TestTRLMixin::test_example_scripts[ex_trl_distillation.py]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_name[logger4]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_hyperparams[logger4]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalar[logger4]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger0]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger1]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger2]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger3]
+tests/llmcompressor/metrics/test_logger.py::TestModifierLogger::test_log_scalars[logger4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs0-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs1-expectation1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs2-expectation2]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs3-expectation3]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs4-expectation4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs5-expectation5]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_frequency_manager_creation[kwargs6-expectation6]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[0.1-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[0-expectation1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[-1-expectation2]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[True-expectation3]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[step4-expectation4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_model_updated[step5-expectation5]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[0.1-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[0-expectation1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[-1-expectation2]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[True-expectation3]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[step4-expectation4]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::TestFrequencyManagerUpdationUtilities::test_log_written[step5-expectation5]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-None-None-None-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-None-1-1-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-1-None-1-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.2-None-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.2-None-True-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[None-1-2-3-False-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[None-1-2-3-True-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-1-1-0.1-False-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-1-1-0.1-True-False]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.1-0.3-False-True]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.1-0.1-True-True0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test_log_ready[0.1-0.3-0.1-0.1-True-True1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test__validate_log_frequency[0.1-epoch-expectation0]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test__validate_log_frequency[0.1-step-expectation1]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test__validate_log_frequency[-1-epoch-expectation2]
+tests/llmcompressor/metrics/utils/test_frequency_manager.py::test__validate_log_frequency[-1-step-expectation3]
+tests/llmcompressor/modifiers/calibration/test_cache.py::test_is_quantized_cache_singleton
+tests/llmcompressor/modifiers/calibration/test_cache.py::test_update
+tests/llmcompressor/modifiers/calibration/test_cache.py::test_cache_reset
+tests/llmcompressor/modifiers/calibration/test_frozen.py::test_set_module_for_calibration
+tests/llmcompressor/modifiers/calibration/test_kv_cache.py::test_kv_cache_quantization[config0]
+tests/llmcompressor/modifiers/logarithmic_equalization/test_base.py::TestLogarithmicEqualizationIsRegistered::test_log_equalization_is_registered
+tests/llmcompressor/modifiers/pruning/sparsegpt/test_base.py::TestSparseGPTIsRegistered::test_wanda_is_registered
+tests/llmcompressor/modifiers/pruning/wanda/test_base.py::TestWandaIsRegistered::test_wanda_is_registered
+tests/llmcompressor/modifiers/quantization/gptq/utils/test_gptq_wrapper.py::test_ignore
+tests/llmcompressor/modifiers/quantization/test_base.py::TestQuantizationRegistered::test_quantization_registered
+tests/llmcompressor/modifiers/quantization/test_base.py::TestEndEpochs::test_end_epochs
+tests/llmcompressor/modifiers/smoothquant/test_base.py::TestSmoothQuantIsRegistered::test_smooth_quant_is_registered
+tests/llmcompressor/modifiers/smoothquant/test_base.py::TestSmoothQuantDefaults::test_defaults
+tests/llmcompressor/modifiers/smoothquant/test_base.py::TestSmoothQuantDefaults::test_override_defaults
+tests/llmcompressor/modifiers/smoothquant/test_utils.py::test_handle_mapping_resolution_errors
+tests/llmcompressor/modifiers/smoothquant/test_utils.py::test_get_layer_mappings_from_architecture
+tests/llmcompressor/modifiers/utils/test_hooks.py::test_register_hook
+tests/llmcompressor/modifiers/utils/test_hooks.py::test_remove_hooks
+tests/llmcompressor/modifiers/utils/test_hooks.py::test_disable_hooks
+tests/llmcompressor/observers/test_helpers.py::test_get_observer_token_count
+tests/llmcompressor/observers/test_min_max.py::test_min_max_observer[True-0.0078-0]
+tests/llmcompressor/observers/test_min_max.py::test_min_max_observer[False-0.0039--128]
+tests/llmcompressor/observers/test_min_max.py::test_min_max_observer_symmetric_scale_range
+tests/llmcompressor/observers/test_min_max.py::test_min_max_observer_value_update
+tests/llmcompressor/observers/test_min_max.py::test_g_idx
+tests/llmcompressor/observers/test_mse.py::test_mse_observer[True-0.0078-0]
+tests/llmcompressor/observers/test_mse.py::test_mse_observer[False-0.0039--128]
+tests/llmcompressor/observers/test_mse.py::test_mse_observer_symmetric_scale_range
+tests/llmcompressor/pytorch/modifiers/logarithmic_equalization/test_pytorch.py::TestLogEqualizationMapping::test_successful_map
+tests/llmcompressor/pytorch/modifiers/pruning/constant/test_pytorch.py::test_constant_pruning_modifier_e2e[Adam-model0]
+tests/llmcompressor/pytorch/modifiers/pruning/constant/test_pytorch.py::test_constant_pruning_modifier_e2e[Adam-model1]
+tests/llmcompressor/pytorch/modifiers/pruning/constant/test_pytorch.py::test_constant_pruning_modifier_e2e[SGD-model0]
+tests/llmcompressor/pytorch/modifiers/pruning/constant/test_pytorch.py::test_constant_pruning_modifier_e2e[SGD-model1]
+tests/llmcompressor/pytorch/modifiers/pruning/constant/test_pytorch.py::test_constant_pruning_pytorch_is_registered
+tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py::TestInvalidLayerwiseRecipesRaiseExceptions::test_invalid_layerwise_recipes_raise_exceptions_0
+tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py::TestInvalidLayerwiseRecipesRaiseExceptions::test_invalid_layerwise_recipes_raise_exceptions_1
+tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py::TestInvalidLayerwiseRecipesRaiseExceptions::test_invalid_layerwise_recipes_raise_exceptions_2
+tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py::TestSuccessfulLayerwiseRecipe::test_successful_layerwise_recipe
+tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py::TestCreateDefaultQuantModifier::test_create_default_quant_modifier
+tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py::TestSetQuantIfModifierAlreadyExists::test_set_quant_if_modifer_already_exists
+tests/llmcompressor/pytorch/modifiers/pruning/sparsegpt/test_pytorch.py::TestSetQuantInGPTQ::test_set_quant_in_gptq
+tests/llmcompressor/pytorch/modifiers/pruning/wanda/test_pytorch.py::TestWandaPytorchIsRegistered::test_wanda_pytorch_is_registered
+tests/llmcompressor/pytorch/modifiers/smoothquant/test_pytorch.py::TestSmoothQuantMapping::test_successful_map
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_default_device
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_get_set_optim_learning_rate
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[None--1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors1--1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors2--1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors3-1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors4-8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors5-1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors6-1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors7-1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_batch_size[tensors8-1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cpu[tensors8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_device_cuda[tensors8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cpu[tensors8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cpu[tensors8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_full_cuda[tensors8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_to_precision_half_cuda[tensors8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module0-tensors0-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module1-tensors1-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module2-tensors2-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module3-tensors3-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module4-tensors4-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module5-tensors5-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module6-tensors6-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module7-tensors7-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module8-tensors8-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module9-tensors9-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module10-tensors10-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward[module11-tensors11-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module0-tensors0-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module1-tensors1-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module2-tensors2-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module3-tensors3-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module4-tensors4-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module5-tensors5-False]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module6-tensors6-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module7-tensors7-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module8-tensors8-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module9-tensors9-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module10-tensors10-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_module_forward_cuda[module11-tensors11-True]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_npy[tensor0-small]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_npy[tensor1-larger]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_npy[tensor2-large]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_npz[tensor0-small]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_npz[tensor1-larger]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_npz[tensor2-large]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_cuda[tensor0-small]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_cuda[tensor1-larger]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_export_cuda[tensor2-large]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_export[tensors0-empty_tuple]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_export[tensors1-empty_list]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_export[tensors2-small_sing_tens]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_export[tensors3-large_sing_tens]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_export[tensors4-flat_tuple]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_export[tensors5-flat_list]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensors_export[tensors6-nested_list]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor0-None-expected_sparsity0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor1-0-expected_sparsity1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor2-1-expected_sparsity2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor3-dim3-expected_sparsity3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor4-dim4-expected_sparsity4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor5-dim5-expected_sparsity5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor6-None-expected_sparsity6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor7-0-expected_sparsity7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor8-1-expected_sparsity8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor9-dim9-expected_sparsity9]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor10-dim10-expected_sparsity10]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor11-dim11-expected_sparsity11]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor12-None-expected_sparsity12]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor13-0-expected_sparsity13]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor14-1-expected_sparsity14]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor15-dim15-expected_sparsity15]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor16-dim16-expected_sparsity16]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor17-dim17-expected_sparsity17]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity[tensor18-None-expected_sparsity18]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor0-None-expected_sparsity0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor1-0-expected_sparsity1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor2-dim2-expected_sparsity2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor3-None-expected_sparsity3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor4-0-expected_sparsity4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor5-dim5-expected_sparsity5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor6-None-expected_sparsity6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor7-0-expected_sparsity7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor8-dim8-expected_sparsity8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sparsity_cuda[tensor9-None-expected_sparsity9]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor0-None-expected_density0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor1-0-expected_density1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor2-1-expected_density2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor3-dim3-expected_density3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor4-dim4-expected_density4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor5-dim5-expected_density5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor6-None-expected_density6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor7-0-expected_density7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor8-1-expected_density8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor9-dim9-expected_density9]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor10-dim10-expected_density10]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor11-dim11-expected_density11]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor12-None-expected_density12]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor13-0-expected_density13]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor14-1-expected_density14]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor15-dim15-expected_density15]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor16-dim16-expected_density16]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor17-dim17-expected_density17]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density[tensor18-None-expected_density18]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density_cuda[tensor0-None-expected_density0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density_cuda[tensor1-dim1-expected_density1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density_cuda[tensor2-None-expected_density2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density_cuda[tensor3-dim3-expected_density3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density_cuda[tensor4-None-expected_density4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_density_cuda[tensor5-None-expected_density5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor0-100-None-expected_shape0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor1-100-0-expected_shape1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor2-100-1-expected_shape2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor3-10-dim3-expected_shape3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor4-10-dim4-expected_shape4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor5-10-2-expected_shape5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor6-10-dim6-expected_shape6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor7-10-1-expected_shape7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample[tensor8-10-dim8-expected_shape8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor0-100-None-expected_shape0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor1-100-0-expected_shape1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor2-100-1-expected_shape2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor3-10-dim3-expected_shape3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor4-10-dim4-expected_shape4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor5-10-2-expected_shape5]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor6-10-dim6-expected_shape6]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor7-10-1-expected_shape7]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_tensor_sample_cuda[tensor8-10-dim8-expected_shape8]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_mask_difference[old_mask0-new_mask0-expected_diff0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_mask_difference[old_mask1-new_mask1-expected_diff1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_mask_difference[old_mask2-new_mask2-expected_diff2]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_mask_difference[old_mask3-new_mask3-expected_diff3]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_mask_difference[old_mask4-new_mask4-expected_diff4]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_thin_model_from_checkpoint[model0-state_dict0-test_input0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_thin_model_from_checkpoint[model1-state_dict1-test_input1]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_memory_aware_threshold[tensor0-0]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_memory_aware_threshold[tensor1-123]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_memory_aware_threshold[tensor2-4321]
+tests/llmcompressor/pytorch/utils/test_helpers.py::test_memory_aware_threshold[tensor3-12345]
+tests/llmcompressor/recipe/test_metadata.py::TestRecipeMetaData::test_update_missing_metadata[other_metadata0-self_metadata0]
+tests/llmcompressor/recipe/test_metadata.py::TestRecipeMetaData::test_update_missing_metadata[other_metadata0-self_metadata1]
+tests/llmcompressor/recipe/test_metadata.py::TestRecipeMetaData::test_update_missing_metadata[other_metadata1-self_metadata0]
+tests/llmcompressor/recipe/test_metadata.py::TestRecipeMetaData::test_update_missing_metadata[other_metadata1-self_metadata1]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_string[\n        test_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_string[\n        test_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_string[\n        test1_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n        test2_stage:\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_string[\n        test1_stage:\n            constant_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n            magnitude_modifiers:\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_file[\n        test_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_file[\n        test_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_file[\n        test1_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n        test2_stage:\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_create_instance_accepts_valid_recipe_file[\n        test1_stage:\n            constant_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n            magnitude_modifiers:\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_serialization[\n        test_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_serialization[\n        test_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_serialization[\n        test1_stage:\n            pruning_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n        test2_stage:\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_serialization[\n        test1_stage:\n            constant_modifiers:\n                ConstantPruningModifier:\n                    start: 0\n                    end: 5\n                    targets: __ALL_PRUNABLE__\n            magnitude_modifiers:\n                MagnitudePruningModifier:\n                    start: 5\n                    end: 10\n                    init_sparsity: 0.1\n                    final_sparsity: 0.5\n                    targets: __ALL_PRUNABLE__\n        ]
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_creates_correct_modifier
+tests/llmcompressor/recipe/test_recipe.py::test_recipe_can_be_created_from_modifier_instances
+tests/llmcompressor/recipe/test_recipe.py::test_create_recipe_string_from_modifiers_with_default_group_name
+tests/llmcompressor/recipe/test_recipe.py::test_create_recipe_string_from_modifiers_with_custom_group_name
+tests/llmcompressor/recipe/test_recipe.py::test_create_recipe_string_from_modifiers_with_empty_modifiers
+tests/llmcompressor/recipe/test_stage.py::test_run_type_as_param
+tests/llmcompressor/recipe/test_stage.py::test_run_type_as_name
+tests/llmcompressor/recipe/test_stage.py::test_no_run_type
+tests/llmcompressor/transformers/compression/test_helpers.py::test_reduce_targets_and_ignores_into_lists[exhaustive_targets0-exhaustive_ignore0-expected_targets0-expected_ignore0]
+tests/llmcompressor/transformers/compression/test_helpers.py::test_reduce_targets_and_ignores_into_lists[exhaustive_targets1-exhaustive_ignore1-expected_targets1-expected_ignore1]
+tests/llmcompressor/transformers/compression/test_helpers.py::test_reduce_targets_and_ignores_into_lists[exhaustive_targets2-exhaustive_ignore2-expected_targets2-expected_ignore2]
+tests/llmcompressor/transformers/compression/test_helpers.py::test_reduce_targets_and_ignores_into_lists[exhaustive_targets3-exhaustive_ignore3-expected_targets3-expected_ignore3]
+tests/llmcompressor/transformers/compression/test_helpers.py::test_reduce_targets_and_ignores_into_lists[exhaustive_targets4-exhaustive_ignore4-expected_targets4-expected_ignore4]
+tests/llmcompressor/transformers/compression/test_helpers.py::test_reduce_targets_and_ignores_into_lists[exhaustive_targets5-exhaustive_ignore5-expected_targets5-expected_ignore5]
+tests/llmcompressor/transformers/compression/test_infer_quant_format.py::test_infer_quant_format[W8A8-unstructured-int-quantized]
+tests/llmcompressor/transformers/compression/test_infer_quant_format.py::test_infer_quant_format[W8A16-unstructured-pack-quantized]
+tests/llmcompressor/transformers/compression/test_infer_quant_format.py::test_infer_quant_format[W8A16-2:4-marlin-24]
+tests/llmcompressor/transformers/compression/test_infer_quant_format.py::test_infer_quant_format[W4A16-unstructured-pack-quantized]
+tests/llmcompressor/transformers/compression/test_infer_quant_format.py::test_infer_quant_format[W4A16-2:4-marlin-24]
+tests/llmcompressor/transformers/compression/test_infer_quant_format.py::test_infer_quant_format[FP8-unstructured-float-quantized]
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_0_commit::test_perplexity
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_0_commit::test_quantization_reload
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_1_commit::test_perplexity
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_1_commit::test_quantization_reload
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_2_commit::test_perplexity
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_2_commit::test_quantization_reload
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_3_commit::test_perplexity
+tests/llmcompressor/transformers/compression/test_quantization.py::TestQuantizationMatches_3_commit::test_quantization_reload
+tests/llmcompressor/transformers/compression/test_run_compressed.py::TestQuantizationMatches_0_commit::test_compressed_matches_uncompressed
+tests/llmcompressor/transformers/compression/test_run_compressed.py::TestQuantizationMatches_1_commit::test_compressed_matches_uncompressed
+tests/llmcompressor/transformers/compression/test_run_compressed.py::TestQuantizationMatches_2_commit::test_compressed_matches_uncompressed
+tests/llmcompressor/transformers/compression/test_run_compressed.py::TestQuantizationMatches_3_commit::test_compressed_matches_uncompressed
+tests/llmcompressor/transformers/finetune/data/test_dataset_helpers.py::test_combined_datasets
+tests/llmcompressor/transformers/finetune/data/test_dataset_helpers.py::test_separate_datasets
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestConcentrationTokenization::test_concatenation_tokenization
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestNoPaddingTokenization::test_no_padding_tokenization
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestMaxSeqLenClipped::test_max_seq_len_clipped
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestDatasetKwargsAndPercent::test_dataset_kwargs_and_percentages
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestDatasets::test_datasets_0_ptb
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestDatasets::test_datasets_1_gsm8k
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestDatasets::test_datasets_2_ultrachat_200k
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestEvol::test_evol
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestStreamLoading::test_stream_loading
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestSplitLoading::test_split_loading_0_train
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestSplitLoading::test_split_loading_1_train_60_
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestSplitLoading::test_split_loading_2
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestSplitLoading::test_split_loading_3
+tests/llmcompressor/transformers/finetune/data/test_dataset_loading.py::TestTokenizationDataset::test_load_tokenized_data
+tests/llmcompressor/transformers/finetune/data/test_registry.py::test_c4_initializes
+tests/llmcompressor/transformers/finetune/data/test_registry.py::test_wikitext_initializes
+tests/llmcompressor/transformers/finetune/data/test_registry.py::test_open_platypus_initializes
+tests/llmcompressor/transformers/finetune/test_finetune_no_recipe_custom_dataset.py::TestOneshotCustomDatasetSmall_0_commit::test_oneshot_then_finetune_small
+tests/llmcompressor/transformers/finetune/test_finetune_no_recipe_custom_dataset.py::TestOneshotCustomDatasetSmall_1_commit::test_oneshot_then_finetune_small
+tests/llmcompressor/transformers/finetune/test_oneshot_and_finetune.py::TestOneshotAndFinetuneSmall_0_commit::test_oneshot_then_finetune_small
+tests/llmcompressor/transformers/finetune/test_oneshot_then_finetune.py::TestOneshotThenFinetune::test_oneshot_then_finetune
+tests/llmcompressor/transformers/finetune/test_session_mixin.py::test_mixin_init
+tests/llmcompressor/transformers/finetune/test_session_mixin.py::test_mixin_session_init
+tests/llmcompressor/transformers/gptq/test_oneshot.py::TestGPTQOneShotWithFullScheme_0__quant_stage_quant_modifiers_GPTQModifier_ignore_lm_head_config_groups_group_0_weights_num_bits_4_type_int_symmetric_true_strategy_channel_targets_Linear_::test_oneshot_application
+tests/llmcompressor/transformers/gptq/test_oneshot.py::TestGPTQOneShotWithFullScheme_1::test_oneshot_application
+tests/llmcompressor/transformers/gptq/test_oneshot.py::TestGPTQOneShotWithFullScheme_2::test_oneshot_application
+tests/llmcompressor/transformers/gptq/test_oneshot.py::TestGPTQOneShotWithFullScheme_3::test_oneshot_application
+tests/llmcompressor/transformers/gptq/test_oneshot.py::TestGPTQOneShotWithFullScheme_4::test_oneshot_application
+tests/llmcompressor/transformers/obcq/test_consecutive_runs.py::TestConsecutiveRunsSmall_0_commit::test_consecutive_runs_small
+tests/llmcompressor/transformers/obcq/test_mask_structure_preservation.py::TestMaskStructurePreserved_0_commit::test_mask_structure_preserved
+tests/llmcompressor/transformers/obcq/test_obcq_infer_targets.py::TestInferTargets::test_infer_targets
+tests/llmcompressor/transformers/obcq/test_obcq_lm_head.py::TestLMHead::test_lm_head_target
+tests/llmcompressor/transformers/obcq/test_obcq_sparsity.py::TestSparsities_0_commit::test_sparsities
+tests/llmcompressor/transformers/obcq/test_sgpt_defaults.py::TestSGPTDefaults::test_sgpt_defaults
+tests/llmcompressor/transformers/oneshot/test_api_inputs.py::TestOneShotInputs_0_commit::test_one_shot_inputs
+tests/llmcompressor/transformers/oneshot/test_api_inputs.py::TestOneShotInputs_1_commit::test_one_shot_inputs
+tests/llmcompressor/transformers/oneshot/test_api_inputs.py::TestOneShotInputs_2_commit::test_one_shot_inputs
+tests/llmcompressor/transformers/oneshot/test_api_inputs.py::TestOneShotInputs_3_commit::test_one_shot_inputs
+tests/llmcompressor/transformers/oneshot/test_api_inputs.py::TestOneShotInputs_4_commit::test_one_shot_inputs
+tests/llmcompressor/transformers/oneshot/test_api_inputs.py::TestOneShotInputs_5_commit::test_one_shot_inputs
+tests/llmcompressor/transformers/oneshot/test_cli.py::TestOneShotCli_0_commit::test_one_shot_cli
+tests/llmcompressor/transformers/oneshot/test_cli.py::TestOneShotCli_1_commit::test_one_shot_cli
+tests/llmcompressor/transformers/oneshot/test_cli.py::TestOneShotCli_2_commit::test_one_shot_cli
+tests/llmcompressor/transformers/oneshot/test_cli.py::TestOneShotCli_3_commit::test_one_shot_cli
+tests/llmcompressor/transformers/oneshot/test_cli.py::TestOneShotCli_4_commit::test_one_shot_cli
+tests/llmcompressor/transformers/oneshot/test_cli.py::TestOneShotCli_5_commit::test_one_shot_cli
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_sparse_model_reload[True-None-dtype0]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_sparse_model_reload[False-config1-dtype1]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_sparse_model_reload[True-config2-dtype2]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_sparse_model_reload[False-config3-dtype3]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_sparse_model_reload[False-None-dtype4]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_dense_model_save[True-True]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_dense_model_save[True-False]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_dense_model_save[False-True]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_dense_model_save[False-False]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_quant_model_reload[dense-dtype0]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_quant_model_reload[dense-dtype1]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_quant_model_reload[int_quantized-dtype2]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload[False-torch_dtype0-False-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload[False-torch_dtype1-True-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload[False-torch_dtype2-False-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload[False-torch_dtype3-True-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload[True-torch_dtype4-False-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload[True-torch_dtype5-False-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload_gpu[False-torch_dtype0-False-cuda:0]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload_gpu[True-torch_dtype1-False-cuda:0]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload_gpu[True-torch_dtype2-True-cuda:0]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_reload_gpu[True-torch_dtype3-True-cuda:0]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors[False-torch_dtype0-False-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors[False-torch_dtype1-False-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors[True-torch_dtype2-False-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors[False-torch_dtype3-True-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors[False-torch_dtype4-True-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors[True-torch_dtype5-True-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors[True-torch_dtype6-True-cpu]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors_gpu[False-torch_dtype0-False-cuda:0]
+tests/llmcompressor/transformers/sparsification/test_compress_tensor_utils.py::test_model_shared_tensors_gpu[False-torch_dtype1-True-cuda:0]
+tests/llmcompressor/transformers/test_clear_ml.py::test_finetune_wout_recipe
+tests/llmcompressor/utils/test_helpers.py::test_flatten_iterable[test_list0-output0]
+tests/llmcompressor/utils/test_helpers.py::test_flatten_iterable[test_list1-output1]
+tests/llmcompressor/utils/test_helpers.py::test_flatten_iterable[test_list2-output2]
+tests/llmcompressor/utils/test_helpers.py::test_flatten_iterable[test_list3-output3]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[True-True0]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[t-True]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[T-True]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[true)-True]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[True-True1]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[1-True0]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[1-True1]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[False-False0]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[f-False]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[F-False]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[false-False]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[False-False1]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[0-False0]
+tests/llmcompressor/utils/test_helpers.py::test_convert_to_bool[0-False1]
+tests/llmcompressor/utils/test_helpers.py::test_validate_str_iterable[__ALL__-__ALL__]
+tests/llmcompressor/utils/test_helpers.py::test_validate_str_iterable[__all__-__ALL__]
+tests/llmcompressor/utils/test_helpers.py::test_validate_str_iterable[test_list2-output2]
+tests/llmcompressor/utils/test_helpers.py::test_validate_str_iterable[test_list3-output3]
+tests/llmcompressor/utils/test_helpers.py::test_validate_str_iterable[test_list4-output4]
+tests/llmcompressor/utils/test_helpers.py::test_validate_str_iterable_negative
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[0.0-0.0-1.0-0.0-5.0-linear-0.0]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[0.0-0.0-1.0-0.0-5.0-cubic-0.0]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[0.0-0.0-1.0-0.0-5.0-inverse_cubic-0.0]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[1.0-0.0-1.0-0.0-5.0-linear-5.0]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[1.0-0.0-1.0-0.0-5.0-cubic-5.0]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[1.0-0.0-1.0-0.0-5.0-inverse_cubic-5.0]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[0.5-0.0-1.0-0.0-5.0-linear-2.5]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[0.5-0.0-1.0-0.0-5.0-cubic-4.375]
+tests/llmcompressor/utils/test_helpers.py::test_interpolate[0.5-0.0-1.0-0.0-5.0-inverse_cubic-1.031]
+tests/llmcompressor/utils/test_helpers.py::test_pass_kwargs_tuples
+tests/llmcompressor/utils/test_helpers.py::test_getattr_chain
+tests/unit/core/events/test_event.py::test_event_type_order
+tests/unit/core/events/test_event.py::test_event_epoch_based
+tests/unit/core/events/test_event.py::test_event_epoch
+tests/unit/core/events/test_event.py::test_event_epoch_full
+tests/unit/core/events/test_event.py::test_event_epoch_step
+tests/unit/core/events/test_event.py::test_event_epoch_batch
+tests/unit/core/events/test_event.py::test_event_current_index
+tests/unit/core/events/test_event.py::test_event_should_update
+tests/unit/core/events/test_event.py::test_event_new_instance
+tests/unit/core/events/test_event_lifecycle.py::test_event_lifecycle_initialization
+tests/unit/core/events/test_event_lifecycle.py::test_check_step_batches_count
+tests/unit/core/events/test_event_lifecycle.py::test_check_default_step_invocations_count
+tests/unit/core/events/test_event_lifecycle.py::test_events_from_type
+tests/unit/core/events/test_event_lifecycle.py::test_check_step_invocations_count
+tests/unit/core/events/test_event_lifecycle.py::test_not_implemented_errors
+tests/unit/core/events/test_lifecycle_callbacks.py::test_initialization
+tests/unit/core/events/test_lifecycle_callbacks.py::test_lifecycle
+tests/unit/core/events/test_lifecycle_callbacks.py::test_batch_start_events
+tests/unit/core/events/test_lifecycle_callbacks.py::test_loss_calculated_events
+tests/unit/core/events/test_lifecycle_callbacks.py::test_optim_pre_step_events
+tests/unit/core/events/test_lifecycle_callbacks.py::test_optim_post_step_events
+tests/unit/core/events/test_lifecycle_callbacks.py::test_batch_end_events
+tests/unit/core/events/test_lifecycle_callbacks.py::test_lifecycle_gradient_accumulation
+tests/unit/core/events/test_lifecycle_callbacks.py::test_invalid_event_order
+tests/unit/core/events/test_lifecycle_optimizer.py::test_initialization
+tests/unit/core/events/test_lifecycle_optimizer.py::test_lifecycle
+tests/unit/core/events/test_lifecycle_optimizer.py::test_lifecycle_with_loss
+tests/unit/core/events/test_lifecycle_optimizer.py::test_loss_calculated_events
+tests/unit/core/events/test_lifecycle_optimizer.py::test_optim_pre_step_events
+tests/unit/core/events/test_lifecycle_optimizer.py::test_optim_post_step_events
+tests/unit/core/events/test_lifecycle_optimizer.py::test_lifecycle_gradient_accumulation
+tests/unit/core/events/test_lifecycle_optimizer.py::test_lifecycle_gradient_accumulation_loss_calculated
+tests/unit/core/events/test_lifecycle_optimizer.py::test_invalid_event_order
+tests/unit/core/test_state.py::test_state_initialization
+tests/unit/core/test_state.py::test_modified_state_initialization
+tests/unit/core/test_state.py::test_state_update
+tests/unit/core/test_state.py::test_state_sparsification_ready
+tests/unit/core/test_state.py::test_state_update_loggers
+tests/unit/test_logger.py::test_default_logger_settings
+tests/unit/test_logger.py::test_configure_logger_console_settings
+tests/unit/test_logger.py::test_configure_logger_file_settings
+tests/unit/test_logger.py::test_configure_logger_console_and_file
+tests/unit/test_logger.py::test_environment_variable_override
+tests/unit/test_logger.py::test_environment_variable_disable_logging
+tests/unit/test_version.py::test_version_attributes
+tests/unit/test_version.py::test_release_version
+tests/unit/test_version.py::test_nightly_version
+tests/unit/test_version.py::test_dev_version
+tests/unit/test_version.py::test_invalid_version
+
+517 tests collected in 12.82s
+Container be981876b629 stopped and removed
+Spend totally 1050.5468952655792.

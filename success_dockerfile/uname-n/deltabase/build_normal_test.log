@@ -1,0 +1,285 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.25kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 23.96kB done
+#4 DONE 0.0s
+
+#5 [1/7] FROM docker.io/library/python:3.11
+#5 CACHED
+
+#6 [2/7] COPY search_patch /search_patch
+#6 DONE 0.0s
+
+#7 [3/7] COPY code_edit.py /code_edit.py
+#7 DONE 0.0s
+
+#8 [4/7] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#8 0.679 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#8 1.059 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#8 1.245 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+#8 1.374 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8789 kB]
+#8 2.065 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [8856 B]
+#8 2.248 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [240 kB]
+#8 3.412 Fetched 9292 kB in 3s (3136 kB/s)
+#8 3.412 Reading package lists...
+#8 4.357 Reading package lists...
+#8 5.152 Building dependency tree...
+#8 5.397 Reading state information...
+#8 5.767 curl is already the newest version (7.88.1-10+deb12u8).
+#8 5.767 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+#8 25.76 Retrieving Poetry metadata
+#8 25.76 
+#8 25.76 # Welcome to Poetry!
+#8 25.76 
+#8 25.76 This will download and install the latest version of Poetry,
+#8 25.76 a dependency and package manager for Python.
+#8 25.76 
+#8 25.76 It will add the `poetry` command to Poetry's bin directory, located at:
+#8 25.76 
+#8 25.76 /root/.local/bin
+#8 25.76 
+#8 25.76 You can uninstall at any time by executing this script with the --uninstall option,
+#8 25.76 and these changes will be reverted.
+#8 25.76 
+#8 25.76 Installing Poetry (2.0.0)
+#8 25.76 Installing Poetry (2.0.0): Creating environment
+#8 25.76 Installing Poetry (2.0.0): Installing Poetry
+#8 25.76 Installing Poetry (2.0.0): Creating script
+#8 25.76 Installing Poetry (2.0.0): Done
+#8 25.76 
+#8 25.76 Poetry (2.0.0) is installed now. Great!
+#8 25.76 
+#8 25.76 To get started you need Poetry's bin directory (/root/.local/bin) in your `PATH`
+#8 25.76 environment variable.
+#8 25.76 
+#8 25.76 Add `export PATH="/root/.local/bin:$PATH"` to your shell configuration file.
+#8 25.76 
+#8 25.76 Alternatively, you can call Poetry explicitly with `/root/.local/bin/poetry`.
+#8 25.76 
+#8 25.76 You can test that everything is set up by executing:
+#8 25.76 
+#8 25.76 `poetry --version`
+#8 25.76 
+#8 DONE 26.0s
+
+#9 [5/7] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/uname-n/deltabase.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /deltabase/. /repo && rm -rf /deltabase/ &&     rm -rf /deltabase &&     cd /repo && git checkout 5eafb9d05316d005e2888cd1a1c71bf01e5f4e0f &&     cd /repo && poetry install &&     python /code_edit.py -t "/search_patch/0.patch" &&     cd /repo && poetry lock &&     cd /repo && poetry install
+#9 2.303 Looking in indexes: http://simple/
+#9 2.420 Collecting pytest
+#9 2.444   Downloading http://packages/pytest/pytest-8.3.4-py3-none-any.whl (343 kB)
+#9 2.470      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 343.1/343.1 kB 16.2 MB/s eta 0:00:00
+#9 2.529 Collecting pytest-xdist
+#9 2.547   Downloading http://packages/pytest-xdist/pytest_xdist-3.6.1-py3-none-any.whl (46 kB)
+#9 2.562      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.1/46.1 kB 3.3 MB/s eta 0:00:00
+#9 2.605 Collecting iniconfig (from pytest)
+#9 2.626   Downloading http://packages/iniconfig/iniconfig-2.0.0-py3-none-any.whl (5.9 kB)
+#9 2.677 Collecting packaging (from pytest)
+#9 2.679   Using cached http://packages/packaging/packaging-24.2-py3-none-any.whl (65 kB)
+#9 2.715 Collecting pluggy<2,>=1.5 (from pytest)
+#9 2.732   Downloading http://packages/pluggy/pluggy-1.5.0-py3-none-any.whl (20 kB)
+#9 2.779 Collecting execnet>=2.1 (from pytest-xdist)
+#9 2.796   Downloading http://packages/execnet/execnet-2.1.1-py3-none-any.whl (40 kB)
+#9 2.805      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.6/40.6 kB 5.2 MB/s eta 0:00:00
+#9 2.912 Installing collected packages: pluggy, packaging, iniconfig, execnet, pytest, pytest-xdist
+#9 3.483 Successfully installed execnet-2.1.1 iniconfig-2.0.0 packaging-24.2 pluggy-1.5.0 pytest-8.3.4 pytest-xdist-3.6.1
+#9 3.483 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 3.583 
+#9 3.583 [notice] A new release of pip is available: 24.0 -> 24.3.1
+#9 3.583 [notice] To update, run: pip install --upgrade pip
+#9 4.293 Looking in indexes: http://simple/
+#9 4.361 Collecting pipdeptree
+#9 4.385   Downloading http://packages/pipdeptree/pipdeptree-2.24.0-py3-none-any.whl (32 kB)
+#9 4.417 Requirement already satisfied: packaging>=24.1 in /usr/local/lib/python3.11/site-packages (from pipdeptree) (24.2)
+#9 4.526 Collecting pip>=24.2 (from pipdeptree)
+#9 4.530   Using cached http://packages/pip/pip-24.3.1-py3-none-any.whl (1.8 MB)
+#9 4.684 Installing collected packages: pip, pipdeptree
+#9 4.686   Attempting uninstall: pip
+#9 4.695     Found existing installation: pip 24.0
+#9 4.796     Uninstalling pip-24.0:
+#9 5.334       Successfully uninstalled pip-24.0
+#9 6.802 Successfully installed pip-24.3.1 pipdeptree-2.24.0
+#9 6.802 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 7.097 Cloning into 'deltabase'...
+#9 10.03 Note: switching to '5eafb9d05316d005e2888cd1a1c71bf01e5f4e0f'.
+#9 10.03 
+#9 10.03 You are in 'detached HEAD' state. You can look around, make experimental
+#9 10.03 changes and commit them, and you can discard any commits you make in this
+#9 10.03 state without impacting any branches by switching back to a branch.
+#9 10.03 
+#9 10.03 If you want to create a new branch to retain commits you create, you may
+#9 10.03 do so (now or later) by using -c with the switch command. Example:
+#9 10.03 
+#9 10.03   git switch -c <new-branch-name>
+#9 10.03 
+#9 10.03 Or undo this operation with:
+#9 10.03 
+#9 10.03   git switch -
+#9 10.03 
+#9 10.03 Turn off this advice by setting config variable advice.detachedHead to false
+#9 10.03 
+#9 10.03 HEAD is now at 5eafb9d v1.0.0
+#9 10.78 Creating virtualenv deltabase-gW_DSdP6-py3.11 in /root/.cache/pypoetry/virtualenvs
+#9 11.24 Installing dependencies from lock file
+#9 11.71 
+#9 11.71 Package operations: 63 installs, 0 updates, 0 removals
+#9 11.71 
+#9 11.71   - Installing certifi (2024.8.30)
+#9 11.71   - Installing charset-normalizer (3.3.2)
+#9 11.71   - Installing idna (3.10)
+#9 11.71   - Installing six (1.16.0)
+#9 11.71   - Installing urllib3 (2.2.3)
+#9 13.66   - Installing asttokens (2.4.1)
+#9 13.67   - Installing executing (2.1.0)
+#9 13.67   - Installing markupsafe (2.1.5)
+#9 13.67   - Installing mergedeep (1.3.4)
+#9 13.67   - Installing parso (0.8.4)
+#9 13.67   - Installing platformdirs (4.3.6)
+#9 13.67   - Installing pure-eval (0.2.3)
+#9 13.68   - Installing python-dateutil (2.9.0.post0)
+#9 13.68   - Installing pyyaml (6.0.2)
+#9 13.68   - Installing ptyprocess (0.7.0)
+#9 13.68   - Installing traitlets (5.14.3)
+#9 13.69   - Installing requests (2.32.3)
+#9 13.69   - Installing typing-extensions (4.12.2)
+#9 13.69   - Installing wcwidth (0.2.13)
+#9 14.99   - Installing click (8.1.7)
+#9 14.99   - Installing decorator (5.1.1)
+#9 14.99   - Installing ghp-import (2.1.0)
+#9 15.00   - Installing jedi (0.19.1)
+#9 15.00   - Installing jinja2 (3.1.4)
+#9 15.00   - Installing markdown (3.7)
+#9 15.01   - Installing matplotlib-inline (0.1.7)
+#9 15.01   - Installing mkdocs-get-deps (0.2.0)
+#9 15.01   - Installing jupyter-core (5.7.2)
+#9 15.02   - Installing packaging (24.1)
+#9 15.02   - Installing pathspec (0.12.1)
+#9 15.02   - Installing prompt-toolkit (3.0.48)
+#9 15.02   - Installing numpy (2.1.1)
+#9 15.02   - Installing pytz (2024.2)
+#9 15.02   - Installing pyzmq (26.2.0)
+#9 15.03   - Installing pexpect (4.9.0)
+#9 15.03   - Installing watchdog (5.0.3)
+#9 15.03   - Installing pyyaml-env-tag (0.1)
+#9 15.03   - Installing stack-data (0.6.3)
+#9 15.03   - Installing pygments (2.18.0)
+#9 15.04   - Installing tornado (6.4.1)
+#9 19.14   - Installing babel (2.16.0)
+#9 19.14   - Installing colorama (0.4.6)
+#9 19.15   - Installing comm (0.2.2)
+#9 19.15   - Installing iniconfig (2.0.0)
+#9 19.15   - Installing ipython (8.27.0)
+#9 19.16   - Installing mkdocs (1.6.1)
+#9 19.16   - Installing jupyter-client (8.6.3)
+#9 19.16   - Installing nest-asyncio (1.6.0)
+#9 19.16   - Installing paginate (0.5.7)
+#9 19.17   - Installing debugpy (1.8.6)
+#9 19.17   - Installing psutil (6.0.0)
+#9 19.17   - Installing pyarrow (17.0.0)
+#9 19.17   - Installing pluggy (1.5.0)
+#9 19.18   - Installing pymdown-extensions (10.11)
+#9 19.18   - Installing mkdocs-material-extensions (1.3.1)
+#9 19.18   - Installing regex (2024.9.11)
+#9 19.18   - Installing tzdata (2024.2)
+#9 25.45   - Installing deltalake (0.19.2)
+#9 25.45   - Installing ipykernel (6.29.5)
+#9 25.45   - Installing mkdocs-material (9.5.38)
+#9 25.45   - Installing pandas (2.2.3)
+#9 25.46   - Installing polars (1.8.2)
+#9 25.46   - Installing pytest (8.3.3)
+#9 38.93 
+#9 38.93 Installing the current project: deltabase (1.0.0)
+#9 39.42 * Succeed Patch:
+#9 39.42 --- arepopyproject.toml
+#9 39.42 +++ brepopyproject.toml
+#9 39.42 @@ -18,6 +18,7 @@
+#9 39.42  
+#9 39.42  [tool.poetry.group.dev.dependencies]
+#9 39.42  pytest = "^8.3.2"
+#9 39.42 +pytest-xdist = "^3.4.0"
+#9 39.42  mkdocs = "^1.6.0"
+#9 39.42  mkdocs-material = "^9.5.31"
+#9 39.42  ipykernel = "^6.29.5"
+#9 39.42 
+#9 39.42 
+#9 40.63 Resolving dependencies...
+#9 68.16 
+#9 68.16 Writing lock file
+#9 69.73 Installing dependencies from lock file
+#9 70.27 
+#9 70.27 Package operations: 2 installs, 0 updates, 0 removals
+#9 70.27 
+#9 70.27   - Installing execnet (2.1.1)
+#9 71.03   - Installing pytest-xdist (3.6.1)
+#9 71.25 
+#9 71.25 Installing the current project: deltabase (1.0.0)
+#9 DONE 71.8s
+
+#10 [6/7] RUN cd /repo && pytest --collect-only -q
+#10 1.147 
+#10 1.147 ==================================== ERRORS ====================================
+#10 1.147 ___________________ ERROR collecting tests/test_deltabase.py ___________________
+#10 1.147 ImportError while importing test module '/repo/tests/test_deltabase.py'.
+#10 1.147 Hint: make sure your test modules/packages have valid Python names.
+#10 1.147 Traceback:
+#10 1.147 /usr/local/lib/python3.11/importlib/__init__.py:126: in import_module
+#10 1.147     return _bootstrap._gcd_import(name[level:], package, level)
+#10 1.147 tests/test_deltabase.py:3: in <module>
+#10 1.147     from deltabase import delta
+#10 1.147 deltabase/__init__.py:22: in <module>
+#10 1.147     from .plugins import delta_plugin
+#10 1.147 deltabase/plugins/__init__.py:23: in <module>
+#10 1.147     from .base import delta_plugin
+#10 1.147 deltabase/plugins/base.py:19: in <module>
+#10 1.147     from polars import DataFrame
+#10 1.147 E   ModuleNotFoundError: No module named 'polars'
+#10 1.147 ______________ ERROR collecting tests/test_deltabase_workflow.py _______________
+#10 1.147 ImportError while importing test module '/repo/tests/test_deltabase_workflow.py'.
+#10 1.147 Hint: make sure your test modules/packages have valid Python names.
+#10 1.147 Traceback:
+#10 1.147 /usr/local/lib/python3.11/importlib/__init__.py:126: in import_module
+#10 1.147     return _bootstrap._gcd_import(name[level:], package, level)
+#10 1.147 tests/test_deltabase_workflow.py:3: in <module>
+#10 1.147     from deltabase import delta
+#10 1.147 deltabase/__init__.py:22: in <module>
+#10 1.147     from .plugins import delta_plugin
+#10 1.147 deltabase/plugins/__init__.py:23: in <module>
+#10 1.147     from .base import delta_plugin
+#10 1.147 deltabase/plugins/base.py:19: in <module>
+#10 1.147     from polars import DataFrame
+#10 1.147 E   ModuleNotFoundError: No module named 'polars'
+#10 1.147 =========================== short test summary info ============================
+#10 1.147 ERROR tests/test_deltabase.py
+#10 1.147 ERROR tests/test_deltabase_workflow.py
+#10 1.147 !!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+#10 1.147 no tests collected, 2 errors in 0.28s
+#10 ERROR: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2
+------
+ > [6/7] RUN cd /repo && pytest --collect-only -q:
+1.147 deltabase/plugins/__init__.py:23: in <module>
+1.147     from .base import delta_plugin
+1.147 deltabase/plugins/base.py:19: in <module>
+1.147     from polars import DataFrame
+1.147 E   ModuleNotFoundError: No module named 'polars'
+1.147 =========================== short test summary info ============================
+1.147 ERROR tests/test_deltabase.py
+1.147 ERROR tests/test_deltabase_workflow.py
+1.147 !!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+1.147 no tests collected, 2 errors in 0.28s
+------
+Dockerfile:25
+--------------------
+  23 |         cd /repo && poetry lock && \
+  24 |         cd /repo && poetry install
+  25 | >>> RUN cd /repo && pytest --collect-only -q
+--------------------
+ERROR: failed to solve: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2

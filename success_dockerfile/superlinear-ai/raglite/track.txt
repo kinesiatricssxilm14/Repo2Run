@@ -1,0 +1,817 @@
+superlinear-ai/raglite
+Container optimistic_burnell 37d34490122f started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+0. **Read README**: First, read the README file. If the README file mentions a way to configure the environment, give priority to using the methods described in the README. Note that our goal here is to run the code, not to use the tool, so our standard is to be able to run the tests. If you think the README clearly specifies a method for configuring the environment for running tests, you can skip the subsequent steps and follow its instructions to configure the environment. Then use `runtest` or `poetryruntest` to check if the configuration is correct.
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version Or Other Base Image**: Decide if you need to switch the Python version or the base image in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you need to change the base image, use the `change_base_image base_image_name:tag` command (for example, `change_base_image pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime`). If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version or the base image.
+    *Note*: If you use `change_base_image` and no tag is provided, it defaults to "latest".
+    *Note*: Please prioritize ease of environment configuration. If an official ready-to-use base image is available, you can use it directly. However, be aware that doing so may discard all previous configurations.
+    *Note*: Avoid using images that do not directly support Python, such as Ubuntu or Node, because the environments we need to configure are primarily based on the Python language.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` or `change_base_image` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+change_base_image base_image # Switching the base image in the Docker container will forgo any installations made prior to the switch. The base image does not necessarily have to follow the format 'python:<Python version>'. Preferably, specify it in the form of 'base_image_name:tag', such as 'pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime'. If no tag is provided, it defaults to 'latest'. No any quotation marks are needed.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+
+---------------------------
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+CHANGELOG.md  README.md		  poetry.lock	  src
+LICENSE       docker-compose.yml  pyproject.toml  tests
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+---------------------------
+### Thought: I found a README.md file which might contain instructions on how to configure the environment. I will read the README.md file next.
+### Action:
+```bash
+cat /repo/README.md
+```
+### Observation:
+Running `cat /repo/README.md`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /repo/README.md`...
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/superlinear-ai/raglite) [![Open in GitHub Codespaces](https://img.shields.io/static/v1?label=GitHub%20Codespaces&message=Open&color=blue&logo=github)](https://github.com/codespaces/new/superlinear-ai/raglite)
+# 🥤 RAGLite
+RAGLite is a Python toolkit for Retrieval-Augmented Generation (RAG) with PostgreSQL or SQLite.
+## Features
+##### Configurable
+- 🧠 Choose any LLM provider with [LiteLLM](https://github.com/BerriAI/litellm), including local [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) models
+- 💾 Choose either [PostgreSQL](https://github.com/postgres/postgres) or [SQLite](https://github.com/sqlite/sqlite) as a keyword & vector search database
+- 🥇 Choose any reranker with [rerankers](https://github.com/AnswerDotAI/rerankers), including multilingual [FlashRank](https://github.com/PrithivirajDamodaran/FlashRank) as the default
+##### Fast and permissive
+- ❤️ Only lightweight and permissive open source dependencies (e.g., no [PyTorch](https://github.com/pytorch/pytorch) or [LangChain](https://github.com/langchain-ai/langchain))
+- 🚀 Acceleration with Metal on macOS, and CUDA on Linux and Windows
+##### Unhobbled
+- 📖 PDF to Markdown conversion on top of [pdftext](https://github.com/VikParuchuri/pdftext) and [pypdfium2](https://github.com/pypdfium2-team/pypdfium2)
+- 🧬 Multi-vector chunk embedding with [late chunking](https://weaviate.io/blog/late-chunking) and [contextual chunk headings](https://d-star.ai/solving-the-out-of-context-chunk-problem-for-rag)
+- ✂️ Optimal [level 4 semantic chunking](https://medium.com/@anuragmishra_27746/five-levels-of-chunking-strategies-in-rag-notes-from-gregs-video-7b735895694d) by solving a [binary integer programming problem](https://en.wikipedia.org/wiki/Integer_programming)
+- 🔍 [Hybrid search](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) with the database's native keyword & vector search ([tsvector](https://www.postgresql.org/docs/current/datatype-textsearch.html)+[pgvector](https://github.com/pgvector/pgvector), [FTS5](https://www.sqlite.org/fts5.html)+[sqlite-vec](https://github.com/asg017/sqlite-vec)[^1])
+- 💰 Improved cost and latency with a [prompt caching-aware message array structure](https://platform.openai.com/docs/guides/prompt-caching)
+- 🍰 Improved output quality with [Anthropic's long-context prompt format](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/long-context-tips)
+- 🌀 Optimal [closed-form linear query adapter](src/raglite/_query_adapter.py) by solving an [orthogonal Procrustes problem](https://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem)
+##### Extensible
+- 💬 Optional customizable ChatGPT-like frontend for [web](https://docs.chainlit.io/deploy/copilot), [Slack](https://docs.chainlit.io/deploy/slack), and [Teams](https://docs.chainlit.io/deploy/teams) with [Chainlit](https://github.com/Chainlit/chainlit)
+- ✍️ Optional conversion of any input document to Markdown with [Pandoc](https://github.com/jgm/pandoc)
+- ✅ Optional evaluation of retrieval and generation performance with [Ragas](https://github.com/explodinggradients/ragas)
+[^1]: We use [PyNNDescent](https://github.com/lmcinnes/pynndescent) until [sqlite-vec](https://github.com/asg017/sqlite-vec) is more mature.
+## Installing
+First, begin by installing spaCy's multilingual sentence model:
+```sh
+# Install spaCy's xx_sent_ud_sm:
+pip install https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl
+```
+Next, it is optional but recommended to install [an accelerated llama-cpp-python precompiled binary](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends) with:
+```sh
+# Configure which llama-cpp-python precompiled binary to install (⚠️ only v0.3.2 is supported right now):
+LLAMA_CPP_PYTHON_VERSION=0.3.2
+PYTHON_VERSION=310
+ACCELERATOR=metal|cu121|cu122|cu123|cu124
+PLATFORM=macosx_11_0_arm64|linux_x86_64|win_amd64
+# Install llama-cpp-python:
+pip install "https://github.com/abetlen/llama-cpp-python/releases/download/v$LLAMA_CPP_PYTHON_VERSION-$ACCELERATOR/llama_cpp_python-$LLAMA_CPP_PYTHON_VERSION-cp$PYTHON_VERSION-cp$PYTHON_VERSION-$PLATFORM.whl"
+```
+Finally, install RAGLite with:
+```sh
+pip install raglite
+```
+To add support for a customizable ChatGPT-like frontend, use the `chainlit` extra:
+```sh
+pip install raglite[chainlit]
+```
+To add support for filetypes other than PDF, use the `pandoc` extra:
+```sh
+pip install raglite[pandoc]
+```
+To add support for evaluation, use the `ragas` extra:
+```sh
+pip install raglite[ragas]
+```
+## Using
+### Overview
+1. [Configuring RAGLite](#1-configuring-raglite)
+2. [Inserting documents](#2-inserting-documents)
+3. [Searching and Retrieval-Augmented Generation (RAG)](#3-searching-and-retrieval-augmented-generation-rag)
+4. [Computing and using an optimal query adapter](#4-computing-and-using-an-optimal-query-adapter)
+5. [Evaluation of retrieval and generation](#5-evaluation-of-retrieval-and-generation)
+6. [Serving a customizable ChatGPT-like frontend](#6-serving-a-customizable-chatgpt-like-frontend)
+### 1. Configuring RAGLite
+> [!TIP]
+> 🧠 RAGLite extends [LiteLLM](https://github.com/BerriAI/litellm) with support for [llama.cpp](https://github.com/ggerganov/llama.cpp) models using [llama-cpp-python](https://github.com/abetlen/llama-cpp-python). To select a llama.cpp model (e.g., from [bartowski's collection](https://huggingface.co/bartowski)), use a model identifier of the form `"llama-cpp-python/<hugging_face_repo_id>/<filename>@<n_ctx>"`, where `n_ctx` is an optional parameter that specifies the context size of the model.
+> [!TIP]
+> 💾 You can create a PostgreSQL database in a few clicks at [neon.tech](https://neon.tech).
+First, configure RAGLite wit
+...[Truncation]...
+_evals` and then compute and store the optimal query adapter with `update_query_adapter`:
+```python
+# Improve RAG with an optimal query adapter:
+from raglite import insert_evals, update_query_adapter
+insert_evals(num_evals=100, config=my_config)
+update_query_adapter(config=my_config)  # From here, every vector search will use the query adapter.
+```
+### 5. Evaluation of retrieval and generation
+If you installed the `ragas` extra, you can use RAGLite to answer the evals and then evaluate the quality of both the retrieval and generation steps of RAG using [Ragas](https://github.com/explodinggradients/ragas):
+```python
+# Evaluate retrieval and generation:
+from raglite import answer_evals, evaluate, insert_evals
+insert_evals(num_evals=100, config=my_config)
+answered_evals_df = answer_evals(num_evals=10, config=my_config)
+evaluation_df = evaluate(answered_evals_df, config=my_config)
+```
+### 6. Serving a customizable ChatGPT-like frontend
+If you installed the `chainlit` extra, you can serve a customizable ChatGPT-like frontend with:
+```sh
+raglite chainlit
+```
+The application is also deployable to [web](https://docs.chainlit.io/deploy/copilot), [Slack](https://docs.chainlit.io/deploy/slack), and [Teams](https://docs.chainlit.io/deploy/teams).
+You can specify the database URL, LLM, and embedder directly in the Chainlit frontend, or with the CLI as follows:
+```sh
+raglite chainlit \
+    --db_url sqlite:///raglite.sqlite \
+    --llm llama-cpp-python/bartowski/Llama-3.2-3B-Instruct-GGUF/*Q4_K_M.gguf@4096 \
+    --embedder llama-cpp-python/lm-kit/bge-m3-gguf/*F16.gguf@1024
+```
+To use an API-based LLM, make sure to include your credentials in a `.env` file or supply them inline:
+```sh
+OPENAI_API_KEY=sk-... raglite chainlit --llm gpt-4o-mini --embedder text-embedding-3-large
+```
+<div align="center"><video src="https://github.com/user-attachments/assets/01cf98d3-6ddd-45bb-8617-cf290c09f187" /></div>
+## Contributing
+<details>
+<summary>Prerequisites</summary>
+<details>
+<summary>1. Set up Git to use SSH</summary>
+1. [Generate an SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#generating-a-new-ssh-key) and [add the SSH key to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
+1. Configure SSH to automatically load your SSH keys:
+    ```sh
+    cat << EOF >> ~/.ssh/config
+    Host *
+      AddKeysToAgent yes
+      IgnoreUnknown UseKeychain
+      UseKeychain yes
+      ForwardAgent yes
+    EOF
+    ```
+</details>
+<details>
+<summary>2. Install Docker</summary>
+1. [Install Docker Desktop](https://www.docker.com/get-started).
+    - _Linux only_:
+        - Export your user's user id and group id so that [files created in the Dev Container are owned by your user](https://github.com/moby/moby/issues/3206):
+            ```sh
+            cat << EOF >> ~/.bashrc
+            export UID=$(id --user)
+            export GID=$(id --group)
+            EOF
+            ```
+</details>
+<details>
+<summary>3. Install VS Code or PyCharm</summary>
+1. [Install VS Code](https://code.visualstudio.com/) and [VS Code's Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers). Alternatively, install [PyCharm](https://www.jetbrains.com/pycharm/download/).
+2. _Optional:_ install a [Nerd Font](https://www.nerdfonts.com/font-downloads) such as [FiraCode Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) and [configure VS Code](https://github.com/tonsky/FiraCode/wiki/VS-Code-Instructions) or [configure PyCharm](https://github.com/tonsky/FiraCode/wiki/Intellij-products-instructions) to use it.
+</details>
+</details>
+<details open>
+<summary>Development environments</summary>
+The following development environments are supported:
+1. ⭐️ _GitHub Codespaces_: click on _Code_ and select _Create codespace_ to start a Dev Container with [GitHub Codespaces](https://github.com/features/codespaces).
+1. ⭐️ _Dev Container (with container volume)_: click on [Open in Dev Containers](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/superlinear-ai/raglite) to clone this repository in a container volume and create a Dev Container with VS Code.
+1. _Dev Container_: clone this repository, open it with VS Code, and run <kbd>Ctrl/⌘</kbd> + <kbd>⇧</kbd> + <kbd>P</kbd> → _Dev Containers: Reopen in Container_.
+1. _PyCharm_: clone this repository, open it with PyCharm, and [configure Docker Compose as a remote interpreter](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote) with the `dev` service.
+1. _Terminal_: clone this repository, open it with your terminal, and run `docker compose up --detach dev` to start a Dev Container in the background, and then run `docker compose exec dev zsh` to open a shell prompt in the Dev Container.
+</details>
+<details>
+<summary>Developing</summary>
+- This project follows the [Conventional Commits](https://www.conventionalcommits.org/) standard to automate [Semantic Versioning](https://semver.org/) and [Keep A Changelog](https://keepachangelog.com/) with [Commitizen](https://github.com/commitizen-tools/commitizen).
+- Run `poe` from within the development environment to print a list of [Poe the Poet](https://github.com/nat-n/poethepoet) tasks available to run on this project.
+- Run `poetry add {package}` from within the development environment to install a run time dependency and add it to `pyproject.toml` and `poetry.lock`. Add `--group test` or `--group dev` to install a CI or development dependency, respectively.
+- Run `poetry update` from within the development environment to upgrade all dependencies to the latest versions allowed by `pyproject.toml`.
+- Run `cz bump` to bump the package's version, update the `CHANGELOG.md`, and create a git tag.
+</details>
+`cat /repo/README.md` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+---------------------------
+### Thought:
+The README provides various steps for installation and setup. Here are the key steps to configure the environment:
+1. Install spaCy's multilingual sentence model.
+2. (Optional) Install an accelerated llama-cpp-python precompiled binary.
+3. Install RAGLite and optional extras like `chainlit`, `pandoc`, and `ragas`.
+
+To begin, I will check the `pyproject.toml` and `poetry.lock` files to understand the dependencies specified there.
+
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+[build-system] # https://python-poetry.org/docs/pyproject/#poetry-and-pep-517
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+[tool.poetry] # https://python-poetry.org/docs/pyproject/
+name = "raglite"
+version = "0.4.1"
+description = "A Python toolkit for Retrieval-Augmented Generation (RAG) with SQLite or PostgreSQL."
+authors = ["Laurent Sorber <laurent@superlinear.eu>"]
+readme = "README.md"
+repository = "https://github.com/superlinear-ai/raglite"
+[tool.commitizen] # https://commitizen-tools.github.io/commitizen/config/
+bump_message = "bump(release): v$current_version → v$new_version"
+tag_format = "v$version"
+update_changelog_on_bump = true
+version_provider = "poetry"
+[tool.poetry.dependencies] # https://python-poetry.org/docs/dependency-specification/
+# Python:
+python = ">=3.10,<4.0"
+# Markdown conversion:
+pdftext = ">=0.3.13"
+pypandoc-binary = { version = ">=1.13", optional = true }
+scikit-learn = ">=1.4.2"
+# Markdown formatting:
+markdown-it-py = ">=3.0.0"
+mdformat-gfm = ">=0.3.6"
+# Sentence and chunk splitting:
+numpy = ">=1.26.4"
+scipy = ">=1.5.0"
+spacy = ">=3.7.0,<3.8.0"
+# Large Language Models:
+huggingface-hub = ">=0.22.0"
+litellm = ">=1.47.1"
+llama-cpp-python = ">=0.3.2"
+pydantic = ">=2.7.0"
+# Approximate Nearest Neighbors:
+pynndescent = ">=0.5.12"
+# Reranking:
+langdetect = ">=1.0.9"
+rerankers = { extras = ["flashrank"], version = ">=0.6.0" }
+# Storage:
+pg8000 = ">=1.31.2"
+sqlmodel-slim = ">=0.0.18"
+# Progress:
+tqdm = ">=4.66.0"
+# Evaluation:
+pandas = ">=2.1.0"
+ragas = { version = ">=0.1.12", optional = true }
+# CLI:
+typer = ">=0.12.5"
+# Frontend:
+chainlit = { version = ">=1.2.0", optional = true }
+[tool.poetry.extras] # https://python-poetry.org/docs/pyproject/#extras
+chainlit = ["chainlit"]
+pandoc = ["pypandoc-binary"]
+ragas = ["ragas"]
+[tool.poetry.group.test.dependencies] # https://python-poetry.org/docs/master/managing-dependencies/
+commitizen = ">=3.29.1"
+coverage = { extras = ["toml"], version = ">=7.4.4" }
+mypy = ">=1.9.0"
+poethepoet = ">=0.25.0"
+pre-commit = ">=3.7.0"
+pytest = ">=8.1.1"
+pytest-mock = ">=3.14.0"
+ruff = ">=0.5.7"
+safety = ">=3.1.0"
+shellcheck-py = ">=0.10.0.1"
+typeguard = ">=4.2.1"
+xx_sent_ud_sm = { url = "https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl" }
+[tool.poetry.group.dev.dependencies] # https://python-poetry.org/docs/master/managing-dependencies/
+cruft = ">=2.15.0"
+ipykernel = ">=6.29.4"
+ipython = ">=8.8.0"
+ipywidgets = ">=8.1.2"
+matplotlib = ">=3.9.0"
+memory-profiler = ">=0.61.0"
+pdoc = ">=14.4.0"
+[tool.poetry.scripts] # https://python-poetry.org/docs/pyproject/#scripts
+raglite = "raglite:cli"
+[tool.coverage.report] # https://coverage.readthedocs.io/en/latest/config.html#report
+fail_under = 50
+precision = 1
+show_missing = true
+skip_covered = true
+[tool.coverage.run] # https://coverage.readthedocs.io/en/latest/config.html#run
+branch = true
+command_line = "--module pytest"
+data_file = "reports/.coverage"
+source = ["src"]
+[tool.coverage.xml] # https://coverage.readthedocs.io/en/latest/config.html#xml
+output = "reports/coverage.xml"
+[tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
+junit_xml = "reports/mypy.xml"
+strict = true
+disallow_subclassing_any = false
+disallow_untyped_decorators = false
+ignore_missing_imports = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+warn_unreachable = true
+[tool.pytest.ini_options] # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
+addopts = "--color=yes --exitfirst --failed-first --strict-config --strict-markers --verbosity=2 --junitxml=reports/pytest.xml"
+filterwarnings = ["error", "ignore::DeprecationWarning", "ignore::pytest.PytestUnraisableExceptionWarning"]
+testpaths = ["src", "tests"]
+xfail_strict = true
+[tool.ruff] # https://github.com/charliermarsh/ruff
+fix = true
+line-length = 100
+src = ["src", "tests"]
+target-version = "py310"
+[tool.ruff.lint]
+select = ["A", "ASYNC", "B", "BLE", "C4", "C90", "D", "DTZ", "E", "EM", "ERA", "F", "FBT", "FLY", "FURB", "G", "I", "ICN", "INP", "INT", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "Q", "RET", "RSE", "RUF", "S", "SIM", "SLF", "SLOT", "T10", "T20", "TCH", "TID", "TRY", "UP", "W", "YTT"]
+ignore = ["D203", "D213", "E501", "RET504", "RUF002", "S101", "S307"]
+unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 100
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+[tool.poe.tasks] # https://github.com/nat-n/poethepoet
+[tool.poe.tasks.docs]
+help = "Generate this package's docs"
+cmd = """
+    pdoc
+      --docformat $docformat
+      --output-directory $outputdirectory
+      raglite
+    """
+[[tool.poe.tasks.docs.args]]
+help = "The docstring style (default: numpy)"
+name = "docformat"
+options = ["--docformat"]
+default = "numpy"
+[[tool.poe.tasks.docs.args]]
+help = "The output directory (default: docs)"
+name = "outputdirectory"
+options = ["--output-directory"]
+default = "docs"
+[tool.poe.tasks.lint]
+help = "Lint this package"
+[[tool.poe.tasks.lint.sequence]]
+cmd = """
+      pre-commit run
+        --all-files
+        --color always
+      """
+[[tool.poe.tasks.lint.sequence]]
+shell = "safety check --continue-on-error --full-report"
+[tool.poe.tasks.test]
+help = "Test this package"
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage run"
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage report"
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage xml"
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+---------------------------
+### Thought:
+The `pyproject.toml` file reveals that the project uses Poetry for dependency management. We should use Poetry to install the dependencies and set up the environment. Now, I will install the dependencies using Poetry.
+
+### Action:
+```bash
+cd /repo && poetry install
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install`...
+[19A[0J  [32;1m-[39;22m [39mInstalling [39m[36mllama-cpp-python[39m[39m ([39m[32m0.3.2[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mmatplotlib[39m[39m ([39m[32m3.9.2[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mmdformat-gfm[39m[39m ([39m[32m0.3.6[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mmemory-profiler[39m[39m ([39m[32m0.61.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mmypy[39m[39m ([39m[32m1.11.1[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpdftext[39m[39m ([39m[32m0.3.13[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpdoc[39m[39m ([39m[32m14.6.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpg8000[39m[39m ([39m[32m1.31.2[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpoethepoet[39m[39m ([39m[32m0.27.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpre-commit[39m[39m ([39m[32m3.8.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpynndescent[39m[39m ([39m[32m0.5.13[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpytest-mock[39m[39m ([39m[32m3.14.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mrerankers[39m[39m ([39m[32m0.6.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mruff[39m[39m ([39m[32m0.6.1[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36msafety[39m[39m ([39m[32m3.2.3[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mshellcheck-py[39m[39m ([39m[32m0.10.0.1[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36msqlmodel-slim[39m[39m ([39m[32m0.0.21[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mtypeguard[39m[39m ([39m[32m4.3.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mxx-sent-ud-sm[39m[39m ([39m[32m3.7.0 https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl[39m[39m)[39m
+[39;1mInstalling[39;22m the current project: [36mraglite[39m ([39;1m0.4.1[39;22m)[1G[2K[39;1mInstalling[39;22m the current project: [36mraglite[39m ([32m0.4.1[39m)
+`poetry install` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+---------------------------
+### Thought:
+Poetry has successfully installed all the dependencies listed in the `pyproject.toml` file. Now, I will run tests to ensure that the configuration is correct.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+Pytest is not installed in your environment. Please install the latest version of pytest using `pip install pytest`.
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 100
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 195 turns left to complete the task.
+---------------------------
+### Thought:
+The error indicates that `pytest` is not installed. However, since `pytest` is listed as a dependency in the `pyproject.toml` file, it appears that it was not installed correctly.
+
+First, I will try running `poetryruntest` in the configured Poetry environment to see if the issue persists.
+
+### Action:
+```bash
+poetryruntest
+```
+Congratulations, you have successfully configured the environment!
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.10.15, pytest-8.3.2, pluggy-1.5.0 -- /root/.cache/pypoetry/virtualenvs/raglite-gW_DSdP6-py3.10/bin/python
+cachedir: .pytest_cache
+rootdir: /repo
+configfile: pyproject.toml
+testpaths: src, tests
+plugins: typeguard-4.3.0, mock-3.14.0, anyio-4.4.0
+[1mcollecting ... [0mcollected 63 items
+run-last-failure: no previously failed tests, not deselecting items.
+
+<Dir repo>
+  <Package tests>
+    <Module test_embed.py>
+      Test RAGLite's embedding functionality.
+      <Function test_embed[bge_m3]>
+        Test embedding a document.
+    <Module test_rag.py>
+      Test RAGLite's RAG functionality.
+      <Function test_rag[sqlite-bge_m3]>
+        Test Retrieval-Augmented Generation.
+    <Module test_rerank.py>
+      Test RAGLite's reranking functionality.
+      <Function test_reranker[sqlite-bge_m3-no_reranker]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[sqlite-bge_m3-flashrank_english]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[sqlite-bge_m3-flashrank_multilingual]>
+        Test inserting a document, updating the indexes, and searching for a query.
+    <Module test_search.py>
+      Test RAGLite's search functionality.
+      <Function test_search[sqlite-bge_m3-keyword_search]>
+        Test searching for a query.
+      <Function test_search[sqlite-bge_m3-vector_search]>
+        Test searching for a query.
+      <Function test_search[sqlite-bge_m3-hybrid_search]>
+        Test searching for a query.
+      <Function test_search_no_results[sqlite-bge_m3-keyword_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[sqlite-bge_m3-vector_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[sqlite-bge_m3-hybrid_search]>
+        Test searching for a query with no keyword search results.
+    <Module test_rag.py>
+      Test RAGLite's RAG functionality.
+      <Function test_rag[sqlite-openai_text_embedding_3_small]>
+        Test Retrieval-Augmented Generation.
+    <Module test_rerank.py>
+      Test RAGLite's reranking functionality.
+      <Function test_reranker[sqlite-openai_text_embedding_3_small-no_reranker]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[sqlite-openai_text_embedding_3_small-flashrank_english]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[sqlite-openai_text_embedding_3_small-flashrank_multilingual]>
+        Test inserting a document, updating the indexes, and searching for a query.
+    <Module test_search.py>
+      Test RAGLite's search functionality.
+      <Function test_search[sqlite-openai_text_embedding_3_small-keyword_search]>
+        Test searching for a query.
+      <Function test_search[sqlite-openai_text_embedding_3_small-vector_search]>
+        Test searching for a query.
+      <Function test_search[sqlite-openai_text_embedding_3_small-hybrid_search]>
+        Test searching for a query.
+      <Function test_search_no_results[sqlite-openai_text_embedding_3_small-keyword_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[sqlite-openai_text_embedding_3_small-vector_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[sqlite-openai_text_embedding_3_small-hybrid_search]>
+        Test searching for a query with no keyword search results.
+    <Module test_embed.py>
+      Test RAGLite's embedding functionality.
+      <Function test_embed[openai_text_embedding_3_small]>
+        Test embedding a document.
+    <Module test_rag.py>
+      Test RAGLite's RAG functionality.
+      <Function test_rag[postgres-openai_text_embedding_3_small]>
+        Test Retrieval-Augmented Generation.
+    <Module test_rerank.py>
+      Test RAGLite's reranking functionality.
+      <Function test_reranker[postgres-openai_text_embedding_3_small-no_reranker]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[postgres-openai_text_embedding_3_small-flashrank_english]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[postgres-openai_text_embedding_3_small-flashrank_multilingual]>
+        Test inserting a document, updating the indexes, and searching for a query.
+    <Module test_search.py>
+      Test RAGLite's search functionality.
+      <Function test_search[postgres-openai_text_embedding_3_small-keyword_search]>
+        Test searching for a query.
+      <Function test_search[postgres-openai_text_embedding_3_small-vector_search]>
+        Test searching for a query.
+      <Function test_search[postgres-openai_text_embedding_3_small-hybrid_search]>
+        Test searching for a query.
+      <Function test_search_no_results[postgres-openai_text_embedding_3_small-keyword_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[postgres-openai_text_embedding_3_small-vector_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[postgres-openai_text_embedding_3_small-hybrid_search]>
+        Test searching for a query with no keyword search results.
+    <Module test_rag.py>
+      Test RAGLite's RAG functionality.
+      <Function test_rag[postgres-bge_m3]>
+        Test Retrieval-Augmented Generation.
+    <Module test_rerank.py>
+      Test RAGLite's reranking functionality.
+      <Function test_reranker[postgres-bge_m3-no_reranker]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[postgres-bge_m3-flashrank_english]>
+        Test inserting a document, updating the indexes, and searching for a query.
+      <Function test_reranker[postgres-bge_m3-flashrank_multilingual]>
+        Test inserting a document, updating the indexes, and searching for a query.
+    <Module test_search.py>
+      Test RAGLite's search functionality.
+      <Function test_search[postgres-bge_m3-keyword_search]>
+        Test searching for a query.
+      <Function test_search[postgres-bge_m3-vector_search]>
+        Test searching for a query.
+      <Function test_search[postgres-bge_m3-hybrid_search]>
+        Test searching for a query.
+      <Function test_search_no_results[postgres-bge_m3-keyword_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[postgres-bge_m3-vector_search]>
+        Test searching for a query with no keyword search results.
+      <Function test_search_no_results[postgres-bge_m3-hybrid_search]>
+        Test searching for a query with no keyword search results.
+    <Module test_extract.py>
+      Test RAGLite's structured output extraction.
+      <Function test_extract[llama_cpp_python-strict=False]>
+        Test extracting structured data.
+      <Function test_extract[llama_cpp_python-strict=True]>
+        Test extracting structured data.
+      <Function test_extract[openai-strict=False]>
+        Test extracting structured data.
+      <Function test_extract[openai-strict=True]>
+        Test extracting structured data.
+    <Module test_import.py>
+      Test RAGLite.
+      <Function test_import>
+        Test that the package can be imported.
+    <Module test_markdown.py>
+      Test Markdown conversion.
+      <Function test_pdf_with_missing_font_sizes>
+        Test conversion of a PDF with missing font sizes.
+    <Module test_split_chunks.py>
+      Test RAGLite's chunk splitting functionality.
+      <Function test_edge_cases[one_chunk:no_sentences]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[one_chunk:one_sentence]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[one_chunk:two_sentences]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[one_chunk:three_sentences]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[one_chunk:many_sentences]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[n_chunks:two_sentences_a]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[n_chunks:two_sentences_b]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[n_chunks:three_sentences_a]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[n_chunks:three_sentences_b]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[n_chunks:three_sentences_c]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[n_chunks:many_sentences_a]>
+        Test chunk splitting edge cases.
+      <Function test_edge_cases[n_chunks:many_sentences_b]>
+        Test chunk splitting edge cases.
+      <Function test_long_sentence[first]>
+        Test chunking on sentences that are too long.
+      <Function test_long_sentence[middle]>
+        Test chunking on sentences that are too long.
+      <Function test_long_sentence[last]>
+        Test chunking on sentences that are too long.
+
+----------------- generated xml file: /repo/reports/pytest.xml -----------------
+[32m========================= [32m63 tests collected[0m[32m in 1.61s[0m[32m ==========================[0m
+Container 5f7153d04c46 stopped and removed
+Spend totally 1347.6698763370514.

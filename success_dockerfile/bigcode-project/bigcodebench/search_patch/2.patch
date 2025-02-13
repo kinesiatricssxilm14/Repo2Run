@@ -1,0 +1,56 @@
+
+/repo/bigcodebench/legacy_sanitize.py
+<<<<<<< SEARCH
+=======
+def get_deps(nodes: List[Tuple[str, Node]]) -> Dict[str, Set[str]]:
+    def dfs_get_deps(node: Node, deps: Set[str]) -> None:
+        for child in node.children:
+            if child.type == IDENTIFIER_TYPE:
+                deps.add(child.text.decode("utf8"))
+            else:
+                dfs_get_deps(child, deps)
+
+    name2deps = {}
+    for name, node in nodes:
+        deps = set()
+        dfs_get_deps(node, deps)
+        name2deps[name] = deps
+    return name2deps
+
+def get_function_dependency(entrypoint: str, call_graph: Dict[str, str]) -> Set[str]:
+    queue = [entrypoint]
+    visited = {entrypoint}
+    while queue:
+        current = queue.pop(0)
+        if current not in call_graph:
+            continue
+        for neighbour in call_graph[current]:
+            if not (neighbour in visited):
+                visited.add(neighbour)
+                queue.append(neighbour)
+    return visited
+
+def get_definition_name(node: Node) -> str:
+    for child in node.children:
+        if child.type == IDENTIFIER_TYPE:
+            return child.text.decode("utf8")
+
+def traverse_tree(node: Node) -> Generator[Node, None, None]:
+    cursor = node.walk()
+    depth = 0
+    visited_children = False
+
+    while True:
+        if not visited_children:
+            yield cursor.node
+            if not cursor.goto_first_child():
+                depth += 1
+                visited_children = True
+        elif cursor.goto_next_sibling():
+            visited_children = False
+        elif not cursor.goto_parent() or depth == 0:
+            break
+        else:
+            depth -= 1
+>>>>>>> REPLACE
+

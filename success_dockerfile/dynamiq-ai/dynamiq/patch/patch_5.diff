@@ -1,0 +1,47 @@
+diff --git a/Dockerfile b/Dockerfile
+deleted file mode 100644
+index b5ab2e6..0000000
+--- a/Dockerfile
++++ /dev/null
+@@ -1,28 +0,0 @@
+-FROM python:3.12.2-slim AS runtime
+-
+-ENV PYTHONPATH=/app/
+-ENV RUNTIME_PACKAGES="git curl make"
+-ENV POETRY_HOME=/opt/poetry
+-ENV POETRY_VERSION=1.8.3
+-ENV POETRY_VIRTUALENVS_CREATE=false
+-ENV PATH=${POETRY_HOME}/bin:${PATH}
+-
+-RUN apt-get update && apt-get install -y $RUNTIME_PACKAGES
+-RUN apt-get install build-essential -y
+-RUN curl -sSL https://install.python-poetry.org | python3 - --yes
+-
+-WORKDIR /app
+-
+-COPY ./pyproject.toml /app/pyproject.toml
+-COPY ./poetry.lock /app/poetry.lock
+-COPY ./Makefile /app/Makefile
+-
+-RUN poetry install --no-root
+-
+-FROM runtime AS develop
+-
+-COPY ./.pre-commit-config.yaml /app/.pre-commit-config.yaml
+-COPY ./setup.cfg /app/setup.cfg
+-COPY ./dynamiq /app/dynamiq
+-COPY ./examples /app/examples
+-COPY ./tests /app/tests
+diff --git a/dynamiq/nodes/agents/base.py b/dynamiq/nodes/agents/base.py
+index 0e0e788..15f5d0f 100644
+--- a/dynamiq/nodes/agents/base.py
++++ b/dynamiq/nodes/agents/base.py
+@@ -488,7 +488,7 @@ class AgentManagerInputSchema(BaseModel):
+         if not action or action not in context.context.get("actions"):
+             raise InvalidActionException(
+                 f"Invalid or missing action: {action}. Please select an action from \
+-                    {context.context.get("actions")}."  # nosec: B608
++                    {context.context.get("actions")}.  # nosec: B608"
+             )
+         return self
+ 

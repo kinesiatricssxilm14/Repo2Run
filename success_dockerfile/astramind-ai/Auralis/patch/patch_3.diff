@@ -1,0 +1,33 @@
+diff --git a/src/auralis/models/xttsv2/XTTSv2.py b/src/auralis/models/xttsv2/XTTSv2.py
+index 4add4cb..2ce666f 100644
+--- a/src/auralis/models/xttsv2/XTTSv2.py
++++ b/src/auralis/models/xttsv2/XTTSv2.py
+@@ -123,7 +123,10 @@ class XTTSv2Engine(BaseAsyncTTSEngine):
+         self.get_memory_usage_curve()
+ 
+         # Initialize VLLM engine at the end, settings its concurrency
+-        self.init_vllm_engine(self.max_concurrency)
++        if torch.cuda.is_available():
++            self.init_vllm_engine(self.max_concurrency)
++        else:
++            self.logger.warning("CUDA is not available. Skipping VLLM engine initialization.")
+ 
+         # Semaphore for concurrency control of the encoding process
+         self.encoder_semaphore = asyncio.BoundedSemaphore(semaphore_concurrency)
+@@ -204,6 +207,7 @@ class XTTSv2Engine(BaseAsyncTTSEngine):
+             device_map: Optional[str] = "auto",
+             tensor_parallel_size: int = 1,
+             pipeline_parallel_size: int = 1,
++            gpt_model: Optional[str] = "AstraMindAI/xtts2-gpt",
+             **kwargs,
+     ) -> nn.Module:
+         """Load pretrained XTTS model from HuggingFace Hub."""
+@@ -230,7 +234,7 @@ class XTTSv2Engine(BaseAsyncTTSEngine):
+         hifi_config = XTTSConfig(**config)
+ 
+         # Initialize model
+-        model = cls(
++        model = cls(gpt_model=gpt_model,
+             hifi_config=hifi_config,
+             gpt_config=gpt_config,
+             tensor_parallel_size=tensor_parallel_size,

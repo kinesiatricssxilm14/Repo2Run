@@ -1,0 +1,58 @@
+diff --git a/Dockerfile b/Dockerfile
+deleted file mode 100644
+index 49538b8..0000000
+--- a/Dockerfile
++++ /dev/null
+@@ -1,27 +0,0 @@
+-# --------- requirements ---------
+-
+-FROM python:3.11 as requirements-stage
+-
+-WORKDIR /tmp
+-
+-RUN pip install poetry
+-
+-COPY ./pyproject.toml ./poetry.lock* /tmp/
+-
+-RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+-
+-
+-# --------- final image build ---------
+-FROM python:3.11
+-
+-WORKDIR /code
+-
+-COPY --from=requirements-stage /tmp/requirements.txt /code/requirements.txt
+-
+-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+-
+-COPY ./src/app /code/app
+-
+-# -------- replace with comment to run with gunicorn --------
+-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+-# CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker". "-b", "0.0.0.0:8000"]
+diff --git a/pyproject.toml b/pyproject.toml
+index c0e83d7..8ab4b38 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -32,6 +32,7 @@ gunicorn = "^22.0.0"
+ bcrypt = "^4.1.1"
+ fastcrud = "^0.12.0"
+ sqlmodel = "^0.0.18"
++aiosqlite = "^0.20.0"
+ 
+ 
+ [build-system]
+diff --git a/src/app/core/config.py b/src/app/core/config.py
+index 5b7926d..9b2ff44 100644
+--- a/src/app/core/config.py
++++ b/src/app/core/config.py
+@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
+ from starlette.config import Config
+ 
+ current_file_dir = os.path.dirname(os.path.realpath(__file__))
+-env_path = os.path.join(current_file_dir, "..", "..", ".env")
++env_path = "/repo/.env"
+ config = Config(env_path)
+ 
+ 

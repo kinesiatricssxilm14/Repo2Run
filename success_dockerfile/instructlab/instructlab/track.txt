@@ -1,0 +1,935 @@
+instructlab/instructlab
+c978b2928c767cd14b221a965bdb5864c128d05c
+Container great_snyder 7c024ef45de1 started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought:
+I need to understand the structure of the root directory to locate configuration files and start the environment setup process.
+
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+CHANGELOG.md	    README.md		pyproject.toml		    src
+CODE_OF_CONDUCT.md  SECURITY.md		requirements		    tests
+CONTRIBUTING	    TROUBLESHOOTING.md	requirements-dev.txt	    tox.ini
+LICENSE		    containers		requirements-vllm-cuda.txt
+MAINTAINERS.md	    docs		requirements.txt
+Makefile	    notebooks		scripts
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+Identify and understand the contents of `pyproject.toml` since it is a common configuration file for various build and dependency management tools like Poetry, setuptools, etc.
+
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /repo/pyproject.toml`...
+# SPDX-License-Identifier: Apache-2.0
+[build-system]
+requires = ["setuptools>=70.1.0", "setuptools_scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "instructlab"
+authors = [{ name = "InstructLab", email = "dev@instructlab.ai" }]
+description = "Core package for interacting with InstructLab"
+readme = "README.md"
+license = { text = "Apache-2.0 AND MIT" }
+requires-python = ">=3.10,<3.12"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "License :: OSI Approved :: Apache Software License",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+dynamic = ["dependencies", "optional-dependencies", "version"]
+[project.scripts]
+# defines ilab executable
+ilab = "instructlab.lab:ilab"
+[project.urls]
+homepage = "https://instructlab.ai"
+source = "https://github.com/instructlab/instructlab"
+issues = "https://github.com/instructlab/instructlab/issues"
+# command entry points
+[project.entry-points."instructlab.command"]
+"config" = "instructlab.config.config:config"
+"data" = "instructlab.cli.data.data:data"
+"model" = "instructlab.model.model:model"
+"system" = "instructlab.system.system:system"
+"taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
+[project.entry-points."instructlab.command.config"]
+"edit" = "instructlab.config.edit:edit"
+"init" = "instructlab.config.init:init"
+"show" = "instructlab.config.show:show"
+[project.entry-points."instructlab.command.data"]
+"generate" = "instructlab.cli.data.generate:generate"
+"list" = "instructlab.cli.data.list:list_datasets"
+[project.entry-points."instructlab.command.model"]
+"chat" = "instructlab.model.chat:chat"
+"convert" = "instructlab.model.convert:convert"
+"download" = "instructlab.model.download:download"
+"evaluate" = "instructlab.model.evaluate:evaluate"
+"serve" = "instructlab.cli.model.serve:serve"
+"test" = "instructlab.model.test:test"
+"train" = "instructlab.cli.model.train:train"
+"list" = "instructlab.model.list:model_list"
+[project.entry-points."instructlab.command.system"]
+"info" = "instructlab.system.info:info"
+[project.entry-points."instructlab.command.taxonomy"]
+"diff" = "instructlab.taxonomy.diff:diff"
+[project.entry-points."instructlab.command.alias"]
+"chat" = "instructlab.model.chat:chat"
+"generate" = "instructlab.cli.data.generate:generate"
+"train" = "instructlab.cli.model.train:train"
+"serve" = "instructlab.cli.model.serve:serve"
+[tool.setuptools_scm]
+version_file = "src/instructlab/_version.py"
+# do not include +gREV local version, required for Test PyPI upload
+local_scheme = "no-local-version"
+[tool.setuptools]
+package-dir = { "" = "src" }
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+optional-dependencies.cpu = { file = ["requirements/cpu.txt"] }
+optional-dependencies.cuda = { file = ["requirements/cuda.txt"] }
+optional-dependencies.hpu = { file = ["requirements/hpu.txt"] }
+optional-dependencies.mps = { file = ["requirements/mps.txt"] }
+optional-dependencies.rocm = { file = ["requirements/rocm.txt"] }
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+  "instructlab",
+  "instructlab.chat",
+  "instructlab.generator",
+  "instructlab.cli",
+  "instructlab.cli.model",
+  "instructlab.train",
+  "instructlab.train.lora_mlx",
+  "instructlab.train.lora_mlx.models",
+  "instructlab.llamacpp",
+  "instructlab.mlx_explore",
+]
+[tool.check-wheel-contents]
+# W002 - Wheel contains duplicate files:
+#  instructlab/mlx_explore/LICENSE
+#  instructlab/train/lora_mlx/LICENSE
+ignore = ["W002"]
+[tool.ruff]
+target-version = "py310"
+# same as black's default line length
+line-length = 88
+[tool.ruff.lint]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+# modern type annotations
+extend-safe-fixes = ["UP006", "UP007"]
+# Fixers will be enabled gradually.
+select = [
+  "B", # flake8-bugbear
+  "E", # pycodestyle
+  "F", # Pyflakes
+  "Q", # flake8-quotes
+  # Ruff does not support isort's import_headings feature, yet.
+  # "I",   # isort
+  # "UP",  # pyupgrade
+  "SIM", # flake8-simplify
+  "TID", # flake8-tidy-imports
+]
+ignore = [
+  "B904", # TODO: "raise from err" or "raise from None"
+  # some embedded strings are longer than 88 characters
+  "E501",   # line too long
+  "SIM108", # Use ternary operator
+  "SIM102", # Use a single if instead of nested if
+  "TID252", # Prefer absolute imports over relative imports from parent modules
+]
+[tool.ruff.lint.per-file-ignores]
+# vendored files, maintained externally
+"src/instructlab/llamacpp/llamacpp_convert_to_gguf.py" = ["ALL"]
+"src/instructlab/mlx_explore/**" = ["ALL"]
+"src/instructlab/train/lora_mlx/**" = ["ALL"]
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"yamllint".msg = "yamllint is for CLI usage only."
+[tool.ruff.lint.isort]
+# same as .isort.cfg
+from-first = true
+# not supported yet
+# import-heading-future=Future
+# import-heading-stdlib=Standard
+# import-heading-thirdparty=Third Party
+# import-heading-firstparty=First Party
+# import-heading-localfolder=Local
+known-local-folder = ["tuning"]
+[tool.mypy]
+mypy_path = ["src"]
+packages = ["instructlab", "tests"]
+disable_error_code = []
+# TODO: tighten MyPy checks by enabling these checks over time.
+check_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+warn_return_any = true
+# honor excludes by not following there through imports
+follow_imports = "silent"
+exclude = [
+  # These are files that were copied from the original codebase.
+  # We are trying to keep changes to a minimum.
+  "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
+  "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
+  "^src/instructlab/mlx_explore/utils\\.py$",
+  "^src/i
+...[Truncation]...
+odel:model"
+"system" = "instructlab.system.system:system"
+"taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
+[project.entry-points."instructlab.command.config"]
+"edit" = "instructlab.config.edit:edit"
+"init" = "instructlab.config.init:init"
+"show" = "instructlab.config.show:show"
+[project.entry-points."instructlab.command.data"]
+"generate" = "instructlab.cli.data.generate:generate"
+"list" = "instructlab.cli.data.list:list_datasets"
+[project.entry-points."instructlab.command.model"]
+"chat" = "instructlab.model.chat:chat"
+"convert" = "instructlab.model.convert:convert"
+"download" = "instructlab.model.download:download"
+"evaluate" = "instructlab.model.evaluate:evaluate"
+"serve" = "instructlab.cli.model.serve:serve"
+"test" = "instructlab.model.test:test"
+"train" = "instructlab.cli.model.train:train"
+"list" = "instructlab.model.list:model_list"
+[project.entry-points."instructlab.command.system"]
+"info" = "instructlab.system.info:info"
+[project.entry-points."instructlab.command.taxonomy"]
+"diff" = "instructlab.taxonomy.diff:diff"
+[project.entry-points."instructlab.command.alias"]
+"chat" = "instructlab.model.chat:chat"
+"generate" = "instructlab.cli.data.generate:generate"
+"train" = "instructlab.cli.model.train:train"
+"serve" = "instructlab.cli.model.serve:serve"
+[tool.setuptools_scm]
+version_file = "src/instructlab/_version.py"
+# do not include +gREV local version, required for Test PyPI upload
+local_scheme = "no-local-version"
+[tool.setuptools]
+package-dir = { "" = "src" }
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+optional-dependencies.cpu = { file = ["requirements/cpu.txt"] }
+optional-dependencies.cuda = { file = ["requirements/cuda.txt"] }
+optional-dependencies.hpu = { file = ["requirements/hpu.txt"] }
+optional-dependencies.mps = { file = ["requirements/mps.txt"] }
+optional-dependencies.rocm = { file = ["requirements/rocm.txt"] }
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+  "instructlab",
+  "instructlab.chat",
+  "instructlab.generator",
+  "instructlab.cli",
+  "instructlab.cli.model",
+  "instructlab.train",
+  "instructlab.train.lora_mlx",
+  "instructlab.train.lora_mlx.models",
+  "instructlab.llamacpp",
+  "instructlab.mlx_explore",
+]
+[tool.check-wheel-contents]
+# W002 - Wheel contains duplicate files:
+#  instructlab/mlx_explore/LICENSE
+#  instructlab/train/lora_mlx/LICENSE
+ignore = ["W002"]
+[tool.ruff]
+target-version = "py310"
+# same as black's default line length
+line-length = 88
+[tool.ruff.lint]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+# modern type annotations
+extend-safe-fixes = ["UP006", "UP007"]
+# Fixers will be enabled gradually.
+select = [
+  "B", # flake8-bugbear
+  "E", # pycodestyle
+  "F", # Pyflakes
+  "Q", # flake8-quotes
+  # Ruff does not support isort's import_headings feature, yet.
+  # "I",   # isort
+  # "UP",  # pyupgrade
+  "SIM", # flake8-simplify
+  "TID", # flake8-tidy-imports
+]
+ignore = [
+  "B904", # TODO: "raise from err" or "raise from None"
+  # some embedded strings are longer than 88 characters
+  "E501",   # line too long
+  "SIM108", # Use ternary operator
+  "SIM102", # Use a single if instead of nested if
+  "TID252", # Prefer absolute imports over relative imports from parent modules
+]
+[tool.ruff.lint.per-file-ignores]
+# vendored files, maintained externally
+"src/instructlab/llamacpp/llamacpp_convert_to_gguf.py" = ["ALL"]
+"src/instructlab/mlx_explore/**" = ["ALL"]
+"src/instructlab/train/lora_mlx/**" = ["ALL"]
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"yamllint".msg = "yamllint is for CLI usage only."
+[tool.ruff.lint.isort]
+# same as .isort.cfg
+from-first = true
+# not supported yet
+# import-heading-future=Future
+# import-heading-stdlib=Standard
+# import-heading-thirdparty=Third Party
+# import-heading-firstparty=First Party
+# import-heading-localfolder=Local
+known-local-folder = ["tuning"]
+[tool.mypy]
+mypy_path = ["src"]
+packages = ["instructlab", "tests"]
+disable_error_code = []
+# TODO: tighten MyPy checks by enabling these checks over time.
+check_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+warn_return_any = true
+# honor excludes by not following there through imports
+follow_imports = "silent"
+exclude = [
+  # These are files that were copied from the original codebase.
+  # We are trying to keep changes to a minimum.
+  "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
+  "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
+  "^src/instructlab/mlx_explore/utils\\.py$",
+  "^src/instructlab/train/lora_mlx/convert\\.py$",
+  "^src/instructlab/train/lora_mlx/lora\\.py$",
+  "^src/instructlab/train/lora_mlx/models/llama\\.py$",
+  "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
+  "^src/instructlab/train/lora_mlx/models/models\\.py$",
+  "^src/instructlab/train/lora_mlx/models/phi2\\.py$",
+  "^src/instructlab/train/lora_mlx/models/lora\\.py$",
+  "^src/instructlab/train/lora_mlx/utils\\.py$",
+]
+[[tool.mypy.overrides]]
+# packages without typing annotations, without stubs, or not available.
+module = [
+  "click_didyoumean",
+  "datasets",
+  "fire",
+  "gitdb",
+  "habana_frameworks.torch",
+  "huggingface_hub.*",
+  "instructlab.eval.*",
+  "instructlab_quantize",
+  "instructlab.training",
+  "mlx.*",
+  "optimum.habana.*",
+  "sentencepiece",
+  "trl",
+  "transformers",
+]
+ignore_missing_imports = true
+[tool.coverage.run]
+branch = false
+relative_files = true
+source = ["instructlab", "tests/"]
+omit = [
+  # omit instructlab code in different packages
+  "*/instructlab/dolomite/*",
+  "*/instructlab/eval/*",
+  "*/instructlab/schema/*",
+  "*/instructlab/sdg/*",
+  "*/instructlab/training/*",
+]
+[tool.coverage.paths]
+source = ["src/instructlab", "*.tox/*/lib*/python*/site-packages/instructlab"]
+tests = ["tests/"]
+[tool.coverage.report]
+exclude_lines = ["@abc.abstractmethod", "if typing.TYPE_CHECKING"]
+[tool.pytest.ini_options]
+# don't collect src/instructlab/model/linux_test.py
+testpaths = "tests"
+# verbose diffs
+verbosity_assertions = 2
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `pyproject.toml` file is set up for setuptools, which means we should use `pip install -e .` to install the dependencies. Let's start by attempting to run this installation command to see if it resolves the dependencies properly.
+
+### Action:
+```bash
+cd /repo && pip install -e .
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `pip install -e .`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install -e .`...
+Looking in indexes: http://simple/
+Obtaining file:///repo
+  Installing build dependencies ... [?25l- \ | / - done
+  Downloading http://packages/click/click-8.1.7-py3-none-any.whl (97 kB)
+Collecting click-didyoumean>=0.3.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/click-didyoumean/click_didyoumean-0.3.1-py3-none-any.whl (3.6 kB)
+Collecting datasets>=2.18.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/datasets/datasets-3.2.0-py3-none-any.whl (480 kB)
+Collecting gguf>=0.6.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/gguf/gguf-0.13.0-py3-none-any.whl (75 kB)
+Collecting GitPython>=3.1.42 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/gitpython/GitPython-3.1.43-py3-none-any.whl (207 kB)
+Collecting httpx>=0.25.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/httpx/httpx-0.28.1-py3-none-any.whl (73 kB)
+Collecting instructlab-eval>=0.4.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/instructlab-eval/instructlab_eval-0.4.2-py3-none-any.whl (66 kB)
+Collecting instructlab-quantize>=0.1.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/instructlab-quantize/instructlab_quantize-0.1.0-py3-none-any.whl (2.0 MB)
+  Downloading http://packages/instructlab-schema/instructlab_schema-0.4.1-py3-none-any.whl (18 kB)
+Collecting instructlab-sdg>=0.6.2 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/instructlab-sdg/instructlab_sdg-0.6.2-py3-none-any.whl (78 kB)
+Collecting instructlab-training>=0.6.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/instructlab-training/instructlab_training-0.6.1-py3-none-any.whl (53 kB)
+Collecting llama_cpp_python==0.2.79 (from llama_cpp_python[server]==0.2.79->instructlab==0.21.0a2.dev185)
+  Downloading http://packages/llama-cpp-python/llama_cpp_python-0.2.79.tar.gz (50.3 MB)
+  Downloading http://packages/numpy/numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+  Downloading http://packages/openai/openai-1.57.4-py3-none-any.whl (390 kB)
+Collecting peft>=0.9.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/peft/peft-0.14.0-py3-none-any.whl (374 kB)
+Collecting prompt-toolkit>=3.0.38 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/prompt-toolkit/prompt_toolkit-3.0.48-py3-none-any.whl (386 kB)
+Collecting pydantic>=2.7.4 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/pydantic/pydantic-2.10.3-py3-none-any.whl (456 kB)
+Collecting pydantic_yaml>=1.2.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/pydantic-yaml/pydantic_yaml-1.4.0-py3-none-any.whl (17 kB)
+Collecting PyYAML>=6.0.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/pyyaml/PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (751 kB)
+  Downloading http://packages/rich/rich-13.9.4-py3-none-any.whl (242 kB)
+Collecting rouge-score>=0.1.2 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/rouge-score/rouge_score-0.1.2.tar.gz (17 kB)
+  Preparing metadata (setup.py) ... [?25l- done
+  Downloading http://packages/ruamel-yaml/ruamel.yaml-0.18.6-py3-none-any.whl (117 kB)
+Collecting sentencepiece>=0.2.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/sentencepiece/sentencepiece-0.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+  Downloading http://packages/tokenizers/tokenizers-0.21.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+  Downloading http://packages/toml/toml-0.10.2-py2.py3-none-any.whl (16 kB)
+Collecting torch<2.5.0,>=2.3.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/torch/torch-2.4.1-cp310-cp310-manylinux1_x86_64.whl (797.1 MB)
+  Downloading http://packages/tqdm/tqdm-4.67.1-py3-none-any.whl (78 kB)
+Collecting transformers>=4.41.2 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/transformers/transformers-4.47.0-py3-none-any.whl (10.1 MB)
+  Downloading http://packages/trl/trl-0.13.0-py3-none-any.whl (293 kB)
+Collecting wandb>=0.16.4 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/wandb/wandb-0.19.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20.0 MB)
+  Downloading http://packages/xdg-base-dirs/xdg_base_dirs-6.0.2-py3-none-any.whl (4.7 kB)
+Collecting psutil>=6.0.0 (from instructlab==0.21.0a2.dev185)
+  Downloading http://packages/psutil/psutil-6.1.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (287 kB)
+Collecting huggingface_hub>=0.1.8 (from huggingface_hub[hf_transfer]>=0.1.8->instructlab==0.21.0a2.dev185)
+  Downloading http://packages/huggingface-hub/huggingface_hub-0.27.0-py3-none-any.whl (450 kB)
+Collecting typing-extensions>=4.5.0 (from llama_cpp_python==0.2.79->llama_cpp_python[server]==0.2.79->instructlab==0.21.0a2.dev185)
+  Downloading http://packages/typing-extensions/typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+Collecting diskcache>=5.6.1 (from llama_cpp_python==0.2.79->llama_cpp_python[server]==0.2.79->instructlab==0.21.0a2.dev185)
+  Downloading http://packages/diskcache/diskcache-5.6.3-py3-none-any.whl (45 kB)
+Collecting jinja2>=2.11.3 (from llama_cpp
+...[Truncation]...
+orpy, tabulate, sympy, soupsieve, sniffio, smmap, six, shortuuid, shellingham, setproctitle, safetensors, ruamel.yaml.clib, rtree, rpds-py, regex, PyYAML, python-dotenv, pypdfium2, pygments, pybind11, pyarrow, psutil, protobuf, propcache, prompt-toolkit, portalocker, platformdirs, pillow, pathvalidate, pathspec, orjson, nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpy, ninja, networkx, more-itertools, mdurl, MarkupSafe, marko, lxml, llvmlite, lazy-loader, jsonref, jsonpointer, joblib, jiter, instructlab-quantize, idna, hf-transfer, h11, fsspec, frozenlist, filelock, et-xmlfile, docutils, distro, diskcache, dill, colorama, click, charset-normalizer, chardet, certifi, attrs, async-timeout, annotated-types, aiohappyeyeballs, aiofiles, absl-py, yamllint, uvicorn, triton, tqdm-multiprocess, tifffile, Shapely, sentry-sdk, scipy, sacrebleu, ruamel.yaml, requests, referencing, python-pptx, python-docx, python-dateutil, pydantic-core, pandas-stubs, openpyxl, opencv-python-headless, nvidia-cusparse-cu12, nvidia-cudnn-cu12, numexpr, numba, nltk, multiprocess, multidict, mbstrdecoder, markdown-it-py, jsonpatch, jsonlines, jinja2, imageio, httpcore, gitdb, gguf, docling-parse, docker-pycreds, click-didyoumean, beautifulsoup4, anyio, aiosignal, yarl, typepy, starlette, scikit-learn, scikit-image, rouge-score, rich, requests-toolbelt, pydantic, pandas, nvidia-cusolver-cu12, llama_cpp_python, jsonschema-specifications, huggingface_hub, httpx, GitPython, wandb, typer, torch, tokenizers, starlette-context, sse-starlette, pydantic_yaml, pydantic-settings, openai, langsmith, jsonschema, fastapi, aiohttp, transformers, torchvision, langchain-core, instructlab-schema, docling-core, DataProperty, accelerate, tabledata, peft, langchain-text-splitters, instructlab-dolomite, easyocr, docling-ibm-models, deepsearch-glm, datasets, trl, pytablewriter, evaluate, docling, lm-eval, instructlab-training, instructlab-sdg, instructlab-eval, instructlab
+Successfully installed DataProperty-1.0.1 GitPython-3.1.43 MarkupSafe-3.0.2 PyYAML-6.0.2 Shapely-2.0.6 XlsxWriter-3.2.0 absl-py-2.1.0 accelerate-1.2.1 aiofiles-24.1.0 aiohappyeyeballs-2.4.4 aiohttp-3.11.10 aiosignal-1.3.2 annotated-types-0.7.0 anyio-4.7.0 async-timeout-5.0.1 attrs-24.3.0 beautifulsoup4-4.12.3 certifi-2024.12.14 chardet-5.2.0 charset-normalizer-3.4.0 click-8.1.7 click-didyoumean-0.3.1 colorama-0.4.6 datasets-2.21.0 deepsearch-glm-0.26.2 dill-0.3.8 diskcache-5.6.3 distro-1.9.0 docker-pycreds-0.4.0 docling-2.8.3 docling-core-2.11.0 docling-ibm-models-2.0.8 docling-parse-2.1.2 docutils-0.21.2 easyocr-1.7.2 et-xmlfile-2.0.0 evaluate-0.4.3 fastapi-0.115.6 filelock-3.16.1 filetype-1.2.0 frozenlist-1.5.0 fsspec-2024.6.1 gguf-0.13.0 gitdb-4.0.11 h11-0.14.0 hf-transfer-0.1.8 httpcore-1.0.7 httpx-0.28.1 huggingface_hub-0.27.0 idna-3.10 imageio-2.36.1 instructlab-0.21.0a2.dev185 instructlab-dolomite-0.2.0 instructlab-eval-0.4.2 instructlab-quantize-0.1.0 instructlab-schema-0.4.1 instructlab-sdg-0.6.2 instructlab-training-0.6.1 jinja2-3.1.4 jiter-0.8.2 joblib-1.4.2 jsonlines-3.1.0 jsonpatch-1.33 jsonpointer-3.0.0 jsonref-1.1.0 jsonschema-4.23.0 jsonschema-specifications-2024.10.1 langchain-core-0.3.25 langchain-text-splitters-0.3.3 langsmith-0.2.3 lazy-loader-0.4 llama_cpp_python-0.2.79 llvmlite-0.43.0 lm-eval-0.4.5 lxml-5.3.0 markdown-it-py-3.0.0 marko-2.1.2 mbstrdecoder-1.1.3 mdurl-0.1.2 more-itertools-10.5.0 mpmath-1.3.0 multidict-6.1.0 multiprocess-0.70.16 networkx-3.4.2 ninja-1.11.1.3 nltk-3.9.1 numba-0.60.0 numexpr-2.10.2 numpy-1.26.4 nvidia-cublas-cu12-12.1.3.1 nvidia-cuda-cupti-cu12-12.1.105 nvidia-cuda-nvrtc-cu12-12.1.105 nvidia-cuda-runtime-cu12-12.1.105 nvidia-cudnn-cu12-9.1.0.70 nvidia-cufft-cu12-11.0.2.54 nvidia-curand-cu12-10.3.2.106 nvidia-cusolver-cu12-11.4.5.107 nvidia-cusparse-cu12-12.1.0.106 nvidia-nccl-cu12-2.20.5 nvidia-nvjitlink-cu12-12.6.85 nvidia-nvtx-cu12-12.1.105 openai-1.57.4 opencv-python-headless-4.10.0.84 openpyxl-3.1.5 orjson-3.10.12 pandas-2.2.3 pandas-stubs-2.2.3.241126 pathspec-0.12.1 pathvalidate-3.2.1 peft-0.14.0 pillow-10.4.0 platformdirs-4.3.6 portalocker-3.0.0 prompt-toolkit-3.0.48 propcache-0.2.1 protobuf-5.29.1 psutil-6.1.0 py-cpuinfo-9.0.0 pyarrow-18.1.0 pybind11-2.13.6 pyclipper-1.3.0.post6 pydantic-2.9.2 pydantic-core-2.23.4 pydantic-settings-2.7.0 pydantic_yaml-1.4.0 pygments-2.18.0 pypdfium2-4.30.0 pytablewriter-1.2.0 python-bidi-0.6.3 python-dateutil-2.9.0.post0 python-docx-1.1.2 python-dotenv-1.0.1 python-pptx-1.0.2 pytz-2024.2 referencing-0.35.1 regex-2024.11.6 requests-2.32.3 requests-toolbelt-1.0.0 rich-13.9.4 rouge-score-0.1.2 rpds-py-0.22.3 rtree-1.3.0 ruamel.yaml-0.18.6 ruamel.yaml.clib-0.2.12 sacrebleu-2.4.3 safetensors-0.4.5 scikit-image-0.25.0 scikit-learn-1.6.0 scipy-1.14.1 sentencepiece-0.2.0 sentry-sdk-2.19.2 setproctitle-1.3.4 shellingham-1.5.4 shortuuid-1.0.13 six-1.17.0 smmap-5.0.1 sniffio-1.3.1 soupsieve-2.6 sqlitedict-2.1.0 sse-starlette-2.1.3 starlette-0.41.3 starlette-context-0.3.6 sympy-1.13.3 tabledata-1.3.3 tabulate-0.9.0 tcolorpy-0.1.6 tenacity-9.0.0 tesserocr-2.7.1 threadpoolctl-3.5.0 tifffile-2024.12.12 tokenizers-0.21.0 toml-0.10.2 torch-2.4.1 torchvision-0.19.1 tqdm-4.67.1 tqdm-multiprocess-0.0.11 transformers-4.47.0 triton-3.0.0 trl-0.13.0 typepy-1.3.2 typer-0.12.5 types-pytz-2024.2.0.20241003 typing-extensions-4.12.2 tzdata-2024.2 urllib3-2.2.3 uvicorn-0.34.0 wandb-0.19.1 wcwidth-0.2.13 word2number-1.1 xdg-base-dirs-6.0.2 xxhash-3.5.0 yamllint-1.35.1 yarl-1.18.3 zstandard-0.23.0
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -e .` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+---------------------------
+### Thought:
+The dependencies specified in `pyproject.toml` have been installed using `pip install -e .`. Now, it is time to run the tests to check if everything is configured correctly.
+
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/test_backends.py::test_free_port
+tests/test_backends.py::test_get_backend_auto_detection_fail_not_gguf
+tests/test_backends.py::test_get_backend_auto_detection_success_gguf
+tests/test_backends.py::test_is_model_safetensors_or_bin_valid[valid_safetensors_model_dir-safetensors-True]
+tests/test_backends.py::test_is_model_safetensors_or_bin_valid[valid_bin_model_dir-bin-True]
+tests/test_backends.py::test_is_model_safetensors_or_bin_valid[invalid_bin_model_dir-other-False]
+tests/test_backends.py::test_is_model_safetensors_or_bin_valid[invalid_safetensors_model_dir-safetensors-False]
+tests/test_backends.py::test_get_backend_auto_detection_success_vllm_dir[valid_safetensors_model_dir-vllm]
+tests/test_backends.py::test_get_backend_auto_detection_failed_vllm_dir_darwin[valid_safetensors_model_dir]
+tests/test_backends.py::test_get_forced_backend_fails_autodetection
+tests/test_backends.py::test_ilab_vllm_args
+tests/test_backends.py::test_ilab_llama_cpp_args[None-None]
+tests/test_backends.py::test_ilab_llama_cpp_args[--log-file-expected_log_file1]
+tests/test_backends.py::test_build_vllm_cmd_with_defaults
+tests/test_backends.py::test_build_vllm_cmd_with_args_provided
+tests/test_backends.py::test_build_vllm_cmd_with_bnb_quant
+tests/test_backends.py::test_get_model_template
+tests/test_backends.py::test_model_exist_check
+tests/test_config.py::TestConfig::test_default_config
+tests/test_config.py::TestConfig::test_cfg_auto_fill
+tests/test_config.py::TestConfig::test_cfg_auto_fill_with_large_config
+tests/test_config.py::TestConfig::test_validate_log_level_invalid
+tests/test_config.py::TestConfig::test_validate_log_level_valid
+tests/test_config.py::TestConfig::test_expand_paths
+tests/test_config.py::TestConfig::test_validate_log_format_invalid
+tests/test_config.py::TestConfig::test_get_model_family
+tests/test_config.py::TestConfig::test_config_modified_settings
+tests/test_config.py::test_logging[INFO-0-20-20-40]
+tests/test_config.py::test_logging[DEBUG-1-20-10-40]
+tests/test_config.py::test_logging[DEBUG-2-10-10-10]
+tests/test_config.py::test_logging[ERROR-0-40-40-40]
+tests/test_config.py::test_compare_default_config_testdata
+tests/test_config.py::test_all_config_options_have_description
+tests/test_config.py::test_get_default_and_description[cfg0-config_identifier0-Field description-default_value-False]
+tests/test_config.py::test_get_default_and_description[cfg1-config_identifier1-Nested field description-nested_default-False]
+tests/test_config.py::test_get_default_and_description[cfg2-config_identifier2-None-None-True]
+tests/test_config.py::test_get_default_and_description[cfg3-config_identifier3-None-None-True]
+tests/test_config.py::test_click_option[param_decls0-This is a test help message-False-True]
+tests/test_config.py::test_click_option[param_decls1-None-False-False]
+tests/test_config.py::test_click_option[param_decls2-None-True-True]
+tests/test_lab.py::TestConfig::test_cli_params_hyphenated
+tests/test_lab.py::test_llamap_cpp_import
+tests/test_lab.py::test_import_mlx
+tests/test_lab.py::test_ilab_cli_imports
+tests/test_lab.py::test_ilab_cli_help[()]
+tests/test_lab.py::test_ilab_cli_help[('config',)]
+tests/test_lab.py::test_ilab_cli_help[('config', 'edit')]
+tests/test_lab.py::test_ilab_cli_help[('config', 'init')]
+tests/test_lab.py::test_ilab_cli_help[('config', 'show')]
+tests/test_lab.py::test_ilab_cli_help[('model',)]
+tests/test_lab.py::test_ilab_cli_help[('model', 'chat')]
+tests/test_lab.py::test_ilab_cli_help[('model', 'convert')]
+tests/test_lab.py::test_ilab_cli_help[('model', 'download')]
+tests/test_lab.py::test_ilab_cli_help[('model', 'evaluate')]
+tests/test_lab.py::test_ilab_cli_help[('model', 'serve')]
+tests/test_lab.py::test_ilab_cli_help[('model', 'test')]
+tests/test_lab.py::test_ilab_cli_help[('model', 'train')]
+tests/test_lab.py::test_ilab_cli_help[('model', 'list')]
+tests/test_lab.py::test_ilab_cli_help[('data',)]
+tests/test_lab.py::test_ilab_cli_help[('data', 'generate')]
+tests/test_lab.py::test_ilab_cli_help[('data', 'list')]
+tests/test_lab.py::test_ilab_cli_help[('system',)]
+tests/test_lab.py::test_ilab_cli_help[('system', 'info')]
+tests/test_lab.py::test_ilab_cli_help[('taxonomy',)]
+tests/test_lab.py::test_ilab_cli_help[('taxonomy', 'diff')]
+tests/test_lab.py::test_ilab_alias_output
+tests/test_lab.py::test_cli_help_matches_field_description
+tests/test_lab.py::test_ilab_cli_debug_params[('config', 'edit')]
+tests/test_lab.py::test_ilab_cli_debug_params[('config', 'init')]
+tests/test_lab.py::test_ilab_cli_debug_params[('config', 'show')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'chat')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'convert')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'download')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'evaluate')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'serve')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'test')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'train')]
+tests/test_lab.py::test_ilab_cli_debug_params[('model', 'list')]
+tests/test_lab.py::test_ilab_cli_debug_params[('data', 'generate')]
+tests/test_lab.py::test_ilab_cli_debug_params[('data', 'list')]
+tests/test_lab.py::test_ilab_cli_debug_params[('system', 'info')]
+tests/test_lab.py::test_ilab_cli_debug_params[('taxonomy', 'diff')]
+tests/test_lab.py::test_ilab_commands_tested
+tests/test_lab.py::test_ilab_missing_config[()]
+tests/test_lab.py::test_ilab_missing_config[('config',)]
+tests/test_lab.py::test_ilab_missing_config[('config', 'edit')]
+tests/test_lab.py::test_ilab_missing_config[('config', 'init')]
+tests/test_lab.py::test_ilab_missing_config[('config', 'show')]
+tests/test_lab.py::test_ilab_missing_config[('model',)]
+tests/test_lab.py::test_ilab_missing_config[('model', 'chat')]
+tests/test_lab.py::test_ilab_missing_config[('model', 'convert')]
+tests/test_lab.py::test_ilab_missing_config[('model', 'download')]
+tests/test_lab.py::test_ilab_missing_config[('model', 'evaluate')]
+tests/test_lab.py::test_ilab_missing_config[('model', 'serve')]
+tests/test_lab.py::test_ilab_missing_config[('model', 'test')]
+tests/test_lab.py::test_ilab_missing_config[('model', 'train')]
+tests/test_lab.py::test_ilab_missing_config[('model', 'list')]
+tests/test_lab.py::test_ilab_missing_config[('data',)]
+tests/test_lab.py::test_ilab_missing_config[('data', 'generate')]
+tests/test_lab.py::test_ilab_missing_config[('data', 'list')]
+tests/test_lab.py::test_ilab_missing_config[('system',)]
+tests/test_lab.py::test_ilab_missing_config[('system', 'info')]
+tests/test_lab.py::test_ilab_missing_config[('taxonomy',)]
+tests/test_lab.py::test_ilab_missing_config[('taxonomy', 'diff')]
+tests/test_lab_config.py::test_ilab_config_show
+tests/test_lab_config.py::test_ilab_config_show_key_general_yaml
+tests/test_lab_config.py::test_ilab_config_show_without_comments
+tests/test_lab_config.py::test_ilab_config_init_with_env_var_config
+tests/test_lab_config.py::test_ilab_config_init_with_model_path
+tests/test_lab_data_list.py::test_data_list_command
+tests/test_lab_data_list.py::test_extract_model_and_timestamp_model_file
+tests/test_lab_data_list.py::test_extract_model_and_timestamp_general_file
+tests/test_lab_diff.py::TestLabDiff::test_diff
+tests/test_lab_diff.py::TestLabDiff::test_diff_empty_base
+tests/test_lab_diff.py::TestLabDiff::test_diff_rm_tracked
+tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_ext
+tests/test_lab_diff.py::TestLabDiff::test_diff_yml_ext
+tests/test_lab_diff.py::TestLabDiff::test_diff_YAML_ext
+tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_base
+tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_path
+tests/test_lab_diff.py::TestLabDiff::test_diff_valid_yaml
+tests/test_lab_diff.py::TestLabDiff::test_diff_valid_yaml_file
+tests/test_lab_diff.py::TestLabDiff::test_diff_valid_yaml_quiet
+tests/test_lab_diff.py::TestLabDiff::test_diff_valid_yaml_quiet_file
+tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_yaml_content
+tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_yaml_content_quiet
+tests/test_lab_diff.py::TestLabDiff::test_diff_custom_yaml
+tests/test_lab_diff.py::TestLabDiff::test_diff_failing_schema_yaml
+tests/test_lab_diff.py::TestLabDiff::test_diff_unsupported_knowledge_yaml
+tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_yaml_filename
+tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_yaml_filename_quiet
+tests/test_lab_download.py::TestLabDownload::test_download
+tests/test_lab_download.py::TestLabDownload::test_download_error
+tests/test_lab_download.py::TestLabDownload::test_oci_download
+tests/test_lab_download.py::TestLabDownload::test_oci_download_repository_error
+tests/test_lab_evaluate.py::test_evaluate_mt_bench
+tests/test_lab_evaluate.py::test_evaluate_mt_bench_branch
+tests/test_lab_evaluate.py::test_evaluate_mmlu
+tests/test_lab_evaluate.py::test_evaluate_mmlu_branch
+tests/test_lab_evaluate.py::test_no_model_mt_bench
+tests/test_lab_evaluate.py::test_missing_benchmark
+tests/test_lab_evaluate.py::test_invalid_model_mt_bench
+tests/test_lab_evaluate.py::test_invalid_max_workers
+tests/test_lab_evaluate.py::test_invalid_model_mmlu
+tests/test_lab_evaluate.py::test_invalid_gguf_model_mmlu
+tests/test_lab_evaluate.py::test_int_batchsize_mmlu
+tests/test_lab_evaluate.py::test_invalid_taxonomy_mt_bench_branch
+tests/test_lab_evaluate.py::test_invalid_branch_mt_bench_branch
+tests/test_lab_evaluate.py::test_invalid_tasks_dir
+tests/test_lab_evaluate.py::test_invalid_model_path_mmlu
+tests/test_lab_evaluate.py::test_invalid_model_path_mt_bench
+tests/test_lab_evaluate.py::test_vllm_args_null
+tests/test_lab_evaluate.py::test_no_gpu_warning
+tests/test_lab_generate.py::test_vllm_args_null
+tests/test_lab_init.py::TestLabInit::test_is_hpu_available_true
+tests/test_lab_init.py::TestLabInit::test_is_hpu_available_false
+tests/test_lab_init.py::TestLabInit::test_hip_and_cuda_active
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_nvidia
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_mac
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_amd_cpu
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_intel_cpu
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_gaudi
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_h100_pcie
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_h100_hbm3
+tests/test_lab_init.py::TestLabInit::test_ilab_config_init_auto_detection_h100_nvl
+tests/test_lab_init.py::TestLabInit::test_init_noninteractive
+tests/test_lab_init.py::TestLabInit::test_init_interactive
+tests/test_lab_init.py::TestLabInit::test_init_interactive_git_error
+tests/test_lab_init.py::TestLabInit::test_init_interactive_clone
+tests/test_lab_init.py::TestLabInit::test_init_interactive_default_clone
+tests/test_lab_init.py::TestLabInit::test_init_interactive_with_preexisting_nonempty_taxonomy
+tests/test_lab_init.py::TestLabInit::test_init_interactive_with_preexisting_config
+tests/test_lab_init.py::TestLabInit::test_lab_init_with_profile
+tests/test_lab_model_test.py::TestLabModelTest::test_model_test_linux
+tests/test_lab_serve.py::test_chat_auto
+tests/test_lab_serve.py::test_chat_custom
+tests/test_lab_serve.py::test_chat_manual
+tests/test_lab_serve.py::test_gpus
+tests/test_lab_serve.py::test_gpus_default
+tests/test_lab_serve.py::test_ctx_tps_with_extra_params
+tests/test_lab_serve.py::test_ctx_tps_with_gpus
+tests/test_lab_serve.py::test_gpus_config
+tests/test_lab_serve.py::test_gpus_with_gpus_config
+tests/test_lab_serve.py::test_ctx_tps_with_gpus_config
+tests/test_lab_serve.py::test_gpus_with_ctx_tps_with_gpus_config
+tests/test_lab_serve.py::test_vllm_args_config
+tests/test_lab_serve.py::test_vllm_args_config_with_gpus_config
+tests/test_lab_serve.py::test_vllm_args_config_with_gpus
+tests/test_lab_serve.py::test_vllm_args_config_with_ctx_tps
+tests/test_lab_serve.py::test_vllm_args_null
+tests/test_lab_serve.py::test_max_stable_vram_wait
+tests/test_lab_serve.py::test_warn_for_unsupported_backend_param[gpu_layers-1]
+tests/test_lab_serve.py::test_warn_for_unsupported_backend_param[num_threads-1]
+tests/test_lab_serve.py::test_warn_for_unsupported_backend_param[max_ctx_size-1]
+tests/test_lab_serve.py::test_warn_for_unsupported_backend_param[supported_param-0]
+tests/test_lab_train.py::TestLabTrain::test_train_mac
+tests/test_lab_train.py::TestLabTrain::test_skip_quantize
+tests/test_lab_train.py::TestLabTrain::test_input_error
+tests/test_lab_train.py::TestLabTrain::test_invalid_taxonomy
+tests/test_lab_train.py::TestLabTrain::test_invalid_data_dir
+tests/test_lab_train.py::TestLabTrain::test_invalid_data_dir_synthetic
+tests/test_lab_train.py::TestLabTrain::test_skip_preprocessing
+tests/test_lab_train.py::TestLabTrain::test_load
+tests/test_lab_train.py::TestLabTrain::test_load_local
+tests/test_lab_train.py::TestLabTrain::test_train_linux
+tests/test_lab_train.py::TestLabTrain::test_double_train_linux
+tests/test_lab_train.py::TestLabTrain::test_num_epochs
+tests/test_lab_train.py::TestLabTrain::test_phased_train_failures
+tests/test_lab_train.py::TestLabTrain::test_invalid_train_request
+tests/test_lab_train.py::TestLabTrain::test_skills_only_train
+tests/test_model_chat.py::test_model_name[/var/model/file-file]
+tests/test_model_chat.py::test_model_name[/var/model/directory/-directory]
+tests/test_model_chat.py::test_model_name[/var/model/directory/////-directory]
+tests/test_model_chat.py::test_list_contexts_output
+tests/test_notebooks.py::test_notebooks[notebooks/Training_a_LoRA_With_Instruct_Lab.ipynb]
+tests/test_package.py::test_provides_extra
+tests/test_package.py::test_require_no_url_req
+tests/test_package.py::test_package_conflict[3.10-cpu]
+tests/test_package.py::test_package_conflict[3.10-cuda]
+tests/test_package.py::test_package_conflict[3.10-hpu]
+tests/test_package.py::test_package_conflict[3.10-mps]
+tests/test_package.py::test_package_conflict[3.10-rocm]
+tests/test_package.py::test_package_conflict[3.11-cpu]
+tests/test_package.py::test_package_conflict[3.11-cuda]
+tests/test_package.py::test_package_conflict[3.11-hpu]
+tests/test_package.py::test_package_conflict[3.11-mps]
+tests/test_package.py::test_package_conflict[3.11-rocm]
+tests/test_utils.py::TestUtils::test_validate_documents
+tests/test_utils.py::TestUtils::test_convert_to_legacy_from_pretraining_messages
+tests/test_utils.py::TestUtils::test_invalid_pretraining_messages[<|user|>What is 2+2? 2+2=4-ValueError-<|assistant|>]
+tests/test_utils.py::TestUtils::test_invalid_pretraining_messages[<|assistant|>2+2=4-ValueError-<|user|>]
+tests/test_utils.py::TestUtils::test_invalid_pretraining_messages[<|user|>what is 2+2?<|assistant|>2+2=4-None-]
+tests/test_utils.py::TestUtils::test_pretraining_messages_without_system
+tests/test_utils.py::TestUtils::test_convert_to_legacy_from_messages
+tests/test_utils.py::TestUtils::test_invalid_datasets[None-None-None]
+tests/test_utils.py::TestUtils::test_invalid_datasets[You are a friendly assistant trained by ACME corp-None-None]
+tests/test_utils.py::TestUtils::test_invalid_datasets[None-Who is pickle rick?-None]
+tests/test_utils.py::TestUtils::test_invalid_datasets[You are a friendly assistant trained by ACME corp-Who is pickle rick?-None]
+tests/test_utils.py::TestUtils::test_invalid_datasets[None-None-As an AI language model, I have absolutely no idea.]
+tests/test_utils.py::TestUtils::test_invalid_datasets[You are a friendly assistant trained by ACME corp-None-As an AI language model, I have absolutely no idea.]
+tests/test_utils.py::TestUtils::test_invalid_datasets[None-Who is pickle rick?-As an AI language model, I have absolutely no idea.]
+tests/test_utils.py::test_split_hostport[127.0.0.1:8080-127.0.0.1-8080]
+tests/test_utils.py::test_split_hostport[[::1]:8080-::1-8080]
+tests/test_utils.py::test_split_hostport[host.test:9090-host.test-9090]
+tests/test_utils.py::test_split_hostport[https://host.test:443/egg/spam-host.test-443]
+tests/test_utils.py::test_split_hostport_err[127.0.0.1]
+tests/test_utils.py::test_split_hostport_err[]
+tests/test_utils.py::test_split_hostport_err[::1:8080]
+tests/test_utils.py::test_get_sysprompt
+tests/test_utils.py::test_get_model_template_from_tokenizer
+tests/test_utils.py::test_use_legacy_pretraining_format
+
+251 tests collected in 9.13s
+Container 7c024ef45de1 stopped and removed
+Spend totally 1519.056208372116.

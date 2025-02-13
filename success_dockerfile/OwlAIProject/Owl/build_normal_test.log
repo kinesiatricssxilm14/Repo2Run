@@ -1,0 +1,441 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.48kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 24.45kB done
+#4 DONE 0.0s
+
+#5 [1/7] FROM docker.io/library/python:3.11
+#5 CACHED
+
+#6 [2/7] COPY search_patch /search_patch
+#6 DONE 0.0s
+
+#7 [3/7] COPY code_edit.py /code_edit.py
+#7 DONE 0.0s
+
+#8 [4/7] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#8 0.681 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#8 1.033 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#8 1.131 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+#8 1.247 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8792 kB]
+#8 1.804 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [13.5 kB]
+#8 1.957 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [243 kB]
+#8 3.093 Fetched 9303 kB in 3s (3606 kB/s)
+#8 3.093 Reading package lists...
+#8 3.934 Reading package lists...
+#8 4.671 Building dependency tree...
+#8 4.887 Reading state information...
+#8 5.316 curl is already the newest version (7.88.1-10+deb12u8).
+#8 5.316 0 upgraded, 0 newly installed, 0 to remove and 33 not upgraded.
+#8 24.38 Retrieving Poetry metadata
+#8 24.38 
+#8 24.38 # Welcome to Poetry!
+#8 24.38 
+#8 24.38 This will download and install the latest version of Poetry,
+#8 24.38 a dependency and package manager for Python.
+#8 24.38 
+#8 24.38 It will add the `poetry` command to Poetry's bin directory, located at:
+#8 24.38 
+#8 24.38 /root/.local/bin
+#8 24.38 
+#8 24.38 You can uninstall at any time by executing this script with the --uninstall option,
+#8 24.38 and these changes will be reverted.
+#8 24.38 
+#8 24.38 Installing Poetry (2.0.1)
+#8 24.38 Installing Poetry (2.0.1): Creating environment
+#8 24.38 Installing Poetry (2.0.1): Installing Poetry
+#8 24.38 Installing Poetry (2.0.1): Creating script
+#8 24.38 Installing Poetry (2.0.1): Done
+#8 24.38 
+#8 24.38 Poetry (2.0.1) is installed now. Great!
+#8 24.38 
+#8 24.38 To get started you need Poetry's bin directory (/root/.local/bin) in your `PATH`
+#8 24.38 environment variable.
+#8 24.38 
+#8 24.38 Add `export PATH="/root/.local/bin:$PATH"` to your shell configuration file.
+#8 24.38 
+#8 24.38 Alternatively, you can call Poetry explicitly with `/root/.local/bin/poetry`.
+#8 24.38 
+#8 24.38 You can test that everything is set up by executing:
+#8 24.38 
+#8 24.38 `poetry --version`
+#8 24.38 
+#8 DONE 24.7s
+
+#9 [5/7] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/OwlAIProject/Owl.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /Owl/. /repo && rm -rf /Owl/ &&     rm -rf /Owl &&     cd /repo && git checkout 91922655c3cbf0e5f3282c22806b5ac0cf30063e &&     apt-get update -qq &&     apt-get install -y -qq portaudio19-dev &&     cd /repo && poetry install &&     python /code_edit.py -t "/search_patch/0.patch" &&     mkdir -p /repo/owl/services/transcription &&     ln -s /repo/owl/services/stt/whisper_transcription_service.py /repo/owl/services/transcription/whisper_transcription_service.py &&     python /code_edit.py -t "/search_patch/1.patch"
+#9 2.216 Looking in indexes: http://simple/
+#9 2.325 Collecting pytest
+#9 2.342   Downloading http://packages/pytest/pytest-8.3.4-py3-none-any.whl (343 kB)
+#9 2.365      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 343.1/343.1 kB 18.6 MB/s eta 0:00:00
+#9 2.419 Collecting pytest-xdist
+#9 2.435   Downloading http://packages/pytest-xdist/pytest_xdist-3.6.1-py3-none-any.whl (46 kB)
+#9 2.447      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.1/46.1 kB 4.6 MB/s eta 0:00:00
+#9 2.484 Collecting iniconfig (from pytest)
+#9 2.502   Downloading http://packages/iniconfig/iniconfig-2.0.0-py3-none-any.whl (5.9 kB)
+#9 2.554 Collecting packaging (from pytest)
+#9 2.557   Using cached http://packages/packaging/packaging-24.2-py3-none-any.whl (65 kB)
+#9 2.593 Collecting pluggy<2,>=1.5 (from pytest)
+#9 2.609   Downloading http://packages/pluggy/pluggy-1.5.0-py3-none-any.whl (20 kB)
+#9 2.655 Collecting execnet>=2.1 (from pytest-xdist)
+#9 2.671   Downloading http://packages/execnet/execnet-2.1.1-py3-none-any.whl (40 kB)
+#9 2.682      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.6/40.6 kB 4.3 MB/s eta 0:00:00
+#9 2.792 Installing collected packages: pluggy, packaging, iniconfig, execnet, pytest, pytest-xdist
+#9 3.393 Successfully installed execnet-2.1.1 iniconfig-2.0.0 packaging-24.2 pluggy-1.5.0 pytest-8.3.4 pytest-xdist-3.6.1
+#9 3.393 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 3.497 
+#9 3.497 [notice] A new release of pip is available: 24.0 -> 25.0
+#9 3.497 [notice] To update, run: pip install --upgrade pip
+#9 4.389 Looking in indexes: http://simple/
+#9 4.457 Collecting pipdeptree
+#9 4.476   Downloading http://packages/pipdeptree/pipdeptree-2.25.0-py3-none-any.whl (32 kB)
+#9 4.506 Requirement already satisfied: packaging>=24.1 in /usr/local/lib/python3.11/site-packages (from pipdeptree) (24.2)
+#9 4.602 Collecting pip>=24.2 (from pipdeptree)
+#9 4.605   Using cached http://packages/pip/pip-25.0-py3-none-any.whl (1.8 MB)
+#9 4.737 Installing collected packages: pip, pipdeptree
+#9 4.737   Attempting uninstall: pip
+#9 4.742     Found existing installation: pip 24.0
+#9 4.817     Uninstalling pip-24.0:
+#9 5.122       Successfully uninstalled pip-24.0
+#9 6.419 Successfully installed pip-25.0 pipdeptree-2.25.0
+#9 6.419 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 6.700 Cloning into 'Owl'...
+#9 13.14 Note: switching to '91922655c3cbf0e5f3282c22806b5ac0cf30063e'.
+#9 13.14 
+#9 13.14 You are in 'detached HEAD' state. You can look around, make experimental
+#9 13.14 changes and commit them, and you can discard any commits you make in this
+#9 13.14 state without impacting any branches by switching back to a branch.
+#9 13.14 
+#9 13.14 If you want to create a new branch to retain commits you create, you may
+#9 13.14 do so (now or later) by using -c with the switch command. Example:
+#9 13.14 
+#9 13.14   git switch -c <new-branch-name>
+#9 13.14 
+#9 13.14 Or undo this operation with:
+#9 13.14 
+#9 13.14   git switch -
+#9 13.14 
+#9 13.14 Turn off this advice by setting config variable advice.detachedHead to false
+#9 13.14 
+#9 13.14 HEAD is now at 9192265 Merge pull request #54 from kodjima33/patch-4
+#9 19.19 debconf: delaying package configuration, since apt-utils is not installed
+#9 19.30 Selecting previously unselected package alsa-topology-conf.
+#9 19.30 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 23969 files and directories currently installed.)
+#9 19.46 Preparing to unpack .../00-alsa-topology-conf_1.2.5.1-2_all.deb ...
+#9 19.46 Unpacking alsa-topology-conf (1.2.5.1-2) ...
+#9 19.51 Selecting previously unselected package libasound2-data.
+#9 19.51 Preparing to unpack .../01-libasound2-data_1.2.8-1_all.deb ...
+#9 19.51 Unpacking libasound2-data (1.2.8-1) ...
+#9 19.56 Selecting previously unselected package libasound2:amd64.
+#9 19.56 Preparing to unpack .../02-libasound2_1.2.8-1+b1_amd64.deb ...
+#9 19.57 Unpacking libasound2:amd64 (1.2.8-1+b1) ...
+#9 19.63 Selecting previously unselected package alsa-ucm-conf.
+#9 19.63 Preparing to unpack .../03-alsa-ucm-conf_1.2.8-1_all.deb ...
+#9 19.64 Unpacking alsa-ucm-conf (1.2.8-1) ...
+#9 19.74 Selecting previously unselected package libasound2-dev:amd64.
+#9 19.74 Preparing to unpack .../04-libasound2-dev_1.2.8-1+b1_amd64.deb ...
+#9 19.75 Unpacking libasound2-dev:amd64 (1.2.8-1+b1) ...
+#9 19.80 Selecting previously unselected package libopus0:amd64.
+#9 19.80 Preparing to unpack .../05-libopus0_1.3.1-3_amd64.deb ...
+#9 19.81 Unpacking libopus0:amd64 (1.3.1-3) ...
+#9 19.86 Selecting previously unselected package libsamplerate0:amd64.
+#9 19.86 Preparing to unpack .../06-libsamplerate0_0.2.2-3_amd64.deb ...
+#9 19.86 Unpacking libsamplerate0:amd64 (0.2.2-3) ...
+#9 20.00 Selecting previously unselected package libjack-jackd2-0:amd64.
+#9 20.00 Preparing to unpack .../07-libjack-jackd2-0_1.9.21~dfsg-3_amd64.deb ...
+#9 20.00 Unpacking libjack-jackd2-0:amd64 (1.9.21~dfsg-3) ...
+#9 20.07 Selecting previously unselected package libjack-jackd2-dev:amd64.
+#9 20.07 Preparing to unpack .../08-libjack-jackd2-dev_1.9.21~dfsg-3_amd64.deb ...
+#9 20.08 Unpacking libjack-jackd2-dev:amd64 (1.9.21~dfsg-3) ...
+#9 20.12 Selecting previously unselected package libportaudio2:amd64.
+#9 20.12 Preparing to unpack .../09-libportaudio2_19.6.0-1.2_amd64.deb ...
+#9 20.12 Unpacking libportaudio2:amd64 (19.6.0-1.2) ...
+#9 20.16 Selecting previously unselected package libportaudiocpp0:amd64.
+#9 20.17 Preparing to unpack .../10-libportaudiocpp0_19.6.0-1.2_amd64.deb ...
+#9 20.17 Unpacking libportaudiocpp0:amd64 (19.6.0-1.2) ...
+#9 20.20 Selecting previously unselected package portaudio19-dev:amd64.
+#9 20.21 Preparing to unpack .../11-portaudio19-dev_19.6.0-1.2_amd64.deb ...
+#9 20.21 Unpacking portaudio19-dev:amd64 (19.6.0-1.2) ...
+#9 20.26 Setting up libasound2-data (1.2.8-1) ...
+#9 20.27 Setting up libopus0:amd64 (1.3.1-3) ...
+#9 20.28 Setting up alsa-topology-conf (1.2.5.1-2) ...
+#9 20.29 Setting up libasound2:amd64 (1.2.8-1+b1) ...
+#9 20.29 Setting up libasound2-dev:amd64 (1.2.8-1+b1) ...
+#9 20.30 Setting up libsamplerate0:amd64 (0.2.2-3) ...
+#9 20.31 Setting up alsa-ucm-conf (1.2.8-1) ...
+#9 20.32 Setting up libjack-jackd2-0:amd64 (1.9.21~dfsg-3) ...
+#9 20.32 Setting up libportaudio2:amd64 (19.6.0-1.2) ...
+#9 20.33 Setting up libjack-jackd2-dev:amd64 (1.9.21~dfsg-3) ...
+#9 20.34 Setting up libportaudiocpp0:amd64 (19.6.0-1.2) ...
+#9 20.35 Setting up portaudio19-dev:amd64 (19.6.0-1.2) ...
+#9 20.36 Processing triggers for libc-bin (2.36-9+deb12u9) ...
+#9 21.38 Creating virtualenv owl-gW_DSdP6-py3.11 in /root/.cache/pypoetry/virtualenvs
+#9 21.84 Installing dependencies from lock file
+#9 22.78 
+#9 22.78 Package operations: 170 installs, 0 updates, 0 removals
+#9 22.78 
+#9 22.78   - Installing nvidia-nvjitlink-cu12 (12.3.101)
+#9 26.87   - Installing filelock (3.13.1)
+#9 26.88   - Installing frozenlist (1.4.1)
+#9 26.90   - Installing idna (3.6)
+#9 26.90   - Installing mdurl (0.1.2)
+#9 26.90   - Installing markupsafe (2.1.5)
+#9 26.91   - Installing mpmath (1.3.0)
+#9 26.92   - Installing multidict (6.0.5)
+#9 26.92   - Installing nvidia-cublas-cu12 (12.1.3.1)
+#9 26.93   - Installing nvidia-cusparse-cu12 (12.1.0.106)
+#9 48.61 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 72.69 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 80.07   - Installing aiosignal (1.3.1)
+#9 80.07   - Installing attrs (23.2.0)
+#9 80.07   - Installing certifi (2024.2.2)
+#9 80.08   - Installing fsspec (2023.12.2)
+#9 80.08   - Installing charset-normalizer (3.3.2)
+#9 80.08   - Installing markdown-it-py (3.0.0)
+#9 80.09   - Installing networkx (3.2.1)
+#9 80.09   - Installing numpy (1.26.3)
+#9 80.09   - Installing greenlet (3.0.3)
+#9 80.10   - Installing nvidia-cuda-runtime-cu12 (12.1.105)
+#9 80.10   - Installing jinja2 (3.1.3)
+#9 80.10   - Installing nvidia-cufft-cu12 (11.0.2.54)
+#9 80.10   - Installing nvidia-curand-cu12 (10.3.2.106)
+#9 80.10   - Installing nvidia-cusolver-cu12 (11.4.5.107)
+#9 80.10   - Installing nvidia-cuda-nvrtc-cu12 (12.1.105)
+#9 80.11   - Installing nvidia-cudnn-cu12 (8.9.2.26)
+#9 80.11   - Installing nvidia-nvtx-cu12 (12.1.105)
+#9 80.11   - Installing nvidia-nccl-cu12 (2.18.1)
+#9 80.22   - Installing nvidia-cuda-cupti-cu12 (12.1.105)
+#9 80.23   - Installing pygments (2.17.2)
+#9 80.23   - Installing pycparser (2.21)
+#9 80.24   - Installing six (1.16.0)
+#9 80.24   - Installing sympy (1.12)
+#9 80.24   - Installing setuptools (69.0.3)
+#9 80.24   - Installing packaging (23.2)
+#9 80.25   - Installing urllib3 (2.2.0)
+#9 80.25   - Installing typing-extensions (4.9.0)
+#9 80.25   - Installing yarl (1.9.4)
+#9 80.25   - Installing triton (2.1.0)
+#9 81.92 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 82.87 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 92.36 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 97.88 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 111.0 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 121.7 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 121.8 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 130.2 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 188.3 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/nvidia/__init__.py over existing file
+#9 202.0   - Installing aiohttp (3.9.3)
+#9 202.0   - Installing cffi (1.16.0)
+#9 202.0   - Installing click (8.1.7)
+#9 202.0   - Installing colorama (0.4.6)
+#9 202.0   - Installing h11 (0.14.0)
+#9 202.0   - Installing joblib (1.3.2)
+#9 202.0   - Installing lightning-utilities (0.10.1)
+#9 202.0   - Installing llvmlite (0.42.0)
+#9 202.0   - Installing mako (1.3.2)
+#9 202.0   - Installing platformdirs (4.2.0)
+#9 202.0   - Installing pytz (2024.1)
+#9 202.0   - Installing requests (2.31.0)
+#9 202.0   - Installing rich (13.7.0)
+#9 202.0   - Installing ruamel-yaml-clib (0.2.8)
+#9 202.0   - Installing python-dateutil (2.8.2)
+#9 202.0   - Installing sniffio (1.3.0)
+#9 202.0   - Installing scipy (1.12.0)
+#9 202.0   - Installing shellingham (1.5.4)
+#9 202.0   - Installing torch (2.1.2)
+#9 202.0   - Installing tzdata (2023.4)
+#9 202.0   - Installing threadpoolctl (3.2.0)
+#9 202.0   - Installing sqlalchemy (2.0.25)
+#9 202.0   - Installing sortedcontainers (2.4.0)
+#9 297.0   - Installing alembic (1.13.1)
+#9 297.0   - Installing annotated-types (0.6.0)
+#9 297.0   - Installing anyio (4.2.0)
+#9 297.0   - Installing colorlog (6.8.2)
+#9 297.0   - Installing contourpy (1.2.0)
+#9 297.0   - Installing cycler (0.12.1)
+#9 297.0   - Installing audioread (3.0.1)
+#9 297.1   - Installing httpcore (1.0.2)
+#9 297.1   - Installing humanfriendly (10.0)
+#9 297.1   - Installing decorator (5.1.1)
+#9 297.1   - Installing fonttools (4.47.2)
+#9 297.1   - Installing msgpack (1.0.7)
+#9 297.1   - Installing mypy-extensions (1.0.0)
+#9 297.1   - Installing pillow (10.2.0)
+#9 297.1   - Installing kiwisolver (1.4.5)
+#9 297.1   - Installing lazy-loader (0.3)
+#9 297.1   - Installing pooch (1.8.0)
+#9 297.2   - Installing numba (0.59.0)
+#9 297.2   - Installing pandas (2.2.0)
+#9 297.2   - Installing primepy (1.3)
+#9 297.2   - Installing pyyaml (6.0.1)
+#9 297.2   - Installing ruamel-yaml (0.17.40)
+#9 297.2   - Installing pydantic-core (2.16.1)
+#9 297.2   - Installing pyannote-core (5.0.0)
+#9 297.2   - Installing soxr (0.3.7)
+#9 297.2   - Installing scikit-learn (1.4.0)
+#9 297.2   - Installing tqdm (4.66.1)
+#9 297.2   - Installing soundfile (0.12.1)
+#9 297.2   - Installing torchaudio (2.1.2)
+#9 297.2   - Installing torchmetrics (1.3.0.post0)
+#9 297.2   - Installing pyparsing (3.1.1)
+#9 297.2   - Installing wsproto (1.2.0)
+#9 297.2   - Installing typer (0.9.0)
+#9 304.4   - Installing antlr4-python3-runtime (4.9.3)
+#9 304.4   - Installing coloredlogs (15.0.1)
+#9 304.4   - Installing distro (1.9.0)
+#9 304.4   - Installing docopt (0.6.2)
+#9 304.4   - Installing httpx (0.26.0)
+#9 304.4   - Installing flatbuffers (23.5.26)
+#9 304.4   - Installing huggingface-hub (0.20.3)
+#9 304.4   - Installing hyperpyyaml (1.2.2)
+#9 304.4   - Installing julius (0.2.7)
+#9 304.4   - Installing librosa (0.10.1)
+#9 304.4   - Installing marshmallow (3.20.2)
+#9 304.4   - Installing matplotlib (3.8.2)
+#9 304.4   - Installing optuna (3.5.0)
+#9 304.4   - Installing protobuf (4.25.2)
+#9 304.4   - Installing pyannote-database (5.0.1)
+#9 304.4   - Installing pydantic (2.6.0)
+#9 304.4   - Installing pytorch-lightning (2.1.4)
+#9 304.4   - Installing regex (2023.12.25)
+#9 304.4   - Installing sentencepiece (0.1.99)
+#9 304.4   - Installing simple-websocket (1.0.0)
+#9 304.4   - Installing tabulate (0.9.0)
+#9 304.4   - Installing typing-inspect (0.9.0)
+#9 304.4   - Installing torch-pitch-shift (1.2.4)
+#9 304.4   - Installing zipp (3.17.0)
+#9 312.3   - Installing asteroid-filterbanks (0.4.0)
+#9 312.3   - Installing av (11.0.0)
+#9 312.3   - Installing bidict (0.22.1)
+#9 312.3   - Installing ctranslate2 (4.0.0)
+#9 312.3   - Installing dataclasses-json (0.6.4)
+#9 312.3   - Installing einops (0.7.0)
+#9 312.3   - Installing importlib-metadata (7.0.1)
+#9 312.3   - Installing iniconfig (2.0.0)
+#9 312.3   - Installing lightning (2.1.4)
+#9 312.3   - Installing log-symbols (0.0.14)
+#9 312.3   - Installing omegaconf (2.3.0)
+#9 312.3   - Installing onnxruntime (1.17.0)
+#9 312.3   - Installing openai (1.10.0)
+#9 312.3   - Installing pluggy (1.4.0)
+#9 312.3   - Installing pyannote-metrics (3.2.1)
+#9 312.3   - Installing pyannote-pipeline (3.0.1)
+#9 312.3   - Installing python-dotenv (1.0.1)
+#9 312.3   - Installing python-engineio (4.8.2)
+#9 312.3   - Installing pytorch-metric-learning (2.4.1)
+#9 312.3   - Installing safetensors (0.4.2)
+#9 312.3   - Installing semver (3.0.2)
+#9 312.3   - Installing speechbrain (0.5.16)
+#9 312.3   - Installing spinners (0.0.24)
+#9 312.3   - Installing tensorboardx (2.6.2.2)
+#9 312.3   - Installing termcolor (2.4.0)
+#9 312.3   - Installing tokenizers (0.15.1)
+#9 312.3   - Installing starlette (0.35.1)
+#9 312.3   - Installing tiktoken (0.5.2)
+#9 312.3   - Installing torch-audiomentations (0.11.0)
+#9 312.3   - Installing websockets (12.0)
+#9 312.3   - Installing verboselogs (1.7)
+#9 315.1 Installing /root/.cache/pypoetry/virtualenvs/owl-gW_DSdP6-py3.11/lib/python3.11/site-packages/tests/__init__.py over existing file
+#9 325.1   - Installing asyncio (3.4.3)
+#9 325.2   - Installing deepgram-sdk (3.1.2)
+#9 325.2   - Installing fastapi (0.109.0)
+#9 325.2   - Installing faster-whisper (1.0.0)
+#9 325.2   - Installing halo (0.0.31)
+#9 325.2   - Installing litellm (1.21.1)
+#9 325.2   - Installing pyannote-audio (3.1.1)
+#9 325.2   - Installing pyaudio (0.2.14)
+#9 325.2   - Installing nltk (3.8.1)
+#9 325.2   - Installing pydantic-yaml (1.2.0)
+#9 325.2   - Installing python-multipart (0.0.6)
+#9 325.2   - Installing python-socketio (5.11.0)
+#9 325.2   - Installing torchvision (0.16.2)
+#9 325.2   - Installing transformers (4.37.2)
+#9 325.2   - Installing uvicorn (0.25.0)
+#9 325.2   - Installing webrtcvad (2.0.10)
+#9 325.2   - Installing whisperx (3.1.1 78dcfaa)
+#9 325.2   - Installing sqlmodel (0.0.14)
+#9 325.2   - Installing pydub (0.25.1)
+#9 325.2   - Installing pytest (7.4.4)
+#9 341.8 
+#9 341.8 Installing the current project: owl (0.1.0)
+#9 342.2 * Succeed Patch:
+#9 342.2 Create and write /repo/owl/services/stt/whisper_transcription_service.py!
+#9 342.2 
+#9 342.3 * Succeed Patch:
+#9 342.3 --- arepoowlservicestranscriptionwhisper_transcription_service.py
+#9 342.3 +++ brepoowlservicestranscriptionwhisper_transcription_service.py
+#9 342.3 @@ -1 +1 @@
+#9 342.3 -from .asynchronous.async_whisper_transcription_service import AsyncWhisperTranscriptionService as transcribe_audio
+#9 342.3 +from owl.services.stt.asynchronous.async_whisper_transcription_service import AsyncWhisperTranscriptionService as transcribe_audio
+#9 342.3 
+#9 342.3 
+#9 DONE 345.0s
+
+#10 [6/7] RUN cd /repo && pytest --collect-only -q
+#10 1.056 
+#10 1.056 ==================================== ERRORS ====================================
+#10 1.056 _________ ERROR collecting tests/test_whisper_transcription_service.py _________
+#10 1.056 ImportError while importing test module '/repo/tests/test_whisper_transcription_service.py'.
+#10 1.056 Hint: make sure your test modules/packages have valid Python names.
+#10 1.056 Traceback:
+#10 1.056 /usr/local/lib/python3.11/importlib/__init__.py:126: in import_module
+#10 1.056     return _bootstrap._gcd_import(name[level:], package, level)
+#10 1.056 tests/test_whisper_transcription_service.py:2: in <module>
+#10 1.056     from owl.services.transcription.whisper_transcription_service import transcribe_audio
+#10 1.056 E   ModuleNotFoundError: No module named 'owl'
+#10 1.056 =========================== short test summary info ============================
+#10 1.056 ERROR tests/test_whisper_transcription_service.py
+#10 1.056 !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+#10 1.056 no tests collected, 1 error in 0.28s
+#10 ERROR: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2
+------
+ > [6/7] RUN cd /repo && pytest --collect-only -q:
+1.056 Traceback:
+1.056 /usr/local/lib/python3.11/importlib/__init__.py:126: in import_module
+1.056     return _bootstrap._gcd_import(name[level:], package, level)
+1.056 tests/test_whisper_transcription_service.py:2: in <module>
+1.056     from owl.services.transcription.whisper_transcription_service import transcribe_audio
+1.056 E   ModuleNotFoundError: No module named 'owl'
+1.056 =========================== short test summary info ============================
+1.056 ERROR tests/test_whisper_transcription_service.py
+1.056 !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1.056 no tests collected, 1 error in 0.28s
+------
+Dockerfile:28
+--------------------
+  26 |         ln -s /repo/owl/services/stt/whisper_transcription_service.py /repo/owl/services/transcription/whisper_transcription_service.py && \
+  27 |         python /code_edit.py -t "/search_patch/1.patch"
+  28 | >>> RUN cd /repo && pytest --collect-only -q
+--------------------
+ERROR: failed to solve: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2

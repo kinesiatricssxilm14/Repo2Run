@@ -1,0 +1,60 @@
+
+/repo/rapid_doc/pdf_extract/main.py
+
+<<<<<<< SEARCH
+            pdf_path = self.pdf_path
+
+    def get_page_count(self):
+        with fitz.open(pdf_path) as pdfer:
+=======
+ # -*- encoding: utf-8 -*-
+ # @Author: SWHL
+ # @Contact: liekkaskono@163.com
+ import copy
+ import string
+ from collections import Counter
+ from typing import List, Optional
+ import camelot
+ import cv2
+ import fitz
+ import numpy as np
+ import shapely
+ from pdfminer.high_level import extract_pages
+ from pdfminer.layout import LTPage, LTTextBoxHorizontal, LTTextLineHorizontal
+ from shapely.geometry import MultiPoint, Polygon
+ from ..utils import is_contain_continous_str, only_contain_str
+ class PDFExtract:
+     def __init__(self, pdf_path: str):
+         self.pdf_path = pdf_path
+         self.extract_all_pages(pdf_path)
+         self.pages = None
+         self.ratio = None
+     def extract_all_pages(self, pdf_path: str):
+         pdf_path = str(self.pdf_path)
+         with fitz.open(pdf_path) as doc:
+             self.pages = [page.get_pixmap() for page in doc]
+         self.pages += list(extract_pages(pdf_path))
+     def read_pdf(self, pdf_path=None) -> List:
+         if pdf_path is None:
+             pdf_path = self.pdf_path
+         def convert_img(page):
+             pix = page.get_pixmap(dpi=200)
+             img = np.frombuffer(pix.samples, dtype=np.uint8)
+             img = img.reshape([pix.h, pix.w, pix.n])
+             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+             return img
+         pdf_img_list = []
+         self.extract_all_pages(pdf_path)
+         pdf_img_list = []
+         self.extract_all_pages(pdf_path)
+         for page in self.pages:
+             if isinstance(page, fitz.Page):
+                 pdf_img_list.append(self.convert_img(page))
+             else:
+                 pdf_img_list.append(None)  # Handling LTPage differently other than fitz.Page
+         return pdf_img_list
+     def get_page_count(self, pdf_path=None):
+         if pdf_path is None:
+             pdf_path = self.pdf_path
+         with fitz.open(pdf_path) as pdfer:
+>>>>>>> REPLACE

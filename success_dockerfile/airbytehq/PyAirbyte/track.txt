@@ -1,0 +1,2876 @@
+airbytehq/PyAirbyte
+7e65ab3cfab39c04e6f0ece7cbc83367b7acb4a9
+Container practical_yonath 8df929e2cee2 started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought: I need to understand the structure of the root directory to identify configuration files for setting up the environment.
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+LICENSE.md  airbyte  examples	  poetry.toml	  tests
+README.md   docs     poetry.lock  pyproject.toml
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought: There is a `poetry.lock` and `pyproject.toml` file in the root directory, indicating that the project uses Poetry for dependency management. I will install the dependencies using Poetry.
+### Action:
+```bash
+cd /repo && poetry install
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install`...
+  [32;1m-[39;22m [39mInstalling [39m[36mviztracer[39m[39m ([39m[32m0.16.3[39m[39m)[39m
+[17A[0J  [32;1m-[39;22m [39mInstalling [39m[36mpyarrow[39m[39m ([39m[32m17.0.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpytest-docker[39m[39m ([39m[32m3.1.1[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpytest-mock[39m[39m ([39m[32m3.14.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpytest-mypy[39m[39m ([39m[32m0.10.3[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpytest-timeout[39m[39m ([39m[32m2.3.1[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpython-dotenv[39m[39m ([39m[32m1.0.1[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mresponses[39m[39m ([39m[32m0.25.3[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mrich[39m[39m ([39m[32m13.9.4[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mruff[39m[39m ([39m[32m0.8.2[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36msnowflake-sqlalchemy[39m[39m ([39m[32m1.7.1[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36msqlalchemy-bigquery[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36msqlalchemy2-stubs[39m[39m ([39m[32m0.0.2a38[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mstructlog[39m[39m ([39m[32m24.4.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mtypes-jsonschema[39m[39m ([39m[32m4.23.0.20241208[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mtypes-pyyaml[39m[39m ([39m[32m6.0.12.20240917[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mtypes-requests[39m[39m ([39m[32m2.31.0.4[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36muuid7[39m[39m ([39m[32m0.1.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mviztracer[39m[39m ([39m[32m0.16.3[39m[39m)[39m
+[39;1mInstalling[39;22m the current project: [36mairbyte[39m ([39;1m0.0.0[39;22m)[1G[2K[39;1mInstalling[39;22m the current project: [36mairbyte[39m ([32m0.0.0[39m)
+`poetry install` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+---------------------------
+### Thought: The dependencies are installed using Poetry. Now, I will run `poetryruntest` to check if the environment configuration is correct and if the tests can be executed successfully.
+### Action:
+```bash
+poetryruntest
+```
+### Observation:
+Running `python /home/tools/poetryruntest.py`...
+Pytest is not installed in your environment. Please install the latest version of pytest using `pip install pytest`.
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetryruntest` executes with returncode: 100
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+---------------------------
+### Thought: It seems that pytest is not installed. Although it should have been installed via poetry initially, I will manually install pytest using pip. Then I will rerun the tests to check if the environment is correctly configured.
+### Action:
+```bash
+pip install -q pytest
+```
+### Observation:
+Running `pip install -q pytest`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q pytest` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+---------------------------
+### Thought: Now that pytest is installed successfully, I will rerun the `poetryruntest` to check if the environment configuration is correct and if the tests can be executed successfully.
+### Action:
+```bash
+poetryruntest
+```
+### Observation:
+Running `python /home/tools/poetryruntest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
+pytest: error: unrecognized arguments: -n
+  inifile: /repo/pyproject.toml
+  rootdir: /repo
+Thank you for using PyAirbyte!
+Anonymous usage reporting is currently enabled. For more information, please see https://docs.airbyte.com/telemetry
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetryruntest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 195 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+---------------------------
+### Thought: The error message indicates that pytest encountered an unrecognized argument `-n`. This points to a possible need for pytest-xdist, a plugin for running tests in parallel. I will install pytest-xdist to handle the `-n` argument and then retry running the tests.
+### Action:
+```bash
+pip install -q pytest-xdist
+```
+### Observation:
+Running `pip install -q pytest-xdist`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q pytest-xdist` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 194 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+---------------------------
+### Thought: Now that pytest-xdist is installed successfully, I will retry running the `poetryruntest` to check if the environment configuration is correct and if the tests can be executed successfully.
+### Action:
+```bash
+poetryruntest
+```
+### Observation:
+Running `python /home/tools/poetryruntest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
+pytest: error: unrecognized arguments: -n
+  inifile: /repo/pyproject.toml
+  rootdir: /repo
+Thank you for using PyAirbyte!
+Anonymous usage reporting is currently enabled. For more information, please see https://docs.airbyte.com/telemetry
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetryruntest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 193 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+---------------------------
+### Thought: Installing pytest-xdist did not resolve the issue, indicating that there might be a problem with how pytest is configured in the `pyproject.toml`. I will examine the `pyproject.toml` file to check for any pytest configuration that might be causing this error.
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /repo/pyproject.toml`...
+[tool.poetry]
+name = "airbyte"
+description = "PyAirbyte"
+authors = ["Airbyte <contact@airbyte.io>"]
+readme = "README.md"
+packages = [{ include = "airbyte" }]
+# This project uses dynamic versioning
+# https://github.com/mtkennerly/poetry-dynamic-versioning
+version = "0.0.0"
+[tool.poetry-dynamic-versioning]
+enable = true
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+airbyte-api = "^0.52.1"
+airbyte-cdk = "^6.9.0"
+airbyte-protocol-models-pdv2 = "^0.13.0"
+click = "^8.1.7"
+duckdb = "^1.1.0"
+duckdb-engine = "^0.13.2"
+google-auth = ">=2.27.0,<3.0"
+google-cloud-bigquery = ">=3.12.0,<4.0"
+google-cloud-bigquery-storage = "^2.25.0"
+google-cloud-secret-manager = "^2.17.0"
+jsonschema = ">=3.2.0,<5.0"
+orjson = "^3.10"
+overrides = "^7.4.0"
+pandas = { version = ">=1.5.3,<3.0" }
+pendulum = "<=3.0.0"
+psycopg = {extras = ["binary", "pool"], version = "^3.1.19"}
+psycopg2-binary =  "^2.9.9"
+pyarrow = ">=16.1,<18.0"
+pydantic = ">=2.0,<=3.0"
+pydantic-core = "*"
+python-dotenv = "^1.0.1"
+python-ulid = "^3.0.0"
+pytz = "*"
+pyyaml = "^6.0.2"
+requests = "<=2.32.2,!=3.32.0"  # 3.32.0 breaks docker tests
+rich = "^13.7.0"
+snowflake-connector-python = "^3.12.2"
+snowflake-sqlalchemy = "^1.6.1"
+structlog = "^24.4.0"
+# TODO: Remove SQLAlchemy version constraint once DuckDB engine bug is fixed (issue #423)
+sqlalchemy = ">=1.4.51,!=2.0.36,<3.0"
+# TODO: Remove this arbitrary python constraint once `sqlalchemy-bigquery` has done so.
+sqlalchemy-bigquery = { version = "1.12.0", python = "<3.13" }
+typing-extensions = "*"
+uuid7 = "^0.1.0"
+[tool.poetry.group.dev.dependencies]
+coverage = "^7.5.1"
+deptry = "^0.21.1"
+docker = "^7.1.0"
+faker = "^21.0.0"
+freezegun = "^1.4.0"
+mypy = "^1.11.2"
+pandas-stubs = "^2.1.4.231218"
+pdoc = "^14.3.0"
+poethepoet = "^0.26.1"
+pytest = "^8.2.0"
+pytest-docker = "^3.1.1"
+pytest-mock = "^3.14.0"
+pytest-mypy = "^0.10.3"
+pytest-timeout = "^2.3.1"
+responses = "^0.25.0"
+ruff = "^0.8.2"
+sqlalchemy2-stubs = "^0.0.2a38"
+tomli = "^2.0"
+types-jsonschema = "^4.20.0.0"
+types-pyyaml = "^6.0.12.12"
+types-requests = "2.31.0.4"
+viztracer = "^0.16.3"
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+[tool.pytest.ini_options]
+# Pytest configuration as follows:
+# - No test can take longer than 10 minutes (600 seconds)
+# - Markers must be declared explicitly
+addopts = "-rs --strict-markers --timeout=600"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "super_slow: these super slow tests will not run in CI; they will only ever run on-demand",
+    "requires_creds: marks a test as requiring credentials (skip when secrets unavailable)",
+    "linting: marks a test as a linting test",
+    "flaky: marks a test as flaky",
+]
+filterwarnings = [ # syntax: "action:message_regex:category:module:line"
+    # Treat python warnings as errors in pytest
+    # "error",  # TODO: Revert. Currently disabled because `airbyte_cdk.sources.source.ExperimentalClassWarning` ignore is not working
+    # # Snowflake reregisters its functions, which is fine.
+    "ignore::sqlalchemy.exc.SAWarning",  # "GenericFunction is already registered and is going to be overridden.""
+    # Ignore these, specifically on Windows because of file cleanup and locking issues:
+    "ignore:unclosed file:ResourceWarning",
+    "ignore:Failed to decode:UserWarning",  # https://github.com/airbytehq/pyairbyte/issues/320
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+    # Order matters here. This must be last because it will fail if we
+    # hit another warning during the import.
+    "ignore::airbyte_cdk.sources.source.ExperimentalClassWarning",
+    "ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning",
+    # CDK has these refs:
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+]
+[tool.ruff]
+target-version = "py310"
+preview = true
+line-length = 100
+[tool.ruff.lint]
+select = [
+    # For rules reference, see https://docs.astral.sh/ruff/rules/
+    "A",     # flake8-builtins
+    "ANN",   # flake8-annotations
+    "ARG",   # flake8-unused-arguments
+    "ASYNC", # flake8-async
+    "B",     # flake8-bugbear
+    "FBT",   # flake8-boolean-trap
+    "BLE",   # Blind except
+    "C4",    # flake8-comprehensions
+    "C90",   # mccabe (complexity)
+    "COM",   # flake8-commas
+    "CPY",   # missing copyright notice
+    "D",     # pydocstyle (Docstring conventions)
+    "DTZ",   # flake8-datetimez
+    "E",     # pycodestyle (errors)
+    "ERA",   # flake8-eradicate (commented out code)
+    "EXE",   # flake8-executable
+    "F",     # Pyflakes
+    "FA",    # flake8-future-annotations
+    "FIX",   # flake8-fixme
+    "FLY",   # flynt
+    "FURB",  # Refurb
+    "I",     # isort
+    "ICN",   # flake8-import-conventions
+    "INP",   # flake8-no-pep420
+    "INT",   # flake8-gettext
+    "ISC",   # flake8-implicit-str-concat
+    "ICN",   # flake8-import-conventions
+    "LOG",   # flake8-logging
+    "N",     # pep8-naming
+    "PD",    # pandas-vet
+    "PERF",  # Perflint
+    "PIE",   # flake8-pie
+    "PGH",   # pygrep-hooks
+    "PL",    # Pylint
+    "PT",    # flake8-pytest-style
+    "PTH",   # flake8-use-pathlib
+    "PYI",   # flake8-pyi
+    "Q",     # flake8-quotes
+    "RET",   # flake8-return
+    "RSE",   # flake8-raise
+    "RUF",   # Ruff-specific rules
+    "SIM",   # flake8-simplify
+    "SLF",   # flake8-self
+    "SLOT",  # flake8-slots
+    "T10",   # debugger calls
+    # "T20", # flake8-print # TODO: Re-enable once we have logging
+    "TCH",    # flake8-type-checking
+    "TD",     # flake8-todos
+    "TID",    # flake8-tidy-imports
+    "TRY",    # tryceratops
+    "TRY002", # Disallow raising vanilla Exception. Create or use a custom exception instead.
+    "UP",     # pyupgrade
+    "W",      # pycodestyle (warnings)
+    "YTT",    # flake8-2020
+]
+ignore = [
+    # For rules reference, see https://docs.astral.sh/ruff/rules/
+    # These we don't agree with or don't want to prioritize to enforce:
+    "ANN003",  # kwargs 
+...[Truncation]...
+les reference, see https://docs.astral.sh/ruff/rules/
+    # These we don't agree with or don't want to prioritize to enforce:
+    "ANN003",  # kwargs missing type annotations
+    "COM812",  # Because it conflicts with ruff auto-format
+    "EM",      # flake8-errmsgs (may reconsider later)
+    "DJ",      # Django linting
+    "G",       # flake8-logging-format
+    "ISC001",  # Conflicts with ruff auto-format
+    "NPY",     # NumPy-specific rules
+    "PIE790",  # Allow unnecssary 'pass' (sometimes useful for readability)
+    "PERF203", # exception handling in loop
+    "PLR6301", # Allow class methods that don't use 'self' (otherwise noisy)
+    "RUF022",  # Allow unsorted __all__ (sometimes useful for grouping by type with pdoc)
+    "S",       # flake8-bandit (noisy, security related)
+    "SIM910",  # Allow "None" as second argument to Dict.get(). "Explicit is better than implicit."
+    "TD002",   # Require author for TODOs
+    "ASYNC1",  # flake8-trio (opinionated, noisy)
+    "INP001",  # Dir 'examples' is part of an implicit namespace package. Add an __init__.py.
+    # TODO: Consider re-enabling these before release:
+    "A003",    # Class attribute 'type' is shadowing a Python builtin
+    "BLE001",  # Do not catch blind exception: Exception
+    "ERA001",  # Remove commented-out code
+    "FIX002",  # Allow "TODO:" until release (then switch to requiring links via TDO003)
+    "PLW0603", # Using the global statement to update _cache is discouraged
+    "PLW0108", # Lambda may be unnecessary; consider inlining inner function
+    "TRY003",  # Allow exceptions to receive strings in constructors.
+    # "TD003", # Require links for TODOs (now enabled)
+    "UP038",   # Allow tuples instead of "|" syntax in `isinstance()` checks ("|" is sometimes slower)
+]
+fixable = ["ALL"]
+unfixable = [
+    "ERA001", # Commented-out code (avoid silent loss of code)
+    "T201",   # print() calls (avoid silent loss of code / log messages)
+]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+[tool.ruff.lint.pylint]
+max-args = 8      # Relaxed from default of 5
+max-branches = 15 # Relaxed from default of 12
+[tool.ruff.lint.flake8-import-conventions.aliases]
+airbyte = "ab"
+"airbyte.exceptions" = "exc"
+[tool.ruff.lint.isort]
+force-sort-within-sections = false
+lines-after-imports = 2
+known-first-party = [
+    "airbyte_cdk",
+    "airbyte_protocol",
+    "airbyte_protocol_dataclasses",
+]
+known-local-folder = ["airbyte"]
+required-imports = ["from __future__ import annotations"]
+known-third-party = []
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+[tool.ruff.lint.mccabe]
+max-complexity = 24
+[tool.ruff.lint.pycodestyle]
+ignore-overlong-task-comments = true
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = false
+ignore-fully-untyped = false
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+preview = false
+docstring-code-format = true
+[tool.mypy]
+# Platform configuration
+python_version = "3.10"
+# imports related
+ignore_missing_imports = true
+follow_imports = "silent"
+# None and Optional handling
+no_implicit_optional = true
+strict_optional = true
+# Configuring warnings
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+warn_return_any = false
+# Untyped definitions and calls
+check_untyped_defs = true
+disallow_untyped_calls = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = false
+# Disallow dynamic typing
+disallow_subclassing_any = true
+disallow_any_unimported = false
+disallow_any_expr = false
+disallow_any_decorated = false
+disallow_any_explicit = false
+disallow_any_generics = false
+# Miscellaneous strictness flags
+allow_untyped_globals = false
+allow_redefinition = false
+local_partial_types = false
+implicit_reexport = true
+strict_equality = true
+# Configuring error messages
+show_error_context = false
+show_column_numbers = false
+show_error_codes = true
+exclude = [
+    "tests/integration_tests/fixtures/source-broken",
+    "tests/integration_tests/fixtures/source-test",
+    "docs",
+    "tests",
+]
+[[tool.mypy.overrides]]
+ignore_missing_imports = true  # No stubs yet (😢)
+module = [
+    "airbyte_protocol",
+    "airbyte_protocol.models",
+]
+[tool.pyright]
+pythonVersion = "3.10"
+venvPath = "./"       # Assuming .venv is at the root of your project
+venv = ".venv"
+[tool.poetry.scripts]
+pyairbyte = "airbyte.cli:cli"
+pyab = "airbyte.cli:cli"
+[tool.poe.tasks]
+test = { shell = "pytest" }
+test-fast = { shell = "pytest --durations=5 --exitfirst -m 'not slow'" }
+coverage = { shell = "coverage run -m pytest && coverage report" }
+coverage-report = { shell = "coverage report" }
+coverage-html = { shell = "coverage html -d htmlcov && open htmlcov/index.html" }
+coverage-reset = { shell = "coverage erase" }
+check = { shell = "ruff check . && mypy . && pytest --collect-only -qq" }
+docs-generate = {env = {PDOC_ALLOW_EXEC = "1"}, cmd = "python -m docs.generate run"}
+docs-preview = {shell = "poe docs-generate && open docs/generated/index.html"}
+fix = { shell = "ruff format . && ruff check --fix -s || ruff format ." }
+fix-unsafe = { shell = "ruff format . && ruff check --fix --unsafe-fixes . && ruff format ." }
+fix-and-check = { shell = "poe fix && poe check" }
+[tool.airbyte_ci]
+extra_poetry_groups = ["dev"]
+poe_tasks = ["test"]
+required_environment_variables = ["GCP_GSM_CREDENTIALS"]
+side_car_docker_engine = true
+[tool.deptry.per_rule_ignores]
+# This is a mapping of rules and package names to be ignored for that rule.
+DEP001 = [
+  "IPython"  # Optional dependency, used for detecting Notebook environments
+]
+DEP004 = [
+  "pdoc"  # Only used for generating documentation. Not a runtime dependency.
+]
+DEP002 = [
+  # Only used for SQLAlchemy engine. Not imported directly:
+  "duckdb",
+  "psycopg",
+  "psycopg2-binary",
+  "sqlalchemy-bigquery",
+]
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 192 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+---------------------------
+### Thought: The `pyproject.toml` file contains a pytest configuration with `addopts = "-rs --strict-markers --timeout=600"`. However, there is no `-n` argument specified in this file indicating the issue might be somewhere else. I will check the `tests` folder to see if there is any specific Pytest configuration or scripts that might be causing this conflict with `-n` argument.
+### Action:
+```bash
+ls /repo/tests
+```
+### Observation:
+Running `ls /repo/tests`...
+conftest.py  integration_tests	pyproject.toml
+docs_tests   lint_tests		unit_tests
+`ls /repo/tests` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 191 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+---------------------------
+### Thought: There is a `conftest.py` file in the `tests` folder. It may contain additional pytest configurations that introduce a `-n` argument. I will examine the contents of the `conftest.py` file.
+### Action:
+```bash
+cat /repo/tests/conftest.py
+```
+### Observation:
+Running `cat /repo/tests/conftest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /repo/tests/conftest.py`...
+# Copyright (c) 2023 Airbyte, Inc., all rights reserved.
+"""Global pytest fixtures."""
+from __future__ import annotations
+import logging
+import os
+import shutil
+import socket
+import subprocess
+import sys
+import time
+import warnings
+from pathlib import Path
+import airbyte
+import docker
+import psycopg
+import pytest
+from _pytest.nodes import Item
+from airbyte._util import text_util
+from airbyte._util.meta import is_windows
+from airbyte._util.venv_util import get_bin_dir
+from airbyte.caches import PostgresCache
+from airbyte.caches.duckdb import DuckDBCache
+from airbyte.caches.util import new_local_cache
+from requests.exceptions import HTTPError
+logger = logging.getLogger(__name__)
+PYTEST_POSTGRES_IMAGE = "postgres:13"
+PYTEST_POSTGRES_CONTAINER = "postgres_pytest_container"
+PYTEST_POSTGRES_PORT = 5432
+LOCAL_TEST_REGISTRY_URL = "./tests/integration_tests/fixtures/registry.json"
+def pytest_configure(config):
+    if sys.platform.startswith("win"):
+        # Ignore specific warnings only on Windows
+        warnings.filterwarnings(
+            "ignore",
+            category=pytest.PytestUnraisableExceptionWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=ResourceWarning,
+            message="unclosed file",
+        )
+def pytest_collection_modifyitems(items: list[Item]) -> None:
+    """Override default pytest behavior, sorting our tests in a sensible execution order.
+    In general, we want faster tests to run first, so that we can get feedback faster.
+    Running lint tests first is helpful because they are fast and can catch typos and other errors.
+    Otherwise tests are run based on an alpha-based natural sort, where 'unit' tests run after
+    'integration' tests because 'u' comes after 'i' alphabetically.
+    """
+    def test_priority(item: Item) -> int:
+        if item.get_closest_marker(name="slow"):
+            return 9  # slow tests have the lowest priority
+        elif "lint_tests" in str(item.fspath):
+            return 1  # lint tests have high priority
+        elif "unit_tests" in str(item.fspath):
+            return 2  # unit tests have highest priority
+        elif "docs_tests" in str(item.fspath):
+            return 3  # doc tests have medium priority
+        elif "integration_tests" in str(item.fspath):
+            return 4  # integration tests have the lowest priority
+        else:
+            return 5  # all other tests have lower priority
+    # Sort the items list in-place based on the test_priority function
+    items.sort(key=test_priority)
+    for item in items:
+        # Skip tests that require Docker if Docker is not available (including on Windows).
+        if (
+            "new_postgres_cache" in item.fixturenames
+            or "postgres_cache" in item.fixturenames
+            or "source_docker_faker_seed_a" in item.fixturenames
+            or "source_docker_faker_seed_b" in item.fixturenames
+            or "new_duckdb_destination_executor" in item.fixturenames
+            or "e2e_test_destination" in item.fixturenames
+        ):
+            if not is_docker_available():
+                item.add_marker(
+                    pytest.mark.skip(reason="Skipping tests (Docker not available)")
+                )
+        # Every test in the cloud directory is slow abd requires credentials
+        if "integration_tests/cloud" in str(item.fspath):
+            item.add_marker(pytest.mark.slow)
+            item.add_marker(pytest.mark.requires_creds)
+        if "super_slow" in item.keywords:
+            # Super slow tests are also slow
+            item.add_marker("slow")
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(("localhost", port)) == 0
+@pytest.fixture(scope="session", autouse=True)
+def remove_postgres_container():
+    if is_port_in_use(PYTEST_POSTGRES_PORT):
+        try:
+            client = docker.from_env()
+            container = client.containers.get(
+                PYTEST_POSTGRES_CONTAINER,
+            )
+            container.stop()
+            container.remove()
+        except docker.errors.NotFound:
+            pass  # Container not found, nothing to do.
+        except docker.errors.DockerException:
+            pass  # Docker not running, nothing to do.
+def test_pg_connection(host) -> bool:
+    pg_url = f"postgresql://postgres:postgres@{host}:{PYTEST_POSTGRES_PORT}/postgres"
+    max_attempts = 120
+    for attempt in range(max_attempts):
+        try:
+            conn = psycopg.connect(pg_url)
+            conn.close()
+            return True
+        except psycopg.OperationalError:
+            logger.info(
+                f"Waiting for postgres to start (attempt {attempt + 1}/{max_attempts})"
+            )
+            time.sleep(1.0)
+    else:
+        return False
+def is_docker_available():
+    if is_windows():
+        # Linux containers are not supported on Windows CI runners
+        return False
+    try:
+        _ = docker.from_env()
+        return True
+    except docker.errors.DockerException:
+        return False
+@pytest.fixture(scope="session")
+def new_postgres_db():
+    """Fixture to start a new PostgreSQL container for testing.
+    This fixture will start a new PostgreSQL container before the tests run and stop it after the
+    tests are done. The host of the PostgreSQL database will be returned to the tests.
+    """
+    client = docker.from_env()
+    try:
+        client.images.get(PYTEST_POSTGRES_IMAGE)
+    except (docker.errors.ImageNotFound, HTTPError):
+        # Pull the image if it doesn't exist, to avoid failing our sleep timer
+        # if the image needs to download on-demand.
+        client.images.pull(PYTEST_POSTGRES_IMAGE)
+    try:
+        previous_container = client.containers.get(PYTEST_POSTGRES_CONTAINER)
+        previous_container.remove()
+    except docker.errors.NotFound:
+        pass
+    postgres_is_running = False
+    postgres = client.containers.run(
+        image=PYTEST_POSTGRES_IMAGE,
+   
+...[Truncation]...
+s s:
+        return s.connect_ex(("localhost", port)) == 0
+@pytest.fixture(scope="session", autouse=True)
+def remove_postgres_container():
+    if is_port_in_use(PYTEST_POSTGRES_PORT):
+        try:
+            client = docker.from_env()
+            container = client.containers.get(
+                PYTEST_POSTGRES_CONTAINER,
+            )
+            container.stop()
+            container.remove()
+        except docker.errors.NotFound:
+            pass  # Container not found, nothing to do.
+        except docker.errors.DockerException:
+            pass  # Docker not running, nothing to do.
+def test_pg_connection(host) -> bool:
+    pg_url = f"postgresql://postgres:postgres@{host}:{PYTEST_POSTGRES_PORT}/postgres"
+    max_attempts = 120
+    for attempt in range(max_attempts):
+        try:
+            conn = psycopg.connect(pg_url)
+            conn.close()
+            return True
+        except psycopg.OperationalError:
+            logger.info(
+                f"Waiting for postgres to start (attempt {attempt + 1}/{max_attempts})"
+            )
+            time.sleep(1.0)
+    else:
+        return False
+def is_docker_available():
+    if is_windows():
+        # Linux containers are not supported on Windows CI runners
+        return False
+    try:
+        _ = docker.from_env()
+        return True
+    except docker.errors.DockerException:
+        return False
+@pytest.fixture(scope="session")
+def new_postgres_db():
+    """Fixture to start a new PostgreSQL container for testing.
+    This fixture will start a new PostgreSQL container before the tests run and stop it after the
+    tests are done. The host of the PostgreSQL database will be returned to the tests.
+    """
+    client = docker.from_env()
+    try:
+        client.images.get(PYTEST_POSTGRES_IMAGE)
+    except (docker.errors.ImageNotFound, HTTPError):
+        # Pull the image if it doesn't exist, to avoid failing our sleep timer
+        # if the image needs to download on-demand.
+        client.images.pull(PYTEST_POSTGRES_IMAGE)
+    try:
+        previous_container = client.containers.get(PYTEST_POSTGRES_CONTAINER)
+        previous_container.remove()
+    except docker.errors.NotFound:
+        pass
+    postgres_is_running = False
+    postgres = client.containers.run(
+        image=PYTEST_POSTGRES_IMAGE,
+        name=PYTEST_POSTGRES_CONTAINER,
+        environment={
+            "POSTGRES_USER": "postgres",
+            "POSTGRES_PASSWORD": "postgres",
+            "POSTGRES_DB": "postgres",
+        },
+        ports={"5432/tcp": PYTEST_POSTGRES_PORT},
+        detach=True,
+    )
+    attempts = 10
+    while not postgres_is_running and attempts > 0:
+        try:
+            postgres.reload()
+            postgres_is_running = postgres.status == "running"
+        except docker.errors.NotFound:
+            attempts -= 1
+            time.sleep(3)
+    if not postgres_is_running:
+        raise Exception(
+            f"Failed to start the PostgreSQL container. Status: {postgres.status}."
+        )
+    final_host = None
+    if host := os.environ.get("DOCKER_HOST_NAME"):
+        final_host = host if test_pg_connection(host) else None
+    else:
+        # Try to connect to the database using localhost and the docker host IP
+        for host in ["127.0.0.1", "localhost", "host.docker.internal", "172.17.0.1"]:
+            if test_pg_connection(host):
+                final_host = host
+                break
+    if final_host is None:
+        raise Exception(f"Failed to connect to the PostgreSQL database on host {host}.")
+    yield final_host
+    # Stop and remove the container after the tests are done
+    postgres.stop()
+    postgres.remove()
+@pytest.fixture(scope="function")
+def new_postgres_cache(new_postgres_db: str):
+    """Fixture to return a fresh Postgres cache.
+    Each test that uses this fixture will get a unique table prefix.
+    """
+    config = PostgresCache(
+        host=new_postgres_db,
+        port=PYTEST_POSTGRES_PORT,
+        username="postgres",
+        password="postgres",
+        database="postgres",
+        schema_name="public",
+        # TODO: Move this to schema name when we support it (breaks as of 2024-01-31):
+        table_prefix=f"test{text_util.generate_random_suffix()}_",
+    )
+    yield config
+@pytest.fixture(autouse=False)
+def source_test_registry(monkeypatch):
+    """
+    Mock the registry to return our custom registry containing the 'source-test' connector.
+    This means the normal registry is not usable. Expect AirbyteConnectorNotRegisteredError for
+    other connectors.
+    """
+    # Define the mock function
+    def mock_get_registry_cache():
+        return LOCAL_TEST_REGISTRY_URL
+    # Replace _get_registry_url() with the mock function
+    monkeypatch.setattr(
+        airbyte.sources.registry, "_get_registry_url", mock_get_registry_cache
+    )
+    # reset the registry cache
+    airbyte.sources.registry.__cache = None
+    yield
+    # reset the registry cache (clean up)
+    airbyte.sources.registry.__cache = None
+@pytest.fixture(autouse=True)
+def do_not_track(monkeypatch):
+    """
+    Set environment variables for the test source.
+    These are applied to this test file only.
+    """
+    env_vars = {"DO_NOT_TRACK": "true"}
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
+@pytest.fixture(scope="package")
+def source_test_installation():
+    """
+    Prepare test environment. This will pre-install the test source from the fixtures array and set
+    the environment variable to use the local json file as registry.
+    """
+    venv_dir = ".venv-source-test"
+    if os.path.exists(venv_dir):
+        shutil.rmtree(venv_dir)
+    subprocess.run(["python", "-m", "venv", venv_dir], check=True)
+    pip_path = str(get_bin_dir(Path(venv_dir)) / "pip")
+    subprocess.run(
+        [pip_path, "install", "-e", "./tests/integration_tests/fixtures/source-test"],
+        check=True,
+    )
+    yield
+    shutil.rmtree(venv_dir)
+@pytest.fixture(scope="function")
+def new_duckdb_cache() -> DuckDBCache:
+    return new_local_cache()
+`cat /repo/tests/conftest.py` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 190 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+---------------------------
+### Thought: The `conftest.py` file doesn't seem to have any configurations or arguments that could be causing issues with `-n`. Seeing multiple `tests` directories with potential config files, I will check the `tests/pyproject.toml` file to see if there are any pytest configurations causing this conflict.
+### Action:
+```bash
+cat /repo/tests/pyproject.toml
+```
+### Observation:
+Running `cat /repo/tests/pyproject.toml`...
+# This file defines lint exceptions for pytest tests and examples.
+# The 'tests' and 'examples' directories can both share this same exception list.
+[tool.ruff]
+preview = true
+[tool.ruff.lint]
+extend-ignore = [
+    "ANN201",  # Type annotations not required for test functions
+    "F841",    # Allow assignments that are not referenced
+    "SLF001",  # Accessing private members ok for tests
+    "DTZ005",  # Don't require timezone-aware datetimes for tests
+]
+`cat /repo/tests/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 189 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+---------------------------
+### Thought: The `tests/pyproject.toml` file does not contain any pytest configurations with the `-n` argument. It seems like the pytest configuration in the main `pyproject.toml` should work correctly. Since the error persists, I will try to directly call `runtest` instead of `poetryruntest` to see if the issue is different.
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::sqlalchemy.exc.SAWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+ModuleNotFoundError: No module named 'sqlalchemy'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 188 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+---------------------------
+### Thought: The error message indicates that the `sqlalchemy` module is not found. This module should have been installed with poetry. This issue may occur if poetry dependencies were not installed correctly. I will install sqlalchemy directly and rerun the tests to check if the issue is resolved.
+### Action:
+```bash
+pip install -q sqlalchemy
+```
+### Observation:
+Running `pip install -q sqlalchemy`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q sqlalchemy` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 187 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+---------------------------
+### Thought: Now that `sqlalchemy` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte_cdk.sources.source.ExperimentalClassWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+ModuleNotFoundError: No module named 'airbyte_cdk'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 186 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+---------------------------
+### Thought: The error message indicates that the module `airbyte_cdk` is not found. This module should also be included in the dependencies managed by Poetry. I will manually install `airbyte-cdk` using pip and rerun the tests to see if the issue is resolved.
+### Action:
+```bash
+pip install -q airbyte-cdk
+```
+### Observation:
+Running `pip install -q airbyte-cdk`...
+[31mERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+pipdeptree 2.24.0 requires packaging>=24.1, but you have packaging 23.2 which is incompatible.[0m[31m
+[0m[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q airbyte-cdk` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 185 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+---------------------------
+### Thought: Now that `airbyte-cdk` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+ModuleNotFoundError: No module named 'airbyte'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 184 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+---------------------------
+### Thought: The error has shifted to another module, `airbyte.exceptions`. This indicates that the module `airbyte` is not correctly installed or recognized. Since the `airbyte` folder exists in the project structure, I will set the `PYTHONPATH` to include `/repo` so the module can be correctly recognized and rerun the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+  File "/repo/airbyte/__init__.py", line 128, in <module>
+    from airbyte.caches.bigquery import BigQueryCache
+  File "/repo/airbyte/caches/__init__.py", line 8, in <module>
+    from airbyte.caches.base import CacheBase
+  File "/repo/airbyte/caches/base.py", line 10, in <module>
+    import pyarrow as pa
+ModuleNotFoundError: No module named 'pyarrow'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 183 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The module `pyarrow` is not found, despite it being listed as a dependency. This might indicate an issue with the installation of dependencies. I will manually install `pyarrow` and rerun the tests.
+### Action:
+```bash
+pip install -q pyarrow
+```
+### Observation:
+Running `pip install -q pyarrow`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q pyarrow` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 182 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+---------------------------
+### Thought: Now that `pyarrow` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+  File "/repo/airbyte/__init__.py", line 128, in <module>
+    from airbyte.caches.bigquery import BigQueryCache
+  File "/repo/airbyte/caches/__init__.py", line 8, in <module>
+    from airbyte.caches.base import CacheBase
+  File "/repo/airbyte/caches/base.py", line 15, in <module>
+    from airbyte_protocol.models import ConfiguredAirbyteCatalog
+ModuleNotFoundError: No module named 'airbyte_protocol'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 181 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error has now shifted to the `airbyte_protocol` module, indicating it is not recognized as installed. I will install `airbyte-protocol-models` using pip and rerun the tests to check if the issue is resolved.
+### Action:
+```bash
+pip install -q airbyte-protocol-models
+```
+### Observation:
+Running `pip install -q airbyte-protocol-models`...
+[31mERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+airbyte-cdk 6.11.1 requires pydantic<3.0,>=2.7, but you have pydantic 1.10.19 which is incompatible.[0m[31m
+[0m[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q airbyte-protocol-models` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 180 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+---------------------------
+### Thought: Now that `airbyte-protocol-models` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+  File "/repo/airbyte/__init__.py", line 128, in <module>
+    from airbyte.caches.bigquery import BigQueryCache
+  File "/repo/airbyte/caches/__init__.py", line 8, in <module>
+    from airbyte.caches.base import CacheBase
+  File "/repo/airbyte/caches/base.py", line 18, in <module>
+    from airbyte._writers.base import AirbyteWriterInterface
+  File "/repo/airbyte/_writers/__init__.py", line 7, in <module>
+    from airbyte._writers.jsonl import FileWriterBase, JsonlWriter
+  File "/repo/airbyte/_writers/jsonl.py", line 11, in <module>
+    from overrides import overrides
+ModuleNotFoundError: No module named 'overrides'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 179 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error has now shifted to the `overrides` module not being found. I will install `overrides` and rerun the tests to check if it resolves the issue.
+### Action:
+```bash
+pip install -q overrides
+```
+### Observation:
+Running `pip install -q overrides`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q overrides` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 178 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+---------------------------
+### Thought: Now that `overrides` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+  File "/repo/airbyte/__init__.py", line 128, in <module>
+    from airbyte.caches.bigquery import BigQueryCache
+  File "/repo/airbyte/caches/__init__.py", line 8, in <module>
+    from airbyte.caches.base import CacheBase
+  File "/repo/airbyte/caches/base.py", line 18, in <module>
+    from airbyte._writers.base import AirbyteWriterInterface
+  File "/repo/airbyte/_writers/__init__.py", line 7, in <module>
+    from airbyte._writers.jsonl import FileWriterBase, JsonlWriter
+  File "/repo/airbyte/_writers/jsonl.py", line 13, in <module>
+    from airbyte._writers.file_writers import (
+  File "/repo/airbyte/_writers/file_writers.py", line 14, in <module>
+    from airbyte import progress
+  File "/repo/airbyte/progress.py", line 32, in <module>
+    from rich.errors import LiveError
+ModuleNotFoundError: No module named 'rich'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 177 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error has now shifted to the `rich` module not being found. I will install `rich` and rerun the tests to check if it resolves the issue.
+### Action:
+```bash
+pip install -q rich
+```
+### Observation:
+Running `pip install -q rich`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q rich` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 176 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+---------------------------
+### Thought: Now that `rich` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+  File "/repo/airbyte/__init__.py", line 128, in <module>
+    from airbyte.caches.bigquery import BigQueryCache
+  File "/repo/airbyte/caches/__init__.py", line 8, in <module>
+    from airbyte.caches.base import CacheBase
+  File "/repo/airbyte/caches/base.py", line 18, in <module>
+    from airbyte._writers.base import AirbyteWriterInterface
+  File "/repo/airbyte/_writers/__init__.py", line 7, in <module>
+    from airbyte._writers.jsonl import FileWriterBase, JsonlWriter
+  File "/repo/airbyte/_writers/jsonl.py", line 13, in <module>
+    from airbyte._writers.file_writers import (
+  File "/repo/airbyte/_writers/file_writers.py", line 14, in <module>
+    from airbyte import progress
+  File "/repo/airbyte/progress.py", line 41, in <module>
+    from airbyte import logs
+  File "/repo/airbyte/logs.py", line 23, in <module>
+    import structlog
+ModuleNotFoundError: No module named 'structlog'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 175 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error has now shifted to the `structlog` module not being found. I will install `structlog` and rerun the tests to check if it resolves the issue.
+### Action:
+```bash
+pip install -q structlog
+```
+### Observation:
+Running `pip install -q structlog`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q structlog` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 174 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+---------------------------
+### Thought: Now that `structlog` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: while parsing the following warning configuration:
+  ignore::airbyte.exceptions.AirbyteExperimentalFeatureWarning
+This error occurred:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1918, in parse_warning_filter
+    category: type[Warning] = _resolve_warning_category(category_)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 1956, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+  File "/repo/airbyte/__init__.py", line 128, in <module>
+    from airbyte.caches.bigquery import BigQueryCache
+  File "/repo/airbyte/caches/__init__.py", line 8, in <module>
+    from airbyte.caches.base import CacheBase
+  File "/repo/airbyte/caches/base.py", line 18, in <module>
+    from airbyte._writers.base import AirbyteWriterInterface
+  File "/repo/airbyte/_writers/__init__.py", line 7, in <module>
+    from airbyte._writers.jsonl import FileWriterBase, JsonlWriter
+  File "/repo/airbyte/_writers/jsonl.py", line 13, in <module>
+    from airbyte._writers.file_writers import (
+  File "/repo/airbyte/_writers/file_writers.py", line 14, in <module>
+    from airbyte import progress
+  File "/repo/airbyte/progress.py", line 44, in <module>
+    from airbyte._util.telemetry import (
+  File "/repo/airbyte/_util/telemetry.py", line 54, in <module>
+    from airbyte.version import get_version
+  File "/repo/airbyte/version.py", line 9, in <module>
+    airbyte_version = importlib.metadata.version("airbyte")
+  File "/usr/local/lib/python3.10/importlib/metadata/__init__.py", line 996, in version
+    return distribution(distribution_name).version
+  File "/usr/local/lib/python3.10/importlib/metadata/__init__.py", line 969, in distribution
+    return Distribution.from_name(distribution_name)
+  File "/usr/local/lib/python3.10/importlib/metadata/__init__.py", line 548, in from_name
+    raise PackageNotFoundError(name)
+importlib.metadata.PackageNotFoundError: No package metadata was found for airbyte
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 173 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error message indicates that no package metadata was found for `airbyte`. Although we've set the `PYTHONPATH`, it seems necessary to install `airbyte` as a package so that its metadata is recognized.
+
+I will install `airbyte` in editable mode using pip from the `/repo` directory.
+### Action:
+```bash
+pip install -e /repo
+```
+### Observation:
+Running `pip install -e /repo`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install -e /repo`...
+Looking in indexes: http://simple/
+Obtaining file:///repo
+  Installing build dependencies ... [?25l- \ | / - \ | done
+  Downloading http://packages/airbyte-api/airbyte_api-0.52.2-py3-none-any.whl (651 kB)
+Collecting airbyte-protocol-models-pdv2<0.14.0,>=0.13.0 (from airbyte==0.21.0)
+  Downloading http://packages/airbyte-protocol-models-pdv2/airbyte_protocol_models_pdv2-0.13.1-py3-none-any.whl (10.0 kB)
+Requirement already satisfied: click<9.0.0,>=8.1.7 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (8.1.7)
+Collecting duckdb<2.0.0,>=1.1.0 (from airbyte==0.21.0)
+  Downloading http://packages/duckdb/duckdb-1.1.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20.1 MB)
+  Downloading http://packages/duckdb-engine/duckdb_engine-0.13.6-py3-none-any.whl (48 kB)
+Collecting google-auth<3.0,>=2.27.0 (from airbyte==0.21.0)
+  Downloading http://packages/google-auth/google_auth-2.37.0-py2.py3-none-any.whl (209 kB)
+Collecting google-cloud-bigquery<4.0,>=3.12.0 (from airbyte==0.21.0)
+  Downloading http://packages/google-cloud-bigquery/google_cloud_bigquery-3.27.0-py2.py3-none-any.whl (240 kB)
+Collecting google-cloud-bigquery-storage<3.0.0,>=2.25.0 (from airbyte==0.21.0)
+  Downloading http://packages/google-cloud-bigquery-storage/google_cloud_bigquery_storage-2.27.0-py2.py3-none-any.whl (240 kB)
+Collecting google-cloud-secret-manager<3.0.0,>=2.17.0 (from airbyte==0.21.0)
+  Downloading http://packages/google-cloud-secret-manager/google_cloud_secret_manager-2.22.0-py2.py3-none-any.whl (208 kB)
+Requirement already satisfied: jsonschema<5.0,>=3.2.0 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (4.17.3)
+Requirement already satisfied: orjson<4.0,>=3.10 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (3.10.12)
+Requirement already satisfied: overrides<8.0.0,>=7.4.0 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (7.7.0)
+Requirement already satisfied: pandas<3.0,>=1.5.3 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (2.2.2)
+Requirement already satisfied: pendulum<=3.0.0 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (2.1.2)
+Collecting psycopg2-binary<3.0.0,>=2.9.9 (from airbyte==0.21.0)
+  Downloading http://packages/psycopg2-binary/psycopg2_binary-2.9.10-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+  Downloading http://packages/psycopg/psycopg-3.2.3-py3-none-any.whl (197 kB)
+Collecting pyarrow<18.0,>=16.1 (from airbyte==0.21.0)
+  Downloading http://packages/pyarrow/pyarrow-17.0.0-cp310-cp310-manylinux_2_28_x86_64.whl (39.9 MB)
+  Using cached http://packages/pydantic/pydantic-2.10.3-py3-none-any.whl (456 kB)
+Requirement already satisfied: pydantic-core in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (2.27.1)
+Collecting python-dotenv<2.0.0,>=1.0.1 (from airbyte==0.21.0)
+  Downloading http://packages/python-dotenv/python_dotenv-1.0.1-py3-none-any.whl (19 kB)
+Requirement already satisfied: python-ulid<4.0.0,>=3.0.0 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (3.0.0)
+Requirement already satisfied: pytz in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (2024.1)
+Requirement already satisfied: pyyaml<7.0.0,>=6.0.2 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (6.0.2)
+Collecting requests<=2.32.2 (from airbyte==0.21.0)
+  Downloading http://packages/requests/requests-2.32.2-py3-none-any.whl (63 kB)
+Requirement already satisfied: rich<14.0.0,>=13.7.0 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (13.9.4)
+Collecting snowflake-connector-python<4.0.0,>=3.12.2 (from airbyte==0.21.0)
+  Downloading http://packages/snowflake-connector-python/snowflake_connector_python-3.12.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.5 MB)
+  Downloading http://packages/snowflake-sqlalchemy/snowflake_sqlalchemy-1.7.2-py3-none-any.whl (69 kB)
+Collecting sqlalchemy!=2.0.36,<3.0,>=1.4.51 (from airbyte==0.21.0)
+  Downloading http://packages/sqlalchemy/SQLAlchemy-2.0.35-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+[2K     [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m[90m━━[0m [32m2.9/3.1 MB[0m [31m64.3 MB/s[0m eta [36m0:00:01[0m
+[2K     [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m3.1/3.1 MB[0m [31m2.2 MB/s[0m eta [36m0:00:00[0m
+[?25hCollecting sqlalchemy-bigquery==1.12.0 (from airbyte==0.21.0)
+  Downloading http://packages/sqlalchemy-bigquery/sqlalchemy_bigquery-1.12.0-py2.py3-none-any.whl (38 kB)
+Requirement already satisfied: structlog<25.0.0,>=24.4.0 in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (24.4.0)
+Requirement already satisfied: typing-extensions in /usr/local/lib/python3.10/site-packages (from airbyte==0.21.0) (4.12.2)
+Collecting uuid7<0.2.0,>=0.1.0 (from airbyte==0.21.0)
+  Downloading http://packages/uuid7/uuid7-0.1.0-py2.py3-none-any.whl (7.5 kB)
+Collecting google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5 (from sqlalchemy-bigquery==1.12.0->airbyte==0.21.0)
+  Downloading http://packages/google-api-core/google_api_core-2.24.0-py3-none-any.whl (158 kB)
+Requirement already satisfied: packaging in /usr/local/lib/python3.10/site-packages (from sqlalchemy-bigquery==1.12.0->airbyte==0.21.0) (23.2)
+Requirement already satisfied: certifi>=2023.7.22 in /usr/local/lib/python3.10/site-packages (from airbyte-api<0.53.0,>=0.52.1->airbyte==0.21.0) (2024.12.14)
+Requirement already satisfied: charset-normalizer>=3.2.0 in /usr/local/lib/python3.10
+...[Truncation]...
+.21.0) (3.0.2)
+Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.10/site-packages (from markdown-it-py>=2.2.0->rich<14.0.0,>=13.7.0->airbyte==0.21.0) (0.1.2)
+Collecting pyasn1<0.7.0,>=0.4.6 (from pyasn1-modules>=0.2.1->google-auth<3.0,>=2.27.0->airbyte==0.21.0)
+  Downloading http://packages/pyasn1/pyasn1-0.6.1-py3-none-any.whl (83 kB)
+Requirement already satisfied: attributes-doc in /usr/local/lib/python3.10/site-packages (from serpyco-rs<2.0.0,>=1.10.2->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (0.4.0)
+Requirement already satisfied: cattrs>=22.2 in /usr/local/lib/python3.10/site-packages (from requests_cache->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (24.1.2)
+Requirement already satisfied: url-normalize>=1.4 in /usr/local/lib/python3.10/site-packages (from requests_cache->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (1.4.3)
+Requirement already satisfied: exceptiongroup>=1.1.1 in /usr/local/lib/python3.10/site-packages (from cattrs>=22.2->requests_cache->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (1.2.2)
+Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.10/site-packages (from jsonpatch<2.0,>=1.33->langchain_core==0.1.42->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (3.0.0)
+Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.10/site-packages (from langsmith<0.2.0,>=0.1.0->langchain_core==0.1.42->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (0.28.1)
+Requirement already satisfied: requests-toolbelt<2.0.0,>=1.0.0 in /usr/local/lib/python3.10/site-packages (from langsmith<0.2.0,>=0.1.0->langchain_core==0.1.42->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (1.0.0)
+Requirement already satisfied: anyio in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->langsmith<0.2.0,>=0.1.0->langchain_core==0.1.42->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (4.7.0)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx<1,>=0.23.0->langsmith<0.2.0,>=0.1.0->langchain_core==0.1.42->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (1.0.7)
+Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx<1,>=0.23.0->langsmith<0.2.0,>=0.1.0->langchain_core==0.1.42->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (0.14.0)
+Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.10/site-packages (from anyio->httpx<1,>=0.23.0->langsmith<0.2.0,>=0.1.0->langchain_core==0.1.42->airbyte-cdk<7.0.0,>=6.9.0->airbyte==0.21.0) (1.3.1)
+Building wheels for collected packages: airbyte
+  Building editable for airbyte (pyproject.toml) ... [?25ldone
+[?25h  Created wheel for airbyte: filename=airbyte-0.21.0-py3-none-any.whl size=4837 sha256=280bfdfbdff8118dbd3fd5bdabf13d50ead673bc5ffa3f7978c841d8b265de4f
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nudchl5i/wheels/83/05/69/977b54e69478800cfcea8a9437a7ea4a9b1a48db334f824611
+Successfully built airbyte
+Installing collected packages: sortedcontainers, asn1crypto, uuid7, tomlkit, sqlalchemy, requests, python-dotenv, pyasn1, pyarrow, psycopg2-binary, psycopg-pool, psycopg-binary, psycopg, protobuf, mypy-extensions, marshmallow, jsonpath-python, grpcio, google-crc32c, filelock, duckdb, typing-inspect, rsa, pydantic, pyasn1-modules, proto-plus, googleapis-common-protos, google-resumable-media, duckdb-engine, pyOpenSSL, grpcio-status, google-auth, dataclasses-json, airbyte-protocol-models-pdv2, snowflake-connector-python, grpc-google-iam-v1, google-api-core, airbyte-api, snowflake-sqlalchemy, google-cloud-core, google-cloud-secret-manager, google-cloud-bigquery-storage, google-cloud-bigquery, sqlalchemy-bigquery, airbyte
+  Attempting uninstall: sqlalchemy
+    Found existing installation: SQLAlchemy 2.0.36
+    Uninstalling SQLAlchemy-2.0.36:
+      Successfully uninstalled SQLAlchemy-2.0.36
+  Attempting uninstall: requests
+    Found existing installation: requests 2.32.3
+    Uninstalling requests-2.32.3:
+      Successfully uninstalled requests-2.32.3
+  Attempting uninstall: pyarrow
+    Found existing installation: pyarrow 18.1.0
+    Uninstalling pyarrow-18.1.0:
+      Successfully uninstalled pyarrow-18.1.0
+  Attempting uninstall: pydantic
+    Found existing installation: pydantic 1.10.19
+    Uninstalling pydantic-1.10.19:
+      Successfully uninstalled pydantic-1.10.19
+[31mERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+airbyte-protocol-models 0.14.1 requires pydantic<2.0.0,>=1.9.2, but you have pydantic 2.10.3 which is incompatible.[0m[31m
+[0mSuccessfully installed airbyte-0.21.0 airbyte-api-0.52.2 airbyte-protocol-models-pdv2-0.13.1 asn1crypto-1.5.1 dataclasses-json-0.6.7 duckdb-1.1.3 duckdb-engine-0.13.6 filelock-3.16.1 google-api-core-2.24.0 google-auth-2.37.0 google-cloud-bigquery-3.27.0 google-cloud-bigquery-storage-2.27.0 google-cloud-core-2.4.1 google-cloud-secret-manager-2.22.0 google-crc32c-1.6.0 google-resumable-media-2.7.2 googleapis-common-protos-1.66.0 grpc-google-iam-v1-0.13.1 grpcio-1.68.1 grpcio-status-1.68.1 jsonpath-python-1.0.6 marshmallow-3.23.1 mypy-extensions-1.0.0 proto-plus-1.25.0 protobuf-5.29.1 psycopg-3.2.3 psycopg-binary-3.2.3 psycopg-pool-3.2.4 psycopg2-binary-2.9.10 pyOpenSSL-24.3.0 pyarrow-17.0.0 pyasn1-0.6.1 pyasn1-modules-0.4.1 pydantic-2.10.3 python-dotenv-1.0.1 requests-2.32.2 rsa-4.9 snowflake-connector-python-3.12.4 snowflake-sqlalchemy-1.7.2 sortedcontainers-2.4.0 sqlalchemy-2.0.35 sqlalchemy-bigquery-1.12.0 tomlkit-0.13.2 typing-inspect-0.9.0 uuid7-0.1.0
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -e /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 172 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+pip install -e /repo
+---------------------------
+### Thought: Now that `airbyte` is installed in editable mode, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ImportError while loading conftest '/repo/tests/conftest.py'.
+tests/conftest.py:17: in <module>
+    import docker
+E   ModuleNotFoundError: No module named 'docker'
+Thank you for using PyAirbyte!
+Anonymous usage reporting is currently enabled. For more information, please see https://docs.airbyte.com/telemetry
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 171 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+pip install -e /repo
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error message now indicates that the `docker` module is not found. I will install `docker` and rerun the tests to check if it resolves the issue.
+### Action:
+```bash
+pip install -q docker
+```
+### Observation:
+Running `pip install -q docker`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q docker` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 170 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+pip install -e /repo
+export PYTHONPATH=/repo
+pip install -q docker
+---------------------------
+### Thought: Now that `docker` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
+pytest: error: unrecognized arguments: --timeout=600
+  inifile: /repo/pyproject.toml
+  rootdir: /repo
+Thank you for using PyAirbyte!
+Anonymous usage reporting is currently enabled. For more information, please see https://docs.airbyte.com/telemetry
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 169 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+pip install -e /repo
+export PYTHONPATH=/repo
+pip install -q docker
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error message indicates that the `--timeout` argument is not recognized by pytest. This could mean the pytest-timeout plugin is not installed. I will install `pytest-timeout` and rerun the tests.
+### Action:
+```bash
+pip install -q pytest-timeout
+```
+### Observation:
+Running `pip install -q pytest-timeout`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q pytest-timeout` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 168 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+pip install -e /repo
+export PYTHONPATH=/repo
+pip install -q docker
+export PYTHONPATH=/repo
+pip install -q pytest-timeout
+---------------------------
+### Thought: Now that `pytest-timeout` is installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+### Observation:
+Running `export PYTHONPATH=/repo`...
+`export PYTHONPATH=/repo` executes with returncode: 0
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+Thank you for using PyAirbyte!
+Anonymous usage reporting is currently enabled. For more information, please see https://docs.airbyte.com/telemetry
+tests/lint_tests/test_mypy.py::test_mypy_typing
+tests/lint_tests/test_ruff.py::test_ruff_linting
+tests/lint_tests/test_ruff.py::test_ruff_linting_fixable
+tests/lint_tests/test_ruff.py::test_ruff_format
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_initialization
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_default_schema_name
+tests/unit_tests/test_caches.py::test_get_sql_alchemy_url
+tests/unit_tests/test_caches.py::test_get_sql_alchemy_url_with_default_schema_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_inheritance
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_sql_alchemy_url
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_database_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_base_inheritance
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_sql_alchemy_url_with_default_schema_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_database_name_with_default_schema_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_inheritance_from_sql_cache_config_base
+tests/unit_tests/test_exceptions.py::test_exceptions
+tests/unit_tests/test_lowcode_connectors.py::test_nocode_execution[source-pokeapi-config0]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-None-None-None-git+https://github.com/airbytehq/airbyte.git]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-master-None-None-git+https://github.com/airbytehq/airbyte.git@master]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-my-branch-None-None-git+https://github.com/airbytehq/airbyte.git@my-branch]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-my-branch-airbyte-lib-None-git+https://github.com/airbytehq/airbyte.git@my-branch#egg=airbyte-lib]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-my-branch-airbyte-lib-airbyte-lib-git+https://github.com/airbytehq/airbyte.git@my-branch#egg=airbyte-lib&subdirectory=airbyte-lib]
+tests/unit_tests/test_pip_helpers.py::test_connector_pip_url[source-coin-api-my-branch-None-git+https://github.com/airbytehq/airbyte.git@my-branch#egg=source-coin-api&subdirectory=airbyte-integrations/connectors/source-coin-api]
+tests/unit_tests/test_pip_helpers.py::test_connector_pip_url[source-coin-api-my-branch-my-fork-git+https://github.com/my-fork/airbyte.git@my-branch#egg=source-coin-api&subdirectory=airbyte-integrations/connectors/source-coin-api]
+tests/unit_tests/test_text_normalization.py::test_record_columns_list
+tests/unit_tests/test_text_normalization.py::test_case_insensitive_dict
+tests/unit_tests/test_text_normalization.py::test_case_insensitive_dict_w
+tests/unit_tests/test_text_normalization.py::test_case_insensitive_w_pretty_keys
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[_airbyte_meta-_airbyte_meta-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[Test_String-test_string-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[ANOTHER-TEST-another_test-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[another.test-another_test-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales(%)-sales___-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[something_-_-_-_else-something_______else-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales (%)-sales____-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales-%-sales__-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales(#)-sales___-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales (#)-sales____-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales--(#)-sales_____-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales-#-sales__-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[+1-_1-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[1-_1-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[2-_2-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[3-_3-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[-1-_1-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[+#$--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[+--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[*--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[!@$--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[some.col-some_col-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization
+...[Truncation]...
+est_fixture.py::test_merge_streams_in_cache
+tests/integration_tests/test_source_test_fixture.py::test_read_result_as_list
+tests/integration_tests/test_source_test_fixture.py::test_get_records_result_as_list
+tests/integration_tests/test_source_test_fixture.py::test_sync_with_merge_to_duckdb
+tests/integration_tests/test_source_test_fixture.py::test_cached_dataset
+tests/integration_tests/test_source_test_fixture.py::test_cached_dataset_filter
+tests/integration_tests/test_source_test_fixture.py::test_lazy_dataset_from_source
+tests/integration_tests/test_source_test_fixture.py::test_check_fail_on_missing_config[check]
+tests/integration_tests/test_source_test_fixture.py::test_check_fail_on_missing_config[read_stream]
+tests/integration_tests/test_source_test_fixture.py::test_check_fail_on_missing_config[read]
+tests/integration_tests/test_source_test_fixture.py::test_sync_with_merge_to_postgres
+tests/integration_tests/test_source_test_fixture.py::test_airbyte_version
+tests/integration_tests/test_source_test_fixture.py::test_sync_to_postgres
+tests/integration_tests/test_source_test_fixture.py::test_sync_limited_streams
+tests/integration_tests/test_source_test_fixture.py::test_read_stream_nonexisting
+tests/integration_tests/test_source_test_fixture.py::test_failing_path_connector
+tests/integration_tests/test_source_test_fixture.py::test_succeeding_path_connector
+tests/integration_tests/test_source_test_fixture.py::test_install_uninstall
+tests/integration_tests/test_state_handling.py::test_incremental_state_cache_persistence
+tests/integration_tests/test_state_handling.py::test_incremental_state_prefix_isolation
+tests/integration_tests/test_state_handling.py::test_destination_state_writer
+tests/integration_tests/test_state_handling.py::test_destination_state
+tests/integration_tests/test_validation.py::test_validate_success
+tests/integration_tests/test_validation.py::test_validate_check_failure
+tests/integration_tests/test_validation.py::test_validate_success_install_only
+tests/integration_tests/test_validation.py::test_validate_config_failure
+tests/integration_tests/test_docker_executable.py::test_replace_strategy
+tests/integration_tests/test_docker_executable.py::test_append_strategy
+tests/integration_tests/test_docker_executable.py::test_merge_strategy[merge]
+tests/integration_tests/test_docker_executable.py::test_merge_strategy[auto]
+tests/integration_tests/test_source_test_fixture.py::test_sync_to_snowflake
+==================================== ERRORS ====================================
+__________ ERROR collecting tests/docs_tests/test_docs_checked_in.py ___________
+ImportError while importing test module '/repo/tests/docs_tests/test_docs_checked_in.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/docs_tests/test_docs_checked_in.py:5: in <module>
+    import docs.generate as generate
+docs/generate.py:16: in <module>
+    import pdoc
+E   ModuleNotFoundError: No module named 'pdoc'
+_______ ERROR collecting tests/integration_tests/test_all_cache_types.py _______
+ImportError while importing test module '/repo/tests/integration_tests/test_all_cache_types.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/integration_tests/test_all_cache_types.py:21: in <module>
+    from viztracer import VizTracer
+E   ModuleNotFoundError: No module named 'viztracer'
+__ ERROR collecting tests/integration_tests/test_source_faker_integration.py ___
+ImportError while importing test module '/repo/tests/integration_tests/test_source_faker_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/integration_tests/test_source_faker_integration.py:20: in <module>
+    import pytest_mock
+E   ModuleNotFoundError: No module named 'pytest_mock'
+_______ ERROR collecting tests/unit_tests/test_anonymous_usage_stats.py ________
+ImportError while importing test module '/repo/tests/unit_tests/test_anonymous_usage_stats.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit_tests/test_anonymous_usage_stats.py:11: in <module>
+    import responses
+E   ModuleNotFoundError: No module named 'responses'
+_____________ ERROR collecting tests/unit_tests/test_processors.py _____________
+ImportError while importing test module '/repo/tests/unit_tests/test_processors.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit_tests/test_processors.py:6: in <module>
+    import pytest_mock
+E   ModuleNotFoundError: No module named 'pytest_mock'
+______________ ERROR collecting tests/unit_tests/test_progress.py ______________
+ImportError while importing test module '/repo/tests/unit_tests/test_progress.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit_tests/test_progress.py:17: in <module>
+    from freezegun import freeze_time
+E   ModuleNotFoundError: No module named 'freezegun'
+!!!!!!!!!!!!!!!!!!! Interrupted: 6 errors during collection !!!!!!!!!!!!!!!!!!!!
+577 tests collected, 6 errors in 30.53s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 167 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+pip install -e /repo
+export PYTHONPATH=/repo
+pip install -q docker
+export PYTHONPATH=/repo
+pip install -q pytest-timeout
+export PYTHONPATH=/repo
+---------------------------
+### Thought: The error message indicates that six modules are missing: `pdoc`, `viztracer`, `pytest_mock`, `responses`, and `freezegun`. I will install all of these missing modules and rerun the tests.
+### Action:
+```bash
+pip install -q pdoc viztracer pytest-mock responses freezegun
+```
+### Observation:
+Running `pip install -q pdoc viztracer pytest-mock responses freezegun`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q pdoc viztracer pytest-mock responses freezegun` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 166 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && poetry install
+pip install -q pytest
+pip install -q pytest-xdist
+pip install -q sqlalchemy
+pip install -q airbyte-cdk
+export PYTHONPATH=/repo
+pip install -q pyarrow
+export PYTHONPATH=/repo
+pip install -q airbyte-protocol-models
+export PYTHONPATH=/repo
+pip install -q overrides
+export PYTHONPATH=/repo
+pip install -q rich
+export PYTHONPATH=/repo
+pip install -q structlog
+export PYTHONPATH=/repo
+pip install -e /repo
+export PYTHONPATH=/repo
+pip install -q docker
+export PYTHONPATH=/repo
+pip install -q pytest-timeout
+export PYTHONPATH=/repo
+pip install -q pdoc viztracer pytest-mock responses freezegun
+---------------------------
+### Thought: Now that the missing modules are installed, I will rerun the `runtest` to check if the current environment passes the tests.
+### Action:
+```bash
+export PYTHONPATH=/repo && runtest
+```
+Congratulations, you have successfully configured the environment!
+Thank you for using PyAirbyte!
+Anonymous usage reporting is currently enabled. For more information, please see https://docs.airbyte.com/telemetry
+tests/lint_tests/test_mypy.py::test_mypy_typing
+tests/lint_tests/test_ruff.py::test_ruff_linting
+tests/lint_tests/test_ruff.py::test_ruff_linting_fixable
+tests/lint_tests/test_ruff.py::test_ruff_format
+tests/unit_tests/test_anonymous_usage_stats.py::test_telemetry_track
+tests/unit_tests/test_anonymous_usage_stats.py::test_do_not_track[1]
+tests/unit_tests/test_anonymous_usage_stats.py::test_do_not_track[true]
+tests/unit_tests/test_anonymous_usage_stats.py::test_do_not_track[t]
+tests/unit_tests/test_anonymous_usage_stats.py::test_setup_analytics_existing_file
+tests/unit_tests/test_anonymous_usage_stats.py::test_setup_analytics_missing_file
+tests/unit_tests/test_anonymous_usage_stats.py::test_setup_analytics_read_only_filesystem
+tests/unit_tests/test_anonymous_usage_stats.py::test_setup_analytics_corrupt_file
+tests/unit_tests/test_anonymous_usage_stats.py::test_get_analytics_id
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_initialization
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_default_schema_name
+tests/unit_tests/test_caches.py::test_get_sql_alchemy_url
+tests/unit_tests/test_caches.py::test_get_sql_alchemy_url_with_default_schema_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_inheritance
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_sql_alchemy_url
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_database_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_base_inheritance
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_sql_alchemy_url_with_default_schema_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_get_database_name_with_default_schema_name
+tests/unit_tests/test_caches.py::test_duck_db_cache_config_inheritance_from_sql_cache_config_base
+tests/unit_tests/test_exceptions.py::test_exceptions
+tests/unit_tests/test_lowcode_connectors.py::test_nocode_execution[source-pokeapi-config0]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-None-None-None-git+https://github.com/airbytehq/airbyte.git]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-master-None-None-git+https://github.com/airbytehq/airbyte.git@master]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-my-branch-None-None-git+https://github.com/airbytehq/airbyte.git@my-branch]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-my-branch-airbyte-lib-None-git+https://github.com/airbytehq/airbyte.git@my-branch#egg=airbyte-lib]
+tests/unit_tests/test_pip_helpers.py::test_github_pip_url[airbytehq-airbyte-my-branch-airbyte-lib-airbyte-lib-git+https://github.com/airbytehq/airbyte.git@my-branch#egg=airbyte-lib&subdirectory=airbyte-lib]
+tests/unit_tests/test_pip_helpers.py::test_connector_pip_url[source-coin-api-my-branch-None-git+https://github.com/airbytehq/airbyte.git@my-branch#egg=source-coin-api&subdirectory=airbyte-integrations/connectors/source-coin-api]
+tests/unit_tests/test_pip_helpers.py::test_connector_pip_url[source-coin-api-my-branch-my-fork-git+https://github.com/my-fork/airbyte.git@my-branch#egg=source-coin-api&subdirectory=airbyte-integrations/connectors/source-coin-api]
+tests/unit_tests/test_processors.py::test_snowflake_cache_config_data_retention_time_in_days
+tests/unit_tests/test_processors.py::test_snowflake_cache_config_no_data_retention_time_in_days
+tests/unit_tests/test_progress.py::test_read_progress_initialization
+tests/unit_tests/test_progress.py::test_read_progress_log_records_read
+tests/unit_tests/test_progress.py::test_read_progress_log_batch_written
+tests/unit_tests/test_progress.py::test_read_progress_log_batches_finalizing
+tests/unit_tests/test_progress.py::test_read_progress_log_batches_finalized
+tests/unit_tests/test_progress.py::test_read_progress_log_stream_finalized
+tests/unit_tests/test_progress.py::test_get_elapsed_time_str
+tests/unit_tests/test_progress.py::test_get_time_str
+tests/unit_tests/test_progress.py::test_default_progress_style
+tests/unit_tests/test_progress.py::test_no_live_progress
+tests/unit_tests/test_progress.py::test_ci_environment_a_progress_style
+tests/unit_tests/test_progress.py::test_ci_environment_b_progress_style
+tests/unit_tests/test_progress.py::test_rich_unavailable_progress_style
+tests/unit_tests/test_text_normalization.py::test_record_columns_list
+tests/unit_tests/test_text_normalization.py::test_case_insensitive_dict
+tests/unit_tests/test_text_normalization.py::test_case_insensitive_dict_w
+tests/unit_tests/test_text_normalization.py::test_case_insensitive_w_pretty_keys
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[_airbyte_meta-_airbyte_meta-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[Test_String-test_string-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[ANOTHER-TEST-another_test-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[another.test-another_test-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales(%)-sales___-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[something_-_-_-_else-something_______else-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales (%)-sales____-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales-%-sales__-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales(#)-sales___-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales (#)-sales____-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales--(#)-sales_____-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[sales-#-sales__-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[+1-_1-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[1-_1-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[2-_2-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[3-_3-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[-1-_1-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[+#$--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[+--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[*--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[!@$--True-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[some.col-some_col-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-False-LowerCaseNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-False-PostgresNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-False-PostgresNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-False-PostgresNormalizer]
+tests/unit_tests/test_text_normalization.py::test_lower_case_normalizer[Test.String-test_string-False-PostgresNormalizer]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def0-VARCHAR]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def1-BOOLEAN]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def2-BOOLEAN]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def3-VARCHAR]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def4-VARCHAR]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def5-BOOLEAN]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def6-DATE]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def7-VARCHAR]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def8-BOOLEAN]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def9-DECIMAL]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def10-TIMESTAMP]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def11-TIMESTAMP]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def12-TIME]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def13-TIME]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def14-BIGINT]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def15-BIGINT]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def16-DECIMAL]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def17-JSON]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def18-JSON]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def19-JSON]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def20-JSON]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def21-VARCHAR]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def22-JSON]
+tests/unit_tests/test_type_translation.py::test_to_sql_type[json_schema_property_def23-JSON]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def0-string-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def1-boolean-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def2-boolean-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def3-string-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def4-string-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def5-boolean-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def6-date-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def7-timestamp_without_timezone-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def8-timestamp_with_timezone-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def9-time_without_timezone-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def10-time_with_timezone-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def11-integer-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def12-integer-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def13-number-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def14-array-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def15-array-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def16-array-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def17-object-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def18-None-SQLTypeConversionError]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def19-None-SQLTypeConversionError]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def20-None-SQLTypeConversionError]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def21-array-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_type[json_schema_property_def22-array-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def0-string-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def1-number-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def2-array-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def3-object-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def4-array-string]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def5-array-boolean]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def6-array-None]
+tests/unit_tests/test_type_translation.py::test_to_airbyte_subtype[json_schema_property_def7-array-None]
+tests/docs_tests/test_docs_checked_in.py::test_docs_generation
+tests/integration_tests/cloud/test_cloud_api_util.py::test_get_workspace
+tests/integration_tests/cloud/test_cloud_api_util.py::test_list_workspaces
+tests/integration_tests/cloud/test_cloud_api_util.py::test_list_sources
+tests/integration_tests/cloud/test_cloud_api_util.py::test_list_destinations
+tests/integration_tests/cloud/test_cloud_api_util.py::test_create_and_delete_source
+tests/integration_tests/cloud/test_cloud_api_util.py::test_create_and_delete_destination
+tests/integration_tests/cloud/test_cloud_api_util.py::test_create_and_delete_connection
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_deployed_connection[Faker->Snowflake]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_deployed_connection[Faker->BigQuery]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_deployed_connection[Faker->Postgres]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_deployed_connection[Faker->MotherDuck]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_translate_cloud_job_to_sql_cache[Faker->Snowflake]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_translate_cloud_job_to_sql_cache[Faker->BigQuery]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_translate_cloud_job_to_sql_cache[Faker->Postgres]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_translate_cloud_job_to_sql_cache[Faker->MotherDuck]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_previous_job[Faker->Snowflake]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_previous_job[Faker->BigQuery]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_previous_job[Faker->Postgres]
+tests/integration_tests/cloud/test_cloud_sql_reads.py::test_read_from_previous_job[Faker->MotherDuck]
+tests/integration_tests/cloud/test_cloud_sync.py::test_run_connection[80857d37-1f21-4500-a802-f5ac08d1a3dd]
+tests/integration_tests/cloud/test_cloud_sync.py::test_get_previous_sync_result
+tests/integration_tests/cloud/test_cloud_sync.py::test_deploy_and_run_connection[BigQuery]
+tests/integration_tests/cloud/test_cloud_sync.py::test_deploy_and_run_connection[Snowflake]
+tests/integration_tests/cloud/test_cloud_workspaces.py::test_deploy_destination
+tests/integration_tests/cloud/test_cloud_workspaces.py::test_deploy_source
+tests/integration_tests/cloud/test_cloud_workspaces.py::test_deploy_dummy_source
+tests/integration_tests/cloud/test_cloud_workspaces.py::test_deploy_connection
+tests/integration_tests/destinations/test_source_to_destination.py::test_duckdb_destination_spec
+tests/integration_tests/destinations/test_source_to_destination.py::test_duckdb_destination_check
+tests/integration_tests/destinations/test_source_to_destination.py::test_duckdb_destination_write_components
+tests/integration_tests/destinations/test_source_to_destination.py::test_destination_write_from_source_with_cache
+tests/integration_tests/destinations/test_source_to_destination.py::test_destination_write_from_source_without_cache
+tests/integration_tests/destinations/test_source_to_destination.py::test_destination_write_from_read_result
+tests/integration_tests/secrets/test_gsm_secrets.py::test_get_gsm_secret
+tests/integration_tests/secrets/test_gsm_secrets.py::test_get_gsm_secrets_with_filter
+tests/integration_tests/secrets/test_gsm_secrets.py::test_get_gsm_secrets_by_label
+tests/integration_tests/secrets/test_gsm_secrets.py::test_get_connector_secrets
+tests/integration_tests/secrets/test_gsm_secrets.py::test_first_connector_secret
+tests/integration_tests/test_bigquery_cache.py::test_bigquery_props
+tests/integration_tests/test_config_change_callback.py::test_source_config_callback
+tests/integration_tests/test_config_change_callback.py::test_destination_config_callback
+tests/integration_tests/test_docker_executable.py::test_faker_pks
+tests/integration_tests/test_docker_executable.py::test_incremental_sync
+tests/integration_tests/test_docker_executable.py::test_config_spec
+tests/integration_tests/test_docker_executable.py::test_example_config_file
+tests/integration_tests/test_duckdb_cache.py::test_setup_source_faker
+tests/integration_tests/test_install.py::test_install_failure_log_pypi
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-7shifts]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-activecampaign]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-agilecrm]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-aha]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-airbyte]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-aircall]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-akeneo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-algolia]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-appcues]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-appfigures]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-appfollow]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-apptivo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-ashby]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-auth0]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-babelforce]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-basecamp]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-beamer]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-bigmailer]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-bitly]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-blogger]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-box]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-breezometer]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-breezy-hr]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-brevo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-brex]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-bugsnag]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-buildkite]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-bunny-inc]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-buzzsprout]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-cal-com]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-calendly]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-callrail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-campaign-monitor]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-campayn]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-canny]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-capsule-crm]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-captain-data]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-care-quality-commission]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-castor-edc]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-chameleon]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-chargedesk]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-chargify]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-chartmogul]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-cimis]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-cin7]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-circa]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-circleci]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-clarif-ai]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-clazar]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-clickup-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-clockify]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-clockodo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-cloudbeds]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-coassemble]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-coda]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-codefresh]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-coin-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-coingecko-coins]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-coinmarketcap]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-concord]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-configcat]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-confluence]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-convertkit]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-copper]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-countercyclical]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-customer-io]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-datadog]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-datascope]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-dbt]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-delighted]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-deputy]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-dixa]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-dockerhub]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-dremio]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-drift]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-drip]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-dropbox-sign]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-e-conomic]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-easypost]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-easypromos]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-elasticemail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-emailoctopus]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-employment-hero]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-encharge]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-eventbrite]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-eventee]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-eventzilla]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-everhour]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-exchange-rates]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-ezofficeinventory]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-factorial]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-fillout]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-finage]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-financial-modelling]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-finnhub]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-finnworlds]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-firehydrant]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-fleetio]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-flexmail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-flexport]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-float]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-flowlu]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-formbricks]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-free-agent-connector]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-freightview]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-freshbooks]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-freshcaller]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-freshchat]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-freshsales]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-freshservice]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-front]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-fulcrum]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-fullstory]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-gainsight-px]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-getgist]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-getlago]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-gitbook]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-glassfrog]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-gmail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-gocardless]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-goldcast]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-gong]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-google-calendar]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-google-classroom]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-google-forms]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-google-pagespeed-insights]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-google-tasks]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-google-webfonts]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-gorgias]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-greythr]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-guru]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-gutendex]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-harvest]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-height]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-hellobaton]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-hibob]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-high-level]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-hoorayhr]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-hubplanner]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-hugging-face-datasets]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-humanitix]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-illumina-basespace]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-incident-io]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-inflowinventory]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-insightly]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-intruder]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-invoiced]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-invoiceninja]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-ip2whois]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-jobnimbus]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-jotform]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-just-sift]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-justcall]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-k6-cloud]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-katana]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-kisi]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-kissmetrics]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-klarna]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-klaus-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-launchdarkly]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-leadfeeder]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-lemlist]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-less-annoying-crm]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-lever-hiring]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-lightspeed-retail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-linkedin-ads]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-linkedin-pages]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-lob]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-lokalise]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-luma]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mailerlite]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mailersend]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mailgun]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mailjet-mail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mailjet-sms]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mailosaur]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mailtrap]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-marketstack]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mention]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-merge]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-metabase]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-microsoft-entra-id]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-microsoft-lists]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-microsoft-teams]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-miro]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-missive]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mixmax]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mode]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-mux]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-nasa]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-navan]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-news-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-newsdata]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-newsdata-io]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-nocrm]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-northpass-lms]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-nutshell]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-nylas]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-nytimes]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-omnisend]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-oncehub]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-onepagecrm]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-onfleet]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-open-data-dc]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-open-exchange-rates]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-openaq]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-openfda]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-openweather]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-opinion-stage]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-opsgenie]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-orbit]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-oura]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-oveit]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pabbly-subscriptions-billing]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pandadoc]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-paperform]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-papersign]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pardot]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-paystack]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pendo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pennylane]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-persistiq]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-persona]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pexels-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-picqer]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pingdom]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pipeliner]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pivotal-tracker]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-piwik]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-plaid]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-planhat]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-plausible]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pokeapi]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-polygon-stock-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pretix]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-primetric]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-productboard]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-productive]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-pypi]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-rd-station-marketing]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-recreation]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-recruitee]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-reddit]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-referralhero]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-rentcast]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-repairshopr]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-reply-io]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-revenuecat]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-revolut-merchant]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-ringcentral]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-rocket-chat]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-rocketlane]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-rollbar]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-rootly]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-ruddr]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-safetyculture]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sage-hr]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-salesflare]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sap-fieldglass]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-savvycal]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-scryfall]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-secoda]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-segment]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sendgrid]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sendinblue]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sendowl]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sendpulse]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-senseforce]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-serpstat]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sharetribe]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-shippo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-shortcut]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-shortio]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sigma-computing]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-simfin]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-simplecast]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-simplesat]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-smaily]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-smartengage]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-smartreach]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-smartwaiver]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-snapchat-marketing]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-solarwinds-service-desk]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sonar-cloud]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-spacex-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-sparkpost]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-split-io]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-spotlercrm]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-square]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-squarespace]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-statsig]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-statuspage]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-stockdata]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-strava]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-survey-sparrow]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-survicate]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-systeme]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-taboola]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-teamtailor]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-teamwork]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-tempo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-testrail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-thinkific]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-ticketmaster]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-tickettailor]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-timely]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-tinyemail]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-tmdb]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-todoist]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-toggl]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-track-pms]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-tremendous]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-trustpilot]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-tvmaze-schedule]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-twelve-data]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-twilio-taskrouter]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-twitter]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-tyntec-sms]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-ubidots]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-uppromote]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-uservoice]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-vantage]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-veeqo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-vercel]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-visma-economic]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-vitally]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-vwo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-waiteraid]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-wasabi-stats-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-weatherstack]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-web-scrapper]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-when-i-work]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-whisky-hunter]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-wikipedia-pageviews]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-woocommerce]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-wordpress]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-workable]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-workflowmax]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-workramp]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-wrike]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-wufoo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-xkcd]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-xsolla]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-yahoo-finance-price]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-yotpo]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-you-need-a-budget-ynab]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-youtube-data]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zapier-supported-storage]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zenefits]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-analytics-metadata-api]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-bigin]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-billing]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-books]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-campaign]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-desk]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-expense]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-inventory]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zoho-invoice]
+tests/integration_tests/test_lowcode_connectors.py::test_nocode_connectors_setup[source-zonka-feedback]
+tests/integration_tests/test_lowcode_connectors.py::test_expected_hardcoded_failures[failure_group0-ValidationError]
+tests/integration_tests/test_lowcode_connectors.py::test_expected_hardcoded_failures[failure_group1-AirbyteConnectorInstallationError]
+tests/integration_tests/test_lowcode_connectors.py::test_expected_hardcoded_failures[failure_group2-Exception]
+tests/integration_tests/test_lowcode_connectors.py::test_expected_hardcoded_failures[failure_group3-AirbyteConnectorFailedError]
+tests/integration_tests/test_source_faker_integration.py::test_faker_pks
+tests/integration_tests/test_source_faker_integration.py::test_incremental_sync
+tests/integration_tests/test_source_faker_integration.py::test_config_spec
+tests/integration_tests/test_source_faker_integration.py::test_example_config_file
+tests/integration_tests/test_source_faker_integration.py::test_merge_insert_not_supported_for_duckdb
+tests/integration_tests/test_source_faker_integration.py::test_merge_insert_not_supported_for_postgres
+tests/integration_tests/test_source_test_fixture.py::test_registry_get
+tests/integration_tests/test_source_test_fixture.py::test_registry_list
+tests/integration_tests/test_source_test_fixture.py::test_list_streams
+tests/integration_tests/test_source_test_fixture.py::test_invalid_config
+tests/integration_tests/test_source_test_fixture.py::test_ensure_installation_detection
+tests/integration_tests/test_source_test_fixture.py::test_source_yaml_spec
+tests/integration_tests/test_source_test_fixture.py::test_non_existing_connector
+tests/integration_tests/test_source_test_fixture.py::test_non_existing_connector_with_local_exe
+tests/integration_tests/test_source_test_fixture.py::test_docker_only_connector
+tests/integration_tests/test_source_test_fixture.py::test_version_enforcement[0.0.1-latest-False]
+tests/integration_tests/test_source_test_fixture.py::test_version_enforcement[0.0.1-0.0.1-False]
+tests/integration_tests/test_source_test_fixture.py::test_version_enforcement[0.0.1-None-False]
+tests/integration_tests/test_source_test_fixture.py::test_version_enforcement[1.2.3-None-False]
+tests/integration_tests/test_source_test_fixture.py::test_version_enforcement[1.2.3-latest-True]
+tests/integration_tests/test_source_test_fixture.py::test_version_enforcement[1.2.3-1.2.3-True]
+tests/integration_tests/test_source_test_fixture.py::test_check
+tests/integration_tests/test_source_test_fixture.py::test_check_fail
+tests/integration_tests/test_source_test_fixture.py::test_file_write_and_cleanup
+tests/integration_tests/test_source_test_fixture.py::test_sync_to_duckdb
+tests/integration_tests/test_source_test_fixture.py::test_read_result_mapping
+tests/integration_tests/test_source_test_fixture.py::test_dataset_list_and_len
+tests/integration_tests/test_source_test_fixture.py::test_read_from_cache
+tests/integration_tests/test_source_test_fixture.py::test_read_isolated_by_prefix
+tests/integration_tests/test_source_test_fixture.py::test_merge_streams_in_cache
+tests/integration_tests/test_source_test_fixture.py::test_read_result_as_list
+tests/integration_tests/test_source_test_fixture.py::test_get_records_result_as_list
+tests/integration_tests/test_source_test_fixture.py::test_sync_with_merge_to_duckdb
+tests/integration_tests/test_source_test_fixture.py::test_cached_dataset
+tests/integration_tests/test_source_test_fixture.py::test_cached_dataset_filter
+tests/integration_tests/test_source_test_fixture.py::test_lazy_dataset_from_source
+tests/integration_tests/test_source_test_fixture.py::test_check_fail_on_missing_config[check]
+tests/integration_tests/test_source_test_fixture.py::test_check_fail_on_missing_config[read_stream]
+tests/integration_tests/test_source_test_fixture.py::test_check_fail_on_missing_config[read]
+tests/integration_tests/test_source_test_fixture.py::test_sync_with_merge_to_postgres
+tests/integration_tests/test_source_test_fixture.py::test_airbyte_version
+tests/integration_tests/test_source_test_fixture.py::test_sync_to_postgres
+tests/integration_tests/test_source_test_fixture.py::test_sync_limited_streams
+tests/integration_tests/test_source_test_fixture.py::test_read_stream_nonexisting
+tests/integration_tests/test_source_test_fixture.py::test_failing_path_connector
+tests/integration_tests/test_source_test_fixture.py::test_succeeding_path_connector
+tests/integration_tests/test_source_test_fixture.py::test_install_uninstall
+tests/integration_tests/test_state_handling.py::test_incremental_state_cache_persistence
+tests/integration_tests/test_state_handling.py::test_incremental_state_prefix_isolation
+tests/integration_tests/test_state_handling.py::test_destination_state_writer
+tests/integration_tests/test_state_handling.py::test_destination_state
+tests/integration_tests/test_validation.py::test_validate_success
+tests/integration_tests/test_validation.py::test_validate_check_failure
+tests/integration_tests/test_validation.py::test_validate_success_install_only
+tests/integration_tests/test_validation.py::test_validate_config_failure
+tests/integration_tests/test_all_cache_types.py::test_pokeapi_read[DuckDB]
+tests/integration_tests/test_all_cache_types.py::test_pokeapi_read[Postgres]
+tests/integration_tests/test_all_cache_types.py::test_pokeapi_read[BigQuery]
+tests/integration_tests/test_all_cache_types.py::test_pokeapi_read[Snowflake]
+tests/integration_tests/test_all_cache_types.py::test_faker_read[DuckDB]
+tests/integration_tests/test_all_cache_types.py::test_faker_read[Postgres]
+tests/integration_tests/test_all_cache_types.py::test_faker_read[BigQuery]
+tests/integration_tests/test_all_cache_types.py::test_faker_read[Snowflake]
+tests/integration_tests/test_all_cache_types.py::test_append_strategy
+tests/integration_tests/test_all_cache_types.py::test_replace_strategy[DuckDB]
+tests/integration_tests/test_all_cache_types.py::test_replace_strategy[Postgres]
+tests/integration_tests/test_all_cache_types.py::test_replace_strategy[BigQuery]
+tests/integration_tests/test_all_cache_types.py::test_replace_strategy[Snowflake]
+tests/integration_tests/test_all_cache_types.py::test_merge_strategy[DuckDB]
+tests/integration_tests/test_all_cache_types.py::test_merge_strategy[Postgres]
+tests/integration_tests/test_all_cache_types.py::test_merge_strategy[BigQuery]
+tests/integration_tests/test_all_cache_types.py::test_merge_strategy[Snowflake]
+tests/integration_tests/test_all_cache_types.py::test_auto_add_columns[DuckDB]
+tests/integration_tests/test_all_cache_types.py::test_auto_add_columns[Postgres]
+tests/integration_tests/test_all_cache_types.py::test_auto_add_columns[BigQuery]
+tests/integration_tests/test_all_cache_types.py::test_auto_add_columns[Snowflake]
+tests/integration_tests/test_docker_executable.py::test_replace_strategy
+tests/integration_tests/test_docker_executable.py::test_append_strategy
+tests/integration_tests/test_docker_executable.py::test_merge_strategy[merge]
+tests/integration_tests/test_docker_executable.py::test_merge_strategy[auto]
+tests/integration_tests/test_source_faker_integration.py::test_replace_strategy
+tests/integration_tests/test_source_faker_integration.py::test_append_strategy
+tests/integration_tests/test_source_faker_integration.py::test_merge_strategy[merge]
+tests/integration_tests/test_source_faker_integration.py::test_merge_strategy[auto]
+tests/integration_tests/test_source_test_fixture.py::test_sync_to_snowflake
+
+633 tests collected in 24.26s
+Container 8de81bae3429 stopped and removed
+Spend totally 1803.8867557048798.

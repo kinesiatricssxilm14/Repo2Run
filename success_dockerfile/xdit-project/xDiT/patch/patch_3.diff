@@ -1,0 +1,38 @@
+diff --git a/setup.py b/setup.py
+index c049b49..3f546e9 100644
+--- a/setup.py
++++ b/setup.py
+@@ -39,7 +39,6 @@ if __name__ == "__main__":
+             "imageio",
+             "imageio-ffmpeg",
+             "optimum-quanto",
+-            "flash_attn>=2.6.3"
+         ],
+         extras_require={
+             "diffusers": [
+diff --git a/xfuser/core/long_ctx_attention/ulysses/attn_layer.py b/xfuser/core/long_ctx_attention/ulysses/attn_layer.py
+index ff8788f..3a01e7b 100644
+--- a/xfuser/core/long_ctx_attention/ulysses/attn_layer.py
++++ b/xfuser/core/long_ctx_attention/ulysses/attn_layer.py
+@@ -10,7 +10,7 @@ from yunchang.globals import PROCESS_GROUP
+ from yunchang.comm.all_to_all import SeqAllToAll4D
+ try:
+     # yunchang > 0.4.0
+-    from yunchang.kernels.attention import torch_attn
++    from yunchang.kernels.attention import pytorch_attn_forward as torch_attn
+ except:
+     print(f"detect you are not use the latest yunchang. Please install yunchang>=0.4.0")
+     try:
+diff --git a/xfuser/envs.py b/xfuser/envs.py
+index 2a7e179..fb3dd4d 100644
+--- a/xfuser/envs.py
++++ b/xfuser/envs.py
+@@ -60,7 +60,7 @@ class PackagesEnvChecker:
+ 
+     def initialize(self):
+         self.packages_info = {
+-            "has_flash_attn": self.check_flash_attn(),
++            "has_flash_attn": False,
+             "has_long_ctx_attn": self.check_long_ctx_attn(),
+             "diffusers_version": self.check_diffusers_version(),
+         }

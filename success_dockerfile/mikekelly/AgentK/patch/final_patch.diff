@@ -1,0 +1,24 @@
+diff --git a/Dockerfile b/Dockerfile
+deleted file mode 100644
+index e578575..0000000
+--- a/Dockerfile
++++ /dev/null
+@@ -1,17 +0,0 @@
+-FROM python:3-bullseye
+-
+-RUN apt-get -y update
+-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+-ENV PATH /root/.cargo/bin:$PATH
+-
+-WORKDIR /tmp
+-COPY apt-packages-list.txt /tmp/apt-packages-list.txt
+-RUN sed -i 's/\r$//' apt-packages-list.txt
+-RUN xargs -a apt-packages-list.txt apt-get install -y
+-
+-COPY requirements.txt /tmp/requirements.txt
+-RUN pip install -r requirements.txt
+-
+-WORKDIR /app
+-COPY . /app
+-ENTRYPOINT ["python", "agent_kernel.py"]
+\ No newline at end of file

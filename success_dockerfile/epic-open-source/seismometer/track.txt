@@ -1,0 +1,1304 @@
+epic-open-source/seismometer
+b3e812fdc7ea475de9991bedc493897d0215659a
+Container gifted_euler cd5aab82080d started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought:
+I need to understand the structure of the root directory to identify any existing configuration files.
+
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+CODE_OF_CONDUCT.md  Makefile	 docs		    setup.cfg
+CONTRIBUTING.md     README.md	 example-notebooks  setup.py
+LICENSE.txt	    SECURITY.md  pyproject.toml     src
+MANIFEST.in	    changelog	 requirements.txt   tests
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+To better understand the dependencies and configurations required for this project, I need to examine the relevant files in detail. I will start by reviewing the `setup.py` file as it typically contains dependency information and other setup configurations.
+
+### Action:
+```bash
+cat /repo/setup.py
+```
+### Observation:
+Running `cat /repo/setup.py`...
+#!/usr/bin/env python
+# This shim enables editable installs
+import site
+import sys
+import setuptools
+if __name__ == "__main__":
+    site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
+    setuptools.setup()
+`cat /repo/setup.py` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `setup.py` file does not contain dependency information, indicating that dependencies might be managed elsewhere. Next, I will check the contents of the `pyproject.toml` file as it is commonly used for project configuration and dependency management in newer Python projects.
+
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+[build-system]
+requires = ["setuptools >= 65.6.0", "wheel >= 0.36.0"]
+build-backend = 'setuptools.build_meta'
+[tool.towncrier]
+package = "seismometer"
+package_dir = "src"
+filename = "docs/release_notes/index.rst"
+directory = "changelog"
+issue_format = "`#{issue} <https://github.com/epic-open-source/seismometer/issues/{issue}>`__"
+title_format = "{version}"
+underlines = ["-","~"]
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `pyproject.toml` file specifies build requirements but not the project's runtime dependencies. Next, I will examine the `requirements.txt` file as it usually lists the Python packages required for the project.
+
+### Action:
+```bash
+cat /repo/requirements.txt
+```
+### Observation:
+Running `cat /repo/requirements.txt`...
+# When installing as an application, assume the dev extra is wanted
+-e .[dev]
+`cat /repo/requirements.txt` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `requirements.txt` file points to the installation of the project itself with the `dev` extras. However, it does not provide a direct list of dependencies either.
+
+Since we utilize Poetry, I should next review the `setup.cfg` file, as it may contain additional dependency and configuration details.
+
+### Action:
+```bash
+cat /repo/setup.cfg
+```
+### Observation:
+Running `cat /repo/setup.cfg`...
+[metadata]
+name = seismometer
+version = 0.3.0
+description = seismometer: Data Science visualization and investigation tools for AI Trust & Assurance
+author = Epic
+author_email = OpenSourceContributions-Python@epic.com
+license_files = LICENSE.txt
+license = BSD 3-Clause
+classifiers =
+    Programming Language :: Python :: 3
+    License :: OSI Approved :: BSD License
+    Operating System :: OS Independent
+    Intended Audience :: Healthcare Industry
+    Framework :: Jupyter :: JupyterLab :: 4
+project_urls =
+    Source = https://github.com/epic-open-source/seismometer
+readme = file: README.md
+long_description = file: README.md
+long_description_content_type = text/markdown
+[options]
+python_requires = >=3.10
+zip_safe = True
+packages =
+    find_namespace:
+include_package_data = True
+install_requires =
+    numpy>=1.26,<3
+    ipython>=8.14
+    ipywidgets>=8.0
+    jupyterlab>=4.2.5,<5
+    matplotlib>=3.6,<4
+    seaborn>=0.13.2,<0.14
+    pandas>=2.1,<3
+    scikit-learn>=1.2.0,<2
+    pyarrow>=9.0.0
+    pydantic>=2.6.3,<3
+    ydata-profiling>=4.8.3,<5
+    great-tables>=0.11.0,<1
+[options.packages.find]
+where = src
+[options.extras_require]
+all =
+    %(dev)s
+    %(docs)s
+dev =
+    coverage>=7.5.1
+    autopep8>=1.3.5
+    pytest-json>=0.4.0
+    pytest>=5.1.1
+    traitlets>=5.1.1
+    pygments>=2.4.1
+docs =
+    sphinx>=7.2.6
+    sphinxawesome-theme>=5.0.0
+    docutils>=0.20.1
+    nbsphinx>=0.9.0
+    nbsphinx_link>=1.0.0
+    autodoc_pydantic>=2.0.0
+    sphinx_design>=0.5.0
+    sphinx-argparse>=0.4.0,<0.5.0
+    erdantic>=1.0.0
+    pandoc>=2.0
+[tool:pytest]
+testpaths = tests
+filterwarnings =
+    ignore::UserWarning
+    ignore::PendingDeprecationWarning
+[coverage:run]
+source = seismometer
+branch = True
+[coverage:report]
+fail_under = 75
+omit =
+    */plot/mpl/*
+[coverage:html]
+directory = coverage/html-report
+[coverage:xml]
+output = coverage/coverage.xml
+[tool:isort]
+line_length = 119
+profile = black
+[flake8]
+max-line-length = 119
+extend-ignore = F821
+per-file-ignores =
+    # F401 imported but unused
+    # F403 wildcard import, unable to detect names
+    __init__.py: F401, F403
+    decorators.py: F401
+    _decorators.py: F401
+    # F841 assigned but unused
+    src/seismometer/__init__.py: F841
+    # F811 redefinition of unused, fixtures
+    tests/*: F811
+`cat /repo/setup.cfg` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 195 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `setup.cfg` file contains a detailed list of dependencies for the project, including runtime and development dependencies. It specifies `install_requires` and `extras_require` sections which provide a clear outline of necessary packages.
+
+Because there are adequate details about dependencies, the next step is to install the project's dependencies. Since `setup.py` is present and `setup.cfg` lists the dependencies, I will use `pip install -e .` to install these dependencies.
+
+### Action:
+```bash
+cd /repo && pip install -e .[dev]
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `pip install -e .[dev]`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install -e .[dev]`...
+Looking in indexes: http://simple/
+Obtaining file:///repo
+  Installing build dependencies ... [?25l- \ | / done
+  Downloading http://packages/numpy/numpy-2.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.4 MB)
+  Downloading http://packages/ipython/ipython-8.30.0-py3-none-any.whl (820 kB)
+  Downloading http://packages/ipywidgets/ipywidgets-8.1.5-py3-none-any.whl (139 kB)
+Collecting jupyterlab<5,>=4.2.5 (from seismometer==0.3.0)
+  Downloading http://packages/jupyterlab/jupyterlab-4.3.3-py3-none-any.whl (11.7 MB)
+  Downloading http://packages/matplotlib/matplotlib-3.10.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (8.6 MB)
+  Downloading http://packages/seaborn/seaborn-0.13.2-py3-none-any.whl (294 kB)
+Collecting pandas<3,>=2.1 (from seismometer==0.3.0)
+  Downloading http://packages/pandas/pandas-2.2.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.1 MB)
+  Downloading http://packages/scikit-learn/scikit_learn-1.6.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.5 MB)
+  Downloading http://packages/pyarrow/pyarrow-18.1.0-cp310-cp310-manylinux_2_28_x86_64.whl (40.1 MB)
+  Downloading http://packages/pydantic/pydantic-2.10.3-py3-none-any.whl (456 kB)
+Collecting ydata-profiling<5,>=4.8.3 (from seismometer==0.3.0)
+  Downloading http://packages/ydata-profiling/ydata_profiling-4.12.1-py2.py3-none-any.whl (390 kB)
+Collecting great-tables<1,>=0.11.0 (from seismometer==0.3.0)
+  Downloading http://packages/great-tables/great_tables-0.15.0-py3-none-any.whl (1.4 MB)
+  Downloading http://packages/coverage/coverage-7.6.9-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (234 kB)
+Collecting autopep8>=1.3.5 (from seismometer==0.3.0)
+  Downloading http://packages/autopep8/autopep8-2.3.1-py2.py3-none-any.whl (45 kB)
+Collecting pytest-json>=0.4.0 (from seismometer==0.3.0)
+  Downloading http://packages/pytest-json/pytest-json-0.4.0.tar.gz (5.7 kB)
+  Preparing metadata (setup.py) ... [?25l- done
+Collecting traitlets>=5.1.1 (from seismometer==0.3.0)
+  Downloading http://packages/traitlets/traitlets-5.14.3-py3-none-any.whl (85 kB)
+Collecting pygments>=2.4.1 (from seismometer==0.3.0)
+  Downloading http://packages/pygments/pygments-2.18.0-py3-none-any.whl (1.2 MB)
+  Downloading http://packages/pycodestyle/pycodestyle-2.12.1-py2.py3-none-any.whl (31 kB)
+Requirement already satisfied: tomli in /usr/local/lib/python3.10/site-packages (from autopep8>=1.3.5->seismometer==0.3.0) (2.2.1)
+Collecting commonmark>=0.9.1 (from great-tables<1,>=0.11.0->seismometer==0.3.0)
+  Downloading http://packages/commonmark/commonmark-0.9.1-py2.py3-none-any.whl (51 kB)
+Collecting css-inline>=0.14.1 (from great-tables<1,>=0.11.0->seismometer==0.3.0)
+  Downloading http://packages/css-inline/css_inline-0.14.3-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.9 MB)
+  Downloading http://packages/faicons/faicons-0.2.2-py3-none-any.whl (607 kB)
+  Downloading http://packages/htmltools/htmltools-0.6.0-py3-none-any.whl (84 kB)
+Collecting importlib-metadata (from great-tables<1,>=0.11.0->seismometer==0.3.0)
+  Using cached http://packages/importlib-metadata/importlib_metadata-8.5.0-py3-none-any.whl (26 kB)
+Collecting typing_extensions>=3.10.0.0 (from great-tables<1,>=0.11.0->seismometer==0.3.0)
+  Downloading http://packages/typing-extensions/typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+Collecting Babel>=2.13.1 (from great-tables<1,>=0.11.0->seismometer==0.3.0)
+  Downloading http://packages/babel/babel-2.16.0-py3-none-any.whl (9.6 MB)
+  Downloading http://packages/importlib-resources/importlib_resources-6.4.5-py3-none-any.whl (36 kB)
+Collecting decorator (from ipython>=8.14->seismometer==0.3.0)
+  Downloading http://packages/decorator/decorator-5.1.1-py3-none-any.whl (9.1 kB)
+Requirement already satisfied: exceptiongroup in /usr/local/lib/python3.10/site-packages (from ipython>=8.14->seismometer==0.3.0) (1.2.2)
+Collecting jedi>=0.16 (from ipython>=8.14->seismometer==0.3.0)
+  Downloading http://packages/jedi/jedi-0.19.2-py2.py3-none-any.whl (1.6 MB)
+  Downloading http://packages/matplotlib-inline/matplotlib_inline-0.1.7-py3-none-any.whl (9.9 kB)
+Collecting pexpect>4.3 (from ipython>=8.14->seismometer==0.3.0)
+  Using cached http://packages/pexpect/pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
+Collecting prompt_toolkit<3.1.0,>=3.0.41 (from ipython>=8.14->seismometer==0.3.0)
+  Downloading http://packages/prompt-toolkit/prompt_toolkit-3.0.48-py3-none-any.whl (386 kB)
+Collecting stack_data (from ipython>=8.14->seismometer==0.3.0)
+  Downloading http://packages/stack-data/stack_data-0.6.3-py3-none-any.whl (24 kB)
+Collecting comm>=0.1.3 (from ipywidgets>=8.0->seismometer==0.3.0)
+  Downloading http://packages/comm/comm-0.2.2-py3-none-any.whl (7.2 kB)
+Collecting widgetsnbextension~=4.0.12 (from ipywidgets>=8.0->seismometer==0.3.0)
+  Downloading http://packages/widgetsnbextension/widgetsnbextension-4.0.13-py3-none-any.whl (2.3 MB)
+  Downloading http://packages/jupyterlab-widgets/jupyterlab_widgets-3.0.13-py3-none-any.whl (214 kB)
+Collecting async-lru>=1.0.0 (from jupyterlab<5,>=4.2.5->seismometer==0.3.0)
+  Downloading http://packages/async-lru/async_lru-2.0.4-py3-none-any.wh
+...[Truncation]...
+es-python-dateutil>=2.8.10 (from arrow>=0.15.0->isoduration->jsonschema[format-nongpl]>=4.18.0->jupyter-events>=0.9.0->jupyter-server<3,>=2.4.0->jupyterlab<5,>=4.2.5->seismometer==0.3.0)
+  Downloading http://packages/types-python-dateutil/types_python_dateutil-2.9.0.20241206-py3-none-any.whl (14 kB)
+Building wheels for collected packages: seismometer, pytest-json, htmlmin
+  Building editable for seismometer (pyproject.toml) ... [?25l- done
+[?25h  Created wheel for seismometer: filename=seismometer-0.3.0-0.editable-py3-none-any.whl size=4385 sha256=a4be4890bb7d6f345551a5336bc48824c592d6409786827d3fafb892d186293d
+  Stored in directory: /tmp/pip-ephem-wheel-cache-ma58faw7/wheels/83/05/69/977b54e69478800cfcea8a9437a7ea4a9b1a48db334f824611
+  Building wheel for pytest-json (setup.py) ... [?25l- done
+[?25h  Created wheel for pytest-json: filename=pytest_json-0.4.0-py3-none-any.whl size=6037 sha256=d9e8047bf9deaa83b5e0302b3b037a460cf26eae20b14e1f02cc03ccc0eb61b4
+  Stored in directory: /root/.cache/pip/wheels/4f/ac/03/dad91ae5565d3f4b29ec5e36ca80f9926bd97fbda4c94c129f
+  Building wheel for htmlmin (setup.py) ... [?25l- done
+[?25h  Created wheel for htmlmin: filename=htmlmin-0.1.12-py3-none-any.whl size=27079 sha256=08c9d70521ac5ae952f55c495d81a16834d6bd56080a2dee291b70c3f3ba5285
+  Stored in directory: /root/.cache/pip/wheels/d8/d1/cb/cdb7492b73f6e48f7525cb308930a1d61005f6d85db90e2e49
+Successfully built seismometer pytest-json htmlmin
+Installing collected packages: webencodings, wcwidth, pytz, pure-eval, ptyprocess, htmlmin, fastjsonschema, commonmark, zipp, widgetsnbextension, websocket-client, webcolors, urllib3, uri-template, tzdata, typing_extensions, types-python-dateutil, traitlets, tqdm, tornado, tinycss2, threadpoolctl, soupsieve, sniffio, six, send2trash, rpds-py, rfc3986-validator, pyzmq, PyYAML, python-json-logger, pyparsing, pygments, pycparser, pycodestyle, pyarrow, psutil, prompt_toolkit, prometheus-client, platformdirs, pillow, pexpect, parso, pandocfilters, overrides, numpy, networkx, nest-asyncio, multimethod, mistune, MarkupSafe, llvmlite, kiwisolver, jupyterlab-widgets, jupyterlab-pygments, jsonpointer, json5, joblib, importlib-resources, idna, h11, fqdn, fonttools, executing, defusedxml, decorator, debugpy, dacite, cycler, css-inline, coverage, charset-normalizer, certifi, bleach, Babel, attrs, asttokens, annotated-types, typeguard, terminado, stack_data, scipy, rfc3339-validator, requests, referencing, PyWavelets, python-dateutil, pytest-json, pydantic-core, patsy, numba, matplotlib-inline, jupyter-core, jinja2, jedi, importlib-metadata, httpcore, htmltools, contourpy, comm, cffi, beautifulsoup4, autopep8, async-lru, anyio, scikit-learn, pydantic, pandas, matplotlib, jupyter-server-terminals, jupyter-client, jsonschema-specifications, ipython, imagehash, httpx, faicons, arrow, argon2-cffi-bindings, wordcloud, visions, statsmodels, seaborn, phik, jsonschema, isoduration, ipywidgets, ipykernel, great-tables, argon2-cffi, nbformat, ydata-profiling, nbclient, jupyter-events, nbconvert, jupyter-server, notebook-shim, jupyterlab-server, jupyter-lsp, jupyterlab, seismometer
+Successfully installed Babel-2.16.0 MarkupSafe-3.0.2 PyWavelets-1.8.0 PyYAML-6.0.2 annotated-types-0.7.0 anyio-4.7.0 argon2-cffi-23.1.0 argon2-cffi-bindings-21.2.0 arrow-1.3.0 asttokens-3.0.0 async-lru-2.0.4 attrs-24.3.0 autopep8-2.3.1 beautifulsoup4-4.12.3 bleach-6.2.0 certifi-2024.12.14 cffi-1.17.1 charset-normalizer-3.4.0 comm-0.2.2 commonmark-0.9.1 contourpy-1.3.1 coverage-7.6.9 css-inline-0.14.3 cycler-0.12.1 dacite-1.8.1 debugpy-1.8.11 decorator-5.1.1 defusedxml-0.7.1 executing-2.1.0 faicons-0.2.2 fastjsonschema-2.21.1 fonttools-4.55.3 fqdn-1.5.1 great-tables-0.15.0 h11-0.14.0 htmlmin-0.1.12 htmltools-0.6.0 httpcore-1.0.7 httpx-0.28.1 idna-3.10 imagehash-4.3.1 importlib-metadata-8.5.0 importlib-resources-6.4.5 ipykernel-6.29.5 ipython-8.30.0 ipywidgets-8.1.5 isoduration-20.11.0 jedi-0.19.2 jinja2-3.1.4 joblib-1.4.2 json5-0.10.0 jsonpointer-3.0.0 jsonschema-4.23.0 jsonschema-specifications-2024.10.1 jupyter-client-8.6.3 jupyter-core-5.7.2 jupyter-events-0.10.0 jupyter-lsp-2.2.5 jupyter-server-2.14.2 jupyter-server-terminals-0.5.3 jupyterlab-4.3.3 jupyterlab-pygments-0.3.0 jupyterlab-server-2.27.3 jupyterlab-widgets-3.0.13 kiwisolver-1.4.7 llvmlite-0.43.0 matplotlib-3.9.4 matplotlib-inline-0.1.7 mistune-3.0.2 multimethod-1.12 nbclient-0.10.1 nbconvert-7.16.4 nbformat-5.10.4 nest-asyncio-1.6.0 networkx-3.4.2 notebook-shim-0.2.4 numba-0.60.0 numpy-2.0.2 overrides-7.7.0 pandas-2.2.3 pandocfilters-1.5.1 parso-0.8.4 patsy-1.0.1 pexpect-4.9.0 phik-0.12.4 pillow-11.0.0 platformdirs-4.3.6 prometheus-client-0.21.1 prompt_toolkit-3.0.48 psutil-6.1.0 ptyprocess-0.7.0 pure-eval-0.2.3 pyarrow-18.1.0 pycodestyle-2.12.1 pycparser-2.22 pydantic-2.10.3 pydantic-core-2.27.1 pygments-2.18.0 pyparsing-3.2.0 pytest-json-0.4.0 python-dateutil-2.9.0.post0 python-json-logger-3.2.1 pytz-2024.2 pyzmq-26.2.0 referencing-0.35.1 requests-2.32.3 rfc3339-validator-0.1.4 rfc3986-validator-0.1.1 rpds-py-0.22.3 scikit-learn-1.6.0 scipy-1.13.1 seaborn-0.13.2 seismometer-0.3.0 send2trash-1.8.3 six-1.17.0 sniffio-1.3.1 soupsieve-2.6 stack_data-0.6.3 statsmodels-0.14.4 terminado-0.18.1 threadpoolctl-3.5.0 tinycss2-1.4.0 tornado-6.4.2 tqdm-4.67.1 traitlets-5.14.3 typeguard-4.4.1 types-python-dateutil-2.9.0.20241206 typing_extensions-4.12.2 tzdata-2024.2 uri-template-1.3.0 urllib3-2.2.3 visions-0.7.6 wcwidth-0.2.13 webcolors-24.11.1 webencodings-0.5.1 websocket-client-1.8.0 widgetsnbextension-4.0.13 wordcloud-1.9.4 ydata-profiling-4.12.1 zipp-3.21.0
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -e .[dev]` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 194 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .[dev]
+---------------------------
+### Thought:
+Dependencies have been successfully installed. Now, let's run the tests to ensure that the environment is correctly set up and that all the dependencies work as expected.
+
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/configuration/test_helpers.py::TestGenerateDict::test_generate_events
+tests/configuration/test_helpers.py::TestGenerateDict::test_generate_predictions
+tests/configuration/test_helpers.py::TestGenerateDict::test_generate_dict_invalid_section
+tests/configuration/test_helpers.py::test_generate_dict_no_data_raises_error[events]
+tests/configuration/test_helpers.py::test_generate_dict_no_data_raises_error[predictions]
+tests/configuration/test_model.py::TestDictionaryItem::test_default_values[name-myname]
+tests/configuration/test_model.py::TestDictionaryItem::test_default_values[display_name-myname]
+tests/configuration/test_model.py::TestDictionaryItem::test_default_values[dtype-None]
+tests/configuration/test_model.py::TestDictionaryItem::test_default_values[definition-None]
+tests/configuration/test_model.py::TestDictionaryItem::test_disp_name_takes_precedence
+tests/configuration/test_model.py::TestEventDictionary::test_no_events_ok
+tests/configuration/test_model.py::TestEventDictionary::test_minimal_item
+tests/configuration/test_model.py::TestEventDictionary::test_multiple_events
+tests/configuration/test_model.py::TestEventDictionary::test_search_returns_item[evA-filled]
+tests/configuration/test_model.py::TestEventDictionary::test_search_returns_item[evB-given]
+tests/configuration/test_model.py::TestEventDictionary::test_search_returns_item[evC-empty]
+tests/configuration/test_model.py::TestPredictDictionary::test_no_predictions_ok
+tests/configuration/test_model.py::TestPredictDictionary::test_minimal_item
+tests/configuration/test_model.py::TestPredictDictionary::test_multiple_predictions
+tests/configuration/test_model.py::TestPredictDictionary::test_search_returns_item[evA-filled]
+tests/configuration/test_model.py::TestPredictDictionary::test_search_returns_item[evB-given]
+tests/configuration/test_model.py::TestPredictDictionary::test_search_returns_item[evC-empty]
+tests/configuration/test_model.py::TestEvent::test_default_values
+tests/configuration/test_model.py::TestEvent::test_one_valid_attribute_change[input_dict0]
+tests/configuration/test_model.py::TestEvent::test_one_valid_attribute_change[input_dict1]
+tests/configuration/test_model.py::TestEvent::test_one_valid_attribute_change[input_dict2]
+tests/configuration/test_model.py::TestEvent::test_one_valid_attribute_change[input_dict3]
+tests/configuration/test_model.py::TestEvent::test_one_valid_attribute_change[input_dict4]
+tests/configuration/test_model.py::TestEvent::test_one_valid_attribute_change[input_dict5]
+tests/configuration/test_model.py::TestEvent::test_one_invalid_attribute_change[input_dict0]
+tests/configuration/test_model.py::TestEvent::test_one_invalid_attribute_change[input_dict1]
+tests/configuration/test_model.py::TestEvent::test_one_invalid_attribute_change[input_dict2]
+tests/configuration/test_model.py::TestEvent::test_one_invalid_attribute_change[input_dict3]
+tests/configuration/test_model.py::TestEvent::test_one_invalid_attribute_change[input_dict4]
+tests/configuration/test_model.py::TestEvent::test_one_invalid_attribute_change[input_dict5]
+tests/configuration/test_model.py::TestEvent::test_supported_agg_strategies_are_allowed[min]
+tests/configuration/test_model.py::TestEvent::test_supported_agg_strategies_are_allowed[max]
+tests/configuration/test_model.py::TestEvent::test_supported_agg_strategies_are_allowed[first]
+tests/configuration/test_model.py::TestEvent::test_supported_agg_strategies_are_allowed[last]
+tests/configuration/test_model.py::TestEvent::test_supported_merge_strategies_are_allowed[first]
+tests/configuration/test_model.py::TestEvent::test_supported_merge_strategies_are_allowed[last]
+tests/configuration/test_model.py::TestEvent::test_supported_merge_strategies_are_allowed[nearest]
+tests/configuration/test_model.py::TestEvent::test_supported_merge_strategies_are_allowed[forward]
+tests/configuration/test_model.py::TestEvent::test_supported_merge_strategies_are_allowed[count]
+tests/configuration/test_model.py::TestEvent::test_multiple_sources_is_allowed
+tests/configuration/test_model.py::TestEvent::test_multiple_sources_require_display
+tests/configuration/test_model.py::TestCohort::test_default_values
+tests/configuration/test_model.py::TestCohort::test_set_displayname
+tests/configuration/test_model.py::TestCohort::test_allows_splits
+tests/configuration/test_model.py::TestCohort::test_strips_other_keys
+tests/configuration/test_model.py::TestDataUsage::test_default_values[entity_id-Id]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[context_id-None]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[primary_output-Score]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[primary_target-Target]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[predict_time-Time]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[comparison_time-Time]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[outputs-value6]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[cohorts-value7]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[features-value8]
+tests/configuration/test_model.py::TestDataUsage::test_default_values[censor_min_count-10]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[entity_id-EntityId]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[context_id-ContextId]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[primary_output-Output]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[primary_target-TargetEvent]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[predict_time-Timestamp]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[comparison_time-ComparisonTime]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[outputs-value6]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[features-value7]
+tests/configuration/test_model.py::TestDataUsage::test_custom_values[censor_min_count-20]
+tests/configuration/test_model.py::TestDataUsage::test_reduce_events_to_unique_names
+tests/configuration/test_model.py::TestDataUsage::test_reduce_events_eliminates_source_display_collision
+tests/configuration/test_model.py::TestDataUsage::test_reduce_cohorts_to_unique_names
+tests/configuration/test_model.py::TestDataUsage::test_reduce_cohorts_eliminates_source_display_collision
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[info_dir-value0]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[prediction_path-value1]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[event_path-value2]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[metadata_path-value3]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[entity_id-id]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[context_id-encounter_id]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[entity_keys-value6]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[target-TargetLabel]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[output-Score]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[output_list-value9]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[predict_time-ScoringTime]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[features-value11]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[comparison_time-ScoringTime]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[outcomes-value13]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[interventions-value14]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[prediction_columns-value15]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_is_valid_simple_object[censor_min_count-15]
+tests/configuration/test_provider.py::TestConfigProvider::test_testconfig_uses_tmp
+tests/configuration/test_provider.py::TestConfigProvider::test_provider_groups_primary_output_with_output_list[outputs0-output_list0]
+tests/configuration/test_provider.py::TestConfigProvider::test_provider_groups_primary_output_with_output_list[outputs1-output_list1]
+tests/configuration/test_provider.py::TestConfigProvider::test_provider_groups_primary_output_with_output_list[outputs2-output_list2]
+tests/configuration/test_provider.py::TestConfigProvider::test_provider_groups_primary_output_with_output_list[outputs3-output_list3]
+tests/controls/test_control_decorators.py::TestCachedHTML::test_save_load_html
+tests/controls/test_explore.py::TestUpdatePlotWidget::test_init
+tests/controls/test_explore.py::TestUpdatePlotWidget::test_plot_button_click
+tests/controls/test_explore.py::TestUpdatePlotWidget::test_disable
+tests/controls/test_explore.py::TestUpdatePlotWidget::test_enable
+tests/controls/test_explore.py::TestUpdatePlotWidget::test_toggle_code_checkbox
+tests/controls/test_explore.py::TestExplorationBaseClass::test_base_class
+tests/controls/test_explore.py::TestExplorationBaseClass::test_args_subclass[__main__-plot_something(False)]
+tests/controls/test_explore.py::TestExplorationBaseClass::test_args_subclass[seismometer.api-sm.plot_something(False)]
+tests/controls/test_explore.py::TestExplorationBaseClass::test_args_subclass[something_else-something_else.plot_something(False)]
+tests/controls/test_explore.py::TestExplorationBaseClass::test_kwargs_subclass
+tests/controls/test_explore.py::TestExplorationBaseClass::test_args_kwargs_subclass
+tests/controls/test_explore.py::TestExplorationBaseClass::test_exception_plot_code_subclass
+tests/controls/test_explore.py::TestExplorationBaseClass::test_no_initial_plot_subclass
+tests/controls/test_explore.py::TestExplorationBaseClass::test_toggle_code_callback[True]
+tests/controls/test_explore.py::TestExplorationBaseClass::test_toggle_code_callback[False]
+tests/controls/test_explore.py::TestModelOptionsWidget::test_init_with_all_options
+tests/controls/test_explore.py::TestModelOptionsWidget::test_init_with_all_options_grouping_off
+tests/controls/test_explore.py::TestModelOptionsWidget::test_no_combine_scores_checkbox
+tests/controls/test_explore.py::TestModelOptionsWidget::test_no_score_thresholds
+tests/controls/test_explore.py::TestModelOptionsWidget::test_per_context_checkbox
+tests/controls/test_explore.py::TestModelOptionsWidget::test_disabled
+tests/controls/test_explore.py::TestModelOptionsWidget::test_disabled_by_list_size
+tests/controls/test_explore.py::TestModelOptionsAndCohortsWidget::test_init
+tests/controls/test_explore.py::TestModelOptionsAndCohortsWidget::test_disable
+tests/controls/test_explore.py::TestModelOptionsAndCohortGroupWidget::test_init
+tests/controls/test_explore.py::TestModelOptionsAndCohortGroupWidget::test_disable
+tests/controls/test_explore.py::TestModelInterventionOptionsWidget::test_init
+tests/controls/test_explore.py::TestModelInterventionOptionsWidget::test_disable
+tests/controls/test_explore.py::TestModelInterventionAndCohortGroupWidget::test_init
+tests/controls/test_explore.py::TestModelInterventionAndCohortGroupWidget::test_disable
+tests/controls/test_explore.py::TestModelScoreComparisonOptionsWidget::test_init
+tests/controls/test_explore.py::TestModelScoreComparisonOptionsWidget::test_disable
+tests/controls/test_explore.py::TestModelScoreComparisonOptionsWidget::test_disabled_by_list_size
+tests/controls/test_explore.py::TestModelScoreComparisonOptionsWidget::test_init_per_context
+tests/controls/test_explore.py::TestModelScoreComparisonOptionsWidget::test_disable_per_context
+tests/controls/test_explore.py::TestModelTargetComparisonOptionsWidget::test_init
+tests/controls/test_explore.py::TestModelTargetComparisonOptionsWidget::test_disable
+tests/controls/test_explore.py::TestModelTargetComparisonOptionsWidget::test_init_per_context
+tests/controls/test_explore.py::TestModelTargetComparisonOptionsWidget::test_disable_per_context
+tests/controls/test_explore.py::TestModelTargetComparisonOptionsWidget::test_disabled_by_list_size
+tests/controls/test_explore.py::TestModelScoreComparisonAndCohortsWidget::test_init
+tests/controls/test_explore.py::TestModelScoreComparisonAndCohortsWidget::test_disable
+tests/controls/test_explore.py::TestModelTargetComparisonAndCohortsWidget::test_init
+tests/controls/test_explore.py::TestModelTargetComparisonAndCohortsWidget::test_disable
+tests/controls/test_explore.py::TestExplorationSubpopulationWidget::test_init
+tests/controls/test_explore.py::TestExplorationSubpopulationWidget::test_option_update
+tests/controls/test_explore.py::TestExplorationModelSubgroupEvaluationWidget::test_init
+tests/controls/test_explore.py::TestExplorationModelSubgroupEvaluationWidget::test_option_update
+tests/controls/test_explore.py::TestExplorationCohortSubclassEvaluationWidget::test_init[all-thresholds0]
+tests/controls/test_explore.py::TestExplorationCohortSubclassEvaluationWidget::test_init[max-0.2]
+tests/controls/test_explore.py::TestExplorationCohortSubclassEvaluationWidget::test_init[min-0.1]
+tests/controls/test_explore.py::TestExplorationCohortSubclassEvaluationWidget::test_init[None-]
+tests/controls/test_explore.py::TestExplorationCohortOutcomeInterventionEvaluationWidget::test_init
+tests/controls/test_explore.py::TestExplorationScoreComparisonByCohortWidget::test_init
+tests/controls/test_explore.py::TestExplorationTargetComparisonByCohortWidget::test_init
+tests/controls/test_explore.py::TestBinaryModelMetricOptions::test_init
+tests/controls/test_explore.py::TestBinaryModelMetricOptions::test_disable
+tests/controls/test_explore.py::TestExplorationMetricWidget::test_init
+tests/controls/test_explore.py::TestExplorationMetricWidget::test_option_update
+tests/controls/test_selection.py::TestSelectionListWidget::test_init
+tests/controls/test_selection.py::TestSelectionListWidget::test_init_no_value
+tests/controls/test_selection.py::TestSelectionListWidget::test_value_propagation
+tests/controls/test_selection.py::TestSelectionListWidget::test_display_text
+tests/controls/test_selection.py::TestSelectionListWidget::test_disabled
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_init[True]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_init[False]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_init_no_value[True]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_init_no_value[False]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_value_propagation[True]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_value_propagation[False]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_on_subselection_changed[True]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_on_subselection_changed[False]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_display_text[True]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_display_text[False]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_disabled[True]
+tests/controls/test_selection.py::TestMultiSelectionListWidget::test_disabled[False]
+tests/controls/test_selection.py::TestDisjointSelectionListsWidget::test_init
+tests/controls/test_selection.py::TestDisjointSelectionListsWidget::test_init_no_value
+tests/controls/test_selection.py::TestDisjointSelectionListsWidget::test_value_change
+tests/controls/test_selection.py::TestDisjointSelectionListsWidget::test_display_text
+tests/controls/test_selection.py::TestDisjointSelectionListsWidget::test_disabled
+tests/controls/test_selection.py::TestDisjointSelectionListsWidget::test_disable_dropdown_only_one_group
+tests/controls/test_selection.py::TestMultiselectDropdownWidget::test_init
+tests/controls/test_selection.py::TestMultiselectDropdownWidget::test_init_no_value
+tests/controls/test_selection.py::TestMultiselectDropdownWidget::test_add_all
+tests/controls/test_selection.py::TestMultiselectDropdownWidget::test_value_propagation
+tests/controls/test_selection.py::TestMultiselectDropdownWidget::test_value_propagation_remove_option
+tests/controls/test_selection.py::TestMultiselectDropdownWidget::test_dropdown_changes_value
+tests/controls/test_selection.py::TestMultiselectDropdownWidget::test_disabled
+tests/controls/test_styles.py::TestHelperFunctions::test_html_title
+tests/controls/test_thresholds.py::TestPercentSliderWidget::test_init
+tests/controls/test_thresholds.py::TestPercentSliderWidget::test_init_with_values
+tests/controls/test_thresholds.py::TestPercentSliderWidget::test_slider_change
+tests/controls/test_thresholds.py::TestPercentSliderWidget::test_value_change
+tests/controls/test_thresholds.py::TestPercentSliderWidget::test_clamps_value
+tests/controls/test_thresholds.py::TestPercentSliderWidget::test_mismatched_names_and_value
+tests/controls/test_thresholds.py::TestPercentSliderWidget::test_disabled
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_init
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_init_with_values
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_init_with_values_increasing
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_init_with_values_decreasing
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_slider_change
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_value_change
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_clamps_value
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_value_out_of_order_raises_value_error
+tests/controls/test_thresholds.py::TestMonotonicPercentSliderWidget::test_too_many_thresholds_raises_value_error
+tests/core/test_decorators.py::Test_Export::test_export
+tests/core/test_decorators.py::Test_Export::test_mod_none
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_errors_for_wrong_annotation
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_errors_for_no_annotation
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_errors_for_good_annotation_but_bad_return
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_caches_results
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_caches_unordered_kwargs
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_can_clear_cached_results
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_can_ignore_cached_results
+tests/core/test_decorators.py::Test_DiskCachedFunction::test_can_skip_caching_results
+tests/core/test_decorators.py::Test_DiskCachedFunction_With_Pandas::test_supports_dataframe_cachable
+tests/core/test_decorators.py::Test_DiskCachedFunction_With_Pandas::test_supports_dataframe_reordered_as_cachable
+tests/core/test_decorators.py::Test_DiskCachedFunction_With_Pandas::test_supports_dataframe_can_skip_cachable
+tests/core/test_decorators.py::Test_DiskCachedFunction_With_Pandas::test_can_differentiate_similar_dataframes
+tests/core/test_decorators.py::Test_DiskCachedFunction_With_Pandas::test_can_match_large_dataframes
+tests/core/test_decorators.py::Test_DiskCachedFunction_With_Pandas::test_can_match_pandas_index
+tests/core/test_decorators.py::Test_DiskCachedFunction_With_Pandas::test_can_match_pandas_series
+tests/core/test_io.py::Test_IO::test_slugify[alphabet characters ok]
+tests/core/test_io.py::Test_IO::test_slugify[numeric characters ok]
+tests/core/test_io.py::Test_IO::test_slugify[<> get converted]
+tests/core/test_io.py::Test_IO::test_slugify[combination of above]
+tests/core/test_io.py::Test_IO::test_slugify[example filepath]
+tests/core/test_io.py::Test_IO::test_slugify[acceptable unicode characters]
+tests/core/test_io.py::Test_IO::test_slugify[underscores combined0]
+tests/core/test_io.py::Test_IO::test_slugify[underscores combined1]
+tests/core/test_io.py::Test_IO::test_slugify_raises[special characters not allowed]
+tests/core/test_io.py::Test_IO::test_slugify_raises[emojis not allowed]
+tests/core/test_io.py::test_load_json
+tests/core/test_io.py::test_load_json_with_dir
+tests/core/test_io.py::TestLoadNotebook::test_load_notebook_with_filepath
+tests/core/test_io.py::TestLoadNotebook::test_load_notebook_with_missing_file
+tests/core/test_io.py::test_load_markdown
+tests/core/test_io.py::test_load_yaml
+tests/core/test_io.py::TestMdWriters::test_write_md
+tests/core/test_io.py::TestMdWriters::test_write_md_fails_if_file_exists
+tests/core/test_io.py::TestMdWriters::test_overwrite_md_if_specified
+tests/core/test_io.py::TestJsonWriters::test_write_json
+tests/core/test_io.py::TestJsonWriters::test_write_json_fails_if_file_exists
+tests/core/test_io.py::TestJsonWriters::test_overwrite_json_if_specified
+tests/core/test_io.py::TestJsonWriters::test_write_ipynb
+tests/core/test_io.py::TestJsonWriters::test_write_ipynb_fails_if_file_exists
+tests/core/test_io.py::TestJsonWriters::test_overwrite_ipynb_if_specified
+tests/core/test_io.py::TestYamlWriters::test_write_yaml
+tests/core/test_io.py::TestYamlWriters::test_write_yaml_fails_if_file_exists
+tests/core/test_io.py::TestYamlWriters::test_overwrite_yaml_if_specified
+tests/core/test_io.py::test_write_new_file_in_nonexistent_directory
+tests/core/test_io.py::test_write_logs_file_written
+tests/core/test_io.py::TestResolveFile::test_no_cohort_returns_slim
+tests/core/test_io.py::TestResolveFile::test_strip_chars_from_subgroups
+tests/core/test_io.py::TestResolveFile::test_subgroup_handles_special_chars
+tests/core/test_io.py::TestResolveFile::test_create_makesdir_on_none
+tests/core/test_io.py::TestResolveFile::test_no_create_warns_on_nonexistent
+tests/core/test_io.py::TestResolveFile::test_no_create_existent_does_not_warn
+tests/data/confidence/test_calculations.py::Test_SJR::test_Series_input
+tests/data/confidence/test_calculations.py::Test_SJR::test_allfalse_alltrue
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.05]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.1]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.15000000000000002]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.2]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.25]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.3]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.35000000000000003]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.4]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.45]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.5]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.55]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.6000000000000001]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.6500000000000001]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.7000000000000001]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.7500000000000001]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.8]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.8500000000000001]
+tests/data/confidence/test_calculations.py::Test_hanley_mcneill_confidence::test_alpha[0.9000000000000001]
+tests/data/confidence/test_calculations.py::Test_logit_interval::test_uniform_probability
+tests/data/confidence/test_calculations.py::Test_logit_interval::test_variance
+tests/data/confidence/test_calculations.py::Test_logit_interval::test_alpha
+tests/data/confidence/test_calculations.py::Test_agresti_coull_interval::test_uniform_probability
+tests/data/confidence/test_calculations.py::Test_agresti_coull_interval::test_variance
+tests/data/confidence/test_calculations.py::Test_agresti_coull_interval::test_alpha
+tests/data/confidence/test_confidence.py::Test_Function_Config::test_custom_intervals
+tests/data/confidence/test_confidence.py::Test_Function_Config::test_custom_regions
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[ROCConfidenceParam-input0-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[ROCConfidenceParam-input1-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PRConfidenceParam-input2-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PRConfidenceParam-input3-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PRConfidenceParam-input4-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PRConfidenceParam-input5-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PRConfidenceParam-input6-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PRConfidenceParam-input7-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-input8-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-input9-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-input10-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-input11-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-0.8-True]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-0-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam--1-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-1.2-False]
+tests/data/confidence/test_parameters.py::Test_Parameters::test_input_validation[PerformanceMetricConfidenceParam-None-True]
+tests/data/confidence/test_parameters.py::Test_Confidence_Dict::test_all_param_level
+tests/data/confidence/test_parameters.py::Test_Confidence_Dict::test_all_param_merge
+tests/data/confidence/test_parameters.py::Test_Confidence_Dict::test_none
+tests/data/loaders/test_load_events.py::TestPredictionLoad::test_nofile_warns_and_returns_empty[parquet_setup-parquet_loader]
+tests/data/loaders/test_load_events.py::TestPredictionLoad::test_load_remaps_columns[parquet_setup-parquet_loader]
+tests/data/loaders/test_load_events.py::TestPostTransformFn::test_assumed_types_convert_times
+tests/data/loaders/test_load_events.py::TestMergeOntoPredictions::test_merge_event
+tests/data/loaders/test_load_events.py::TestMergeOntoPredictions::test_merge_event_two_sources
+tests/data/loaders/test_load_events.py::TestMergeOntoPredictions::test_merge_info_logged[event0-str_inclusions0]
+tests/data/loaders/test_load_events.py::TestMergeOntoPredictions::test_merge_info_logged[event1-str_inclusions1]
+tests/data/loaders/test_load_events.py::TestMergeOntoPredictions::test_merge_info_logged[only offset, doesnt window]
+tests/data/loaders/test_load_events.py::TestMergeOntoPredictions::test_merge_info_logged[event3-str_inclusions3]
+tests/data/loaders/test_load_events.py::TestMergeOntoPredictions::test_imputation_on_target
+tests/data/loaders/test_load_pipeline.py::test_passthru_framehook
+tests/data/loaders/test_load_pipeline.py::test_passthru_mergehook
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[config-CONFIGPROVIDER]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[prediction_fn-None]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[event_fn-None]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[post_predict_fn-_passthru_framehook]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[post_event_fn-_passthru_framehook]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[merge_fn-_passthru_mergehook]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[prediction_from_memory-_passthru_framehook]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_defaults[event_from_memory-_passthru_framehook]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_kwarg_assignment[input_kwargs0]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_kwarg_assignment[input_kwargs1]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_kwarg_assignment[input_kwargs2]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_kwarg_assignment[input_kwargs3]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loader_kwarg_assignment[input_kwargs4]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_default_behavior_can_execute
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_loading_can_log_location
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_load_predictions_use_expected_fn[prediction function is called]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_load_predictions_use_expected_fn[inmemory is prioritized]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_load_events_use_expected_fn[prediction function is called]
+tests/data/loaders/test_load_pipeline.py::TestSeismogramLoader::test_load_events_use_expected_fn[inmemory is prioritized]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_load_all_columns[parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_load_selected_columns[no_extra_columns-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_load_selected_columns[one extra column-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_load_selected_columns[multiple extra columns-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_target_inclusion_is_renamed[all features-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_target_inclusion_is_renamed[full features-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[warning only-one unseen columns-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[warning only-multiple unseen columns-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[warning only-only missing feature-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[warning only-one present, one missing feature-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[debug has both-one unseen columns-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[debug has both-multiple unseen columns-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[debug has both-only missing feature-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestPredictionLoad::test_column_mismatch_logs_warning[debug has both-one present, one missing feature-parquet_setup-parquet_loader]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_convert_times[exact]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_convert_times[match middle]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_convert_scores[reduces from percentage]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_convert_scores[no change from probability]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_avoids_pandasFloat[float64]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_avoids_pandasFloat[nullable inferred]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_avoids_pandasFloat[numpy]
+tests/data/loaders/test_load_predictions.py::TestAssumedTypes::test_assumed_types_avoids_pandasFloat[generic]
+tests/data/loaders/test_load_predictions.py::TestDictionaryTypes::test_defined_type_conversions_succeed[basic types]
+tests/data/loaders/test_load_predictions.py::TestDictionaryTypes::test_value_error_raises_configuration_error
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_loader_factory_sets_config
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_parquet_loader_functions[prediction_fn-parquet_loader]
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_parquet_loader_functions[event_fn-parquet_loader]
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_parquet_loader_functions[post_predict_fn-dictionary_types]
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_parquet_loader_functions[post_event_fn-post_transform_fn]
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_parquet_loader_functions[merge_fn-merge_onto_predictions]
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_parquet_loader_functions[prediction_from_memory-_passthru_framehook]
+tests/data/loaders/test_loaders.py::TestLoaderFactory::test_parquet_loader_functions[event_from_memory-_passthru_framehook]
+tests/data/test_cohorts.py::Test_Performance_Data::test_data_defaults
+tests/data/test_cohorts.py::Test_Performance_Data::test_data_splits
+tests/data/test_data.py::Test_Resolve_Col::test_col_np1d
+tests/data/test_data.py::Test_Resolve_Col::test_col_np2d
+tests/data/test_data.py::Test_Resolve_Col::test_col_list
+tests/data/test_data.py::Test_Resolve_Col::test_col_name
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-min-Target]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-min-PredictTime]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-min-Reference_5_15_Time]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-max-Target]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-max-PredictTime]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-max-Reference_5_15_Time]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-first-Target]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-first-PredictTime]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-first-Reference_5_15_Time]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-last-Target]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-last-PredictTime]
+tests/data/test_events.py::Test_Event_Score::test_bad_event[monotonic-increasing-last-Reference_5_15_Time]
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_rule_can_hide_small_counts
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_universal_rule_equals
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_equals
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_not_equals
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_isin
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_notin
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_less_than
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_greater_then
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_less_than_or_eq
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_greater_then_or_eq
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_isna
+tests/data/test_filters.py::TestFilterRulesFiltering::test_filter_base_rule_notna
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule0-ValueError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule1-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule2-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule3-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule4-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule5-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule6-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule7-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_filter_base_bad_relation[rule8-TypeError]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left0-right0]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left1-right1]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left2-right2]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left3-right3]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left4-right4]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left5-right5]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left6-right6]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left7-right7]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left8-right8]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left9-right9]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left10-right10]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left11-right11]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left12-right12]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left13-right13]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_base_convience_methods[left14-right14]
+tests/data/test_filters.py::TestFilterRuleConstructors::test_between_requires_bounds
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_idempotence[left0-right0]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_idempotence[left1-right1]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_idempotence[left2-right2]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_idempotence[left3-right3]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_conjunction[left0-right0]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_conjunction[left1-right1]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_conjunction[left2-right2]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_conjunction[left3-right3]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_disjunction[left0-right0]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_disjunction[left1-right1]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_disjunction[left2-right2]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_universal_disjunction[left3-right3]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_conjunction_idempotence
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_disjunction_idempotence
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_filter_conjunction_and
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_filter_disjunction_or
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left0-right0]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left1-right1]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left2-right2]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left3-right3]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left4-right4]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left5-right5]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left6-right6]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left7-right7]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left8-right8]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left9-right9]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_negation_logic[left10-right10]
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_de_Morgans_laws_and
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_de_Morgans_laws_or
+tests/data/test_filters.py::TestFilterRuleCombinationLogic::test_object_ineq
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_universal[rule0-FilterRule.all()]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_universal[rule1-FilterRule.none()]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_universal[rule2-FilterRule.all()]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_universal[rule3-FilterRule.none()]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_universal[rule0-Include all]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_universal[rule1-Exclude all]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_unary[rule0-FilterRule.isna('cat')]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_unary[rule1-FilterRule.notna('cat')]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_unary[rule2-FilterRule.isna('cat')]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_unary[rule3-FilterRule.notna('cat')]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_unary[rule0-cat is missing]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_unary[rule1-cat has a value]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_binary[rule0-FilterRule('Val', '>=', 20)]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_binary[rule1-FilterRule('Cat', '!=', 'A')]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_binary[rule2-FilterRule('Cat', '==', 'A')]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_binary[rule3-FilterRule('Cat', 'isin', ['A', 'B'])]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_binary[rule4-FilterRule('Cat', 'notin', ['A', 'B'])]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_binary[rule0-Val >= 20]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_binary[rule1-Cat is not A]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_binary[rule2-Cat is A]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_binary[rule3-Cat is in: A, B]
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_binary[rule4-Cat not in: A, B]
+tests/data/test_filters.py::TestFilterRulesAsText::test_repr_respects_and_or_logic
+tests/data/test_filters.py::TestFilterRulesAsText::test_str_respects_and_or_logic
+tests/data/test_filters.py::TestFilterRulesAsText::test_corrupted_rule
+tests/data/test_filters.py::TestFilterRuleFromCohortDictionary::test_matches_cohort
+tests/data/test_filters.py::TestFilterRuleFromCohortDictionary::test_matches_default_cohort
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[pos val no event: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[neg val no event: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[null val no event: impute negative]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[pos val before_window: clear time+impute neg]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[neg val before_window: clear time]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[null val before_window: no time or event]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[pos val in_window: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[neg val in_window: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[null in_window: impute+]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[pos val late time: NaT+0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[neg val late time:  NaT+0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[null val late time:  NaT+0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[pos val window start: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[neg val window start: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[null val window start: impute positive]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[pos val pred=event times: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[neg val pred=event times: no change]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[null val pred=event times: impute positve]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[offset catches earlier case; like 1.0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[offset misses near event; like 4.3]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_with_single_prediction[no window keep longago event]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two later events: closest value]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two later events: closest]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two later out of order events: closest by time]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two later events: impute positive]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two without times: impute negative]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two events before prediction: NaT+0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two events before prediction: Nat+0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two early out of order events: keep neither]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[two early events: keep neither]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[late and inwindow score: in window]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[late and inwindow ooo: in window]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[late and early score: NaT+0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[late and early score ooo: NaT+0]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[late and no time: prioritize known time ('late score')]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[late and no time ooo: ]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[inwindow and early score: keeps inwindow]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[inwindow and early score ooo: keeps inwindow]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[early score and no time: no time or event ]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[early score and no time ooo: no time or event]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[inwindow and no time: keep in window]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_two_events[inwindow and no time ooo: keep in window]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_multi_predictions[base lookback]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_multi_predictions[offset out of middle pred window]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_multi_predictions[offset allow future for third event]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_multi_predictions[reduce window out of second event]
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_multiple_ids
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_multiple_ctxs
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_no_shared_keys_errors
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_no_events_adds_nothing
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_ctx_not_key_not_added
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_some_nat_warn_and_dropped
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_no_times_warn_and_merges
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_first
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_nearest
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_merge_last
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_invalid_merge_strategy
+tests/data/test_merge_window.py::TestMergeWindowedEvent::test_impute_value
+tests/data/test_merge_window.py::TestMergeEventCounts::test_merge_count_single_pk
+tests/data/test_merge_window.py::TestMergeEventCounts::test_merge_count_double_pk
+tests/data/test_merge_window.py::TestMergeEventCounts::test_merge_count_missing_values
+tests/data/test_merge_window.py::TestMergeEventCounts::test_merge_count_some_times_missing
+tests/data/test_merge_window.py::TestMergeEventCounts::test_merge_count_all_times_missing
+tests/data/test_merge_window.py::TestMergeEventCounts::test_merge_count_window_hrs
+tests/data/test_merge_window.py::TestMergeEventCounts::test_merge_count_max_columns
+tests/data/test_pandas_helpers.py::TestMergeFrames::test_merge_earliest[predictions+outcomes]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[label1+time keeps]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[label0+time keeps label]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[label1+no time keeps label]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[label0+no time keeps label]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[no label with time infers to positive]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[no label with time infers to positive (again)]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[no label nor time infers to negative]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_one_line[no label nor time infers to negative (again)]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_infer_multi_line
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_hardint_casts_well[input_list0-string]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_hardint_casts_well[input_list1-string]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_hardint_casts_well[input_list2-Int64]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_hardint_casts_well[input_list3-object]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_hardint_casts_well[input_list4-float]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_hardint_casts_well[input_list5-object]
+tests/data/test_pandas_helpers.py::TestPostProcessEvent::test_imputation_overrides
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_without_value_returns_added[A]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_without_value_returns_added[1]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_without_value_returns_added[normal_column]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_without_value_returns_added[4reallyl0ngc*lum\namewithsymbo|s]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_without_value_returns_added[no underscore but ends in Value]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_without_value_returns_added[wrong case but ends in _value]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_without_value_returns_added[all caps ending in _VALUE]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_doesnt_repeat_suffix[A]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_doesnt_repeat_suffix[1]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_doesnt_repeat_suffix[normal_column]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_doesnt_repeat_suffix[4reallyl0ngc*lum\namewithsymbo|s]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_with_time_stripped_first[A]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_with_time_stripped_first[1]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_with_time_stripped_first[normal_column]
+tests/data/test_pandas_helpers.py::TestEventValue::test_string_with_time_stripped_first[4reallyl0ngc*lum\namewithsymbo|s]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_without_time_returns_added[A]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_without_time_returns_added[1]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_without_time_returns_added[normal_column]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_without_time_returns_added[4reallyl0ngc*lum\namewithsymbo|s]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_without_time_returns_added[no underscore but ends in Time]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_without_time_returns_added[wrong case but ends in _time]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_without_time_returns_added[all caps ending in _TIME]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_doesnt_repeat_suffix[A]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_doesnt_repeat_suffix[1]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_doesnt_repeat_suffix[normal_column]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_doesnt_repeat_suffix[4reallyl0ngc*lum\namewithsymbo|s]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_with_time_stripped_first[A]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_with_time_stripped_first[1]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_with_time_stripped_first[normal_column]
+tests/data/test_pandas_helpers.py::TestEventTime::test_string_with_time_stripped_first[4reallyl0ngc*lum\namewithsymbo|s]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[A-]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[A-_Time]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[A-_Value]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[1-]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[1-_Time]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[1-_Value]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[normal_column-]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[normal_column-_Time]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[normal_column-_Value]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[4reallyl0ngc*lum\namewithsymbo|s-]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[4reallyl0ngc*lum\namewithsymbo|s-_Time]
+tests/data/test_pandas_helpers.py::TestEventName::test_three_suffixes_align[4reallyl0ngc*lum\namewithsymbo|s-_Value]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[eventname_Value-eventname]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[eventname_Time-eventname]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[no underscore but ends in Time-no underscore but ends in Time]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[no underscore but ends in Value-no underscore but ends in Value]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[wrong case but ends in _time-wrong case but ends in _time]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[wrong case but ends in _value-wrong case but ends in _value]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[all caps ending in _TIME-all caps ending in _TIME]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[all caps ending in _VALUE-all caps ending in _VALUE]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[only one suffix gets stripped_Time_Value-only one suffix gets stripped_Time]
+tests/data/test_pandas_helpers.py::TestEventName::test_suffix_specific_handling[only one suffix gets stripped_Value_Time-only one suffix gets stripped_Value]
+tests/data/test_perf_stats.py::Test_Stats::test_stat_keys[base]
+tests/data/test_perf_stats.py::Test_Stats::test_stat_keys[0-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_stat_keys[1-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_stat_keys[1 and 0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_stat_keys[0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr[base]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr[0-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr[1-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr[1 and 0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr[0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr_percentile[base]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr_percentile[0-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr_percentile[1-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr_percentile[1 and 0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_arr_percentile[0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_proba_nulls[base]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_proba_nulls[0-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_proba_nulls[1-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_proba_nulls[1 and 0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_proba_nulls[0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_true_nulls[base]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_true_nulls[0-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_true_nulls[1-pred]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_true_nulls[1 and 0 preds]
+tests/data/test_perf_stats.py::Test_Stats::test_score_with_y_true_nulls[0 preds]
+tests/data/test_perf_stats.py::test_bin_stats_point_thresholds
+tests/data/test_perf_stats.py::Test_AsProbabilities::test_convert
+tests/data/test_perf_stats.py::Test_AsProbabilities::test_already_in_range
+tests/data/test_perf_stats.py::Test_AsPercentages::test_convert
+tests/data/test_perf_stats.py::Test_AsPercentages::test_already_in_range
+tests/data/test_performance.py::TestAssertValidPerf::test_no_stats_fails
+tests/data/test_performance.py::TestAssertValidPerf::test_default_allstats_passes[All stats]
+tests/data/test_performance.py::TestAssertValidPerf::test_default_allstats_passes[Six required]
+tests/data/test_performance.py::TestAssertValidPerf::test_default_allstats_passes[Extra column]
+tests/data/test_performance.py::TestAssertValidPerf::test_missing_stats_fails
+tests/data/test_performance.py::TestAssertValidPerf::test_custom_stats_prioritized
+tests/data/test_performance.py::TestCalCi::test_calc_ci_maps_roc_values[Threshold]
+tests/data/test_performance.py::TestCalCi::test_calc_ci_maps_roc_values[TPR]
+tests/data/test_performance.py::TestCalCi::test_calc_ci_maps_roc_values[FPR]
+tests/data/test_performance.py::TestCalCi::test_calc_ci_maps_roc_values[region]
+tests/data/test_performance.py::TestCalCi::test_calc_ci_maps_roc_values[interval]
+tests/data/test_performance.py::TestCalCi::test_calc_ci_maps_pr
+tests/data/test_performance.py::TestCalCi::test_calc_ci_returns_conf[0.99]
+tests/data/test_performance.py::TestCalCi::test_calc_ci_returns_conf[0.95]
+tests/data/test_performance.py::TestCalCi::test_calc_ci_returns_conf[0.9]
+tests/data/test_performance.py::TestCalCi::test_no_truth_returns_conf
+tests/data/test_performance.py::TestCalCi::test_no_output_returns_conf
+tests/data/test_performance.py::TestMetricGenerator::test_generate_metrics_init_fails[No function]
+tests/data/test_performance.py::TestMetricGenerator::test_generate_metrics_init_fails[No metrics]
+tests/data/test_performance.py::TestMetricGenerator::test_generate_metrics_init_fails[Not Callable]
+tests/data/test_performance.py::TestMetricGenerator::test_generate_metrics_init_fails[Count is reserved]
+tests/data/test_performance.py::TestMetricGenerator::test_generate_metrics_init_correctly
+tests/data/test_performance.py::TestMetricGenerator::test_generate_metrics_empty_dataframe
+tests/data/test_performance.py::TestMetricGenerator::test_generate_named_metrics
+tests/data/test_performance.py::TestMetricGenerator::test_generate_metrics_with_kwargs
+tests/data/test_performance.py::TestBinaryMetricGenerator::test_binary_metric_generator_init
+tests/data/test_performance.py::TestBinaryMetricGenerator::test_binary_metric_generation
+tests/data/test_performance.py::TestBinaryMetricGenerator::test_calc_ci_maps_roc_values
+tests/data/test_summaries.py::Test_Summaries::test_default_summaries
+tests/data/test_summaries.py::Test_Summaries::test_score_target_summaries
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_filter_small_group
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_multi_key_filters_small_group
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_all_small_returns_empty
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-01-2024-01-01]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-02-2024-01-01]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-03-2024-01-01]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-04-2024-01-01]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-05-2024-01-01]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-06-2024-01-01]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-07-2024-01-01]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-08-2024-01-08]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-09-2024-01-08]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_frequency_aligned_to_week[2024-01-10-2024-01-08]
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_data_limited_to_time_bound
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_bools_filter_out_early
+tests/data/test_timeseries.py::TestCreateMetricTimeseries::test_missing_does_not_count_toward_threshold
+tests/html/test_template_apis.py::Test_Template_Apis::test_get_info_dict
+tests/html/test_template_apis.py::Test_Template_Apis::test_score_target_levels_and_index[cohort-False-False-expected0]
+tests/html/test_template_apis.py::Test_Template_Apis::test_score_target_levels_and_index[cohort-True-False-expected1]
+tests/html/test_template_apis.py::Test_Template_Apis::test_score_target_levels_and_index[cohort-False-True-expected2]
+tests/html/test_template_apis.py::Test_Template_Apis::test_score_target_levels_and_index[cohort-True-True-expected3]
+tests/html/test_templates.py::Test_Templates::test_nonexistent_template
+tests/html/test_templates.py::Test_Templates::test_info_template_no_plot_help
+tests/html/test_templates.py::Test_Templates::test_info_template
+tests/html/test_templates.py::Test_Templates::test_cohort_summaries_template
+tests/html/test_templates.py::Test_Templates::test_title_message_template
+tests/html/test_templates.py::Test_Templates::test_censored_plot_template
+tests/html/test_templates.py::Test_Templates::test_censored_data_template
+tests/html/test_templates.py::Test_Templates::test_title_image_template
+tests/plot/test_lines.py::TestFindThresholds::test_thresholds_increasing_labels
+tests/plot/test_lines.py::TestFindThresholds::test_thresholds_decreasing_labels
+tests/plot/test_lines.py::TestFindThresholds::test_thresholds_ascending_out_of_range
+tests/plot/test_lines.py::TestFindThresholds::test_thresholds_descending_out_of_range
+tests/plot/test_multi_plots.py::Test_One_Vertical::test_defaults
+tests/plot/test_multi_plots.py::Test_One_Vertical::test_with_label
+tests/plot/test_multi_plots.py::Test_One_Vertical::test_with_all
+tests/plot/test_utils.py::Test_Save_File::test_calls_save_fig
+tests/plot/test_utils.py::Test_Save_File::test_calls_save_fig_bbox
+tests/plot/test_utils.py::Test_Plot_Curve::test_plots_curve
+tests/plot/test_utils.py::Test_Plot_Curve::test_plots_curve_with_name
+tests/plot/test_utils.py::Test_Plot_Curve::test_plots_curve_with_title
+tests/plot/test_utils.py::Test_Plot_Curve::test_plots_curve_with_ylabel
+tests/plot/test_utils.py::Test_Plot_Curve::test_plots_with_accents
+tests/plot/test_utils.py::Test_Simple_Plots::test_polygon
+tests/plot/test_utils.py::Test_Simple_Plots::test_diagonal
+tests/plot/test_utils.py::Test_Simple_Plots::test_horizontal
+tests/plot/test_utils.py::Test_Simple_Plots::test_vertical
+tests/plot/test_utils.py::Test_Axis_Clear::test_defaults
+tests/plot/test_utils.py::Test_Axis_Clear::test_clear_y
+tests/plot/test_utils.py::Test_Axis_Clear::test_clear_all
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_empty_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_empty_config_for_other_alert
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_not_shown_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_shown_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_thresholds_not_met_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_thresholds_one_met_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_thresholds_all_met_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_column_specific_not_shown
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_column_specific_shown
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_column_specific_thresholds_not_met
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_column_specific_thresholds_met
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_misconfigured_thresholds_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_misconfigured_thresholds_config_one_met
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_misconfigured_column_specific_thresholds_config
+tests/report/test_alerts.py::Test_Alert_Thresholding::test_misconfigured_column_specific_thresholds_config_one_met
+tests/report/test_fairness.py::TestSortKeys::test_sort_keys
+tests/report/test_fairness.py::TestFairnessTable::test_fairness_table_filters_values
+tests/report/test_fairness.py::TestFairnessIcons::test_values[0.5-FairnessIcons.CRITICAL_LOW]
+tests/report/test_fairness.py::TestFairnessIcons::test_values[0.75-FairnessIcons.WARNING_LOW]
+tests/report/test_fairness.py::TestFairnessIcons::test_values[0.9-FairnessIcons.GOOD]
+tests/report/test_fairness.py::TestFairnessIcons::test_values[1.0-FairnessIcons.DEFAULT]
+tests/report/test_fairness.py::TestFairnessIcons::test_values[1.1-FairnessIcons.GOOD]
+tests/report/test_fairness.py::TestFairnessIcons::test_values[1.26-FairnessIcons.WARNING_HIGH]
+tests/report/test_fairness.py::TestFairnessIcons::test_values[1.71-FairnessIcons.CRITICAL_HIGH]
+tests/report/test_fairness.py::TestFairnessIcons::test_values[None-FairnessIcons.UNKNOWN]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_freezes_values[prediction_count-4]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_freezes_values[entity_count-3]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_freezes_values[start_time-2022-01-01]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_freezes_values[end_time-2022-01-04]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_freezes_values[event_types_count-2]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_freezes_values[cohort_attribute_count-2]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_handles_feature_counts[features0-predict_cols0-~9]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_handles_feature_counts[features1-predict_cols1-~7]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_handles_feature_counts[features2-predict_cols2-~8]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_handles_feature_counts[features3-predict_cols3-2]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_handles_feature_counts[features4-predict_cols4-2]
+tests/test_seismogram.py::Test__set_df_counts::test_set_df_count_handles_feature_counts[features5-predict_cols5-3]
+tests/test_seismogram.py::TestSeismogramConfigRetrievalMethods::test_methods_get_value_from_config[event_aggregation_method-method_args0-max]
+tests/test_seismogram.py::TestSeismogramConfigRetrievalMethods::test_methods_get_value_from_config[event_aggregation_method-method_args1-min]
+tests/test_seismogram.py::TestSeismogramConfigRetrievalMethods::test_methods_get_value_from_config[event_aggregation_window_hours-method_args2-1]
+tests/test_seismogram.py::TestSeismogramConfigRetrievalMethods::test_methods_get_value_from_config[event_aggregation_window_hours-method_args3-2]
+tests/test_seismogram.py::TestSeismogramConfigRetrievalMethods::test_raises_exception_when_missing_from_config[event_aggregation_method-method_args0-ValueError]
+tests/test_seismogram.py::TestSeismogramConfigRetrievalMethods::test_raises_exception_when_missing_from_config[event_aggregation_window_hours-method_args1-ValueError]
+tests/test_seismogram.py::TestSeismogramCreateCohorts::test_create_cohorts_creates_str_list
+tests/test_seismogram.py::TestSeismogramCreateCohorts::test_unseen_column_logs_warning_and_drops
+tests/test_seismogram.py::TestSeismogramCreateCohorts::test_large_cardinality_warns_and_drops
+tests/test_seismogram.py::TestSeismogramCreateCohorts::test_censor_limit_logs_warning_and_drops
+tests/test_seismogram.py::TestSeismogramCreateCohorts::test_censor_some_logs_warning
+tests/test_startup.py::TestStartup::test_debug_logs_with_formatter
+tests/test_startup.py::TestStartup::test_seismo_killed_between_tests
+tests/test_startup.py::TestStartup::test_logger_initialized[30]
+tests/test_startup.py::TestStartup::test_logger_initialized[40]
+tests/test_startup.py::TestStartup::test_logger_initialized[50]
+
+775 tests collected in 3.91s
+Container cd5aab82080d stopped and removed
+Spend totally 356.49584913253784.

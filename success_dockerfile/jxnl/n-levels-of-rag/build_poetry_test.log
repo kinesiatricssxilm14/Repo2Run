@@ -1,0 +1,54 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.39kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/library/python:3.10
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 185B done
+#5 DONE 0.0s
+
+#6 [2/7] COPY search_patch /search_patch
+#6 CACHED
+
+#7 [3/7] COPY code_edit.py /code_edit.py
+#7 CACHED
+
+#8 [4/7] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#8 CACHED
+
+#9 [5/7] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/jxnl/n-levels-of-rag.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /n-levels-of-rag/. /repo && rm -rf /n-levels-of-rag/ &&     rm -rf /n-levels-of-rag &&     cd /repo && git checkout 2ce1106b0163d11fcf7959187b42f0d3a67fbe05 &&     python /code_edit.py -t "/search_patch/0.patch" &&     python /code_edit.py -t "/search_patch/1.patch" &&     cd /repo && poetry install &&     python /code_edit.py -t "/search_patch/2.patch" &&     cd /repo && poetry lock &&     cd /repo && poetry install
+#9 CACHED
+
+#10 [6/7] RUN cd /repo && poetry run pytest --collect-only -q
+#10 1.147 The "poetry.dev-dependencies" section is deprecated and will be removed in a future version. Use "poetry.group.dev.dependencies" instead.
+#10 5.629 tests/test_models.py::test_document_metadata_valid_date
+#10 5.629 tests/test_models.py::test_document_metadata_invalid_date
+#10 5.629 tests/test_models.py::test_document_creation
+#10 5.629 tests/test_models.py::test_document_creation_with_invalid_metadata
+#10 5.629 
+#10 5.629 =============================== warnings summary ===============================
+#10 5.629 ../root/.cache/pypoetry/virtualenvs/rag-app-gW_DSdP6-py3.10/lib/python3.10/site-packages/lancedb/pydantic.py:40
+#10 5.629   /root/.cache/pypoetry/virtualenvs/rag-app-gW_DSdP6-py3.10/lib/python3.10/site-packages/lancedb/pydantic.py:40: DeprecationWarning: Function 'semver.parse_version_info' is deprecated. Deprecated since version 2.10.0.  This function will be removed in semver 3. Use 'semver.version.Version.parse' instead.
+#10 5.629     PYDANTIC_VERSION = semver.parse_version_info(pydantic.__version__)
+#10 5.629 
+#10 5.629 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#10 5.629 4 tests collected in 3.38s
+#10 DONE 6.2s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 7.7s done
+#11 writing image sha256:0b6afec4d0575419052022779f0e39dc8a1510251981f0d32ff45f91ce70f3ec done
+#11 naming to docker.io/library/tmp:tmp done
+#11 DONE 7.7s

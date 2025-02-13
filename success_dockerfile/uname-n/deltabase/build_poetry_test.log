@@ -1,0 +1,66 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.26kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/library/python:3.11
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 106B done
+#5 DONE 0.0s
+
+#6 [4/7] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#6 CACHED
+
+#7 [3/7] COPY code_edit.py /code_edit.py
+#7 CACHED
+
+#8 [2/7] COPY search_patch /search_patch
+#8 CACHED
+
+#9 [5/7] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/uname-n/deltabase.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /deltabase/. /repo && rm -rf /deltabase/ &&     rm -rf /deltabase &&     cd /repo && git checkout 5eafb9d05316d005e2888cd1a1c71bf01e5f4e0f &&     cd /repo && poetry install &&     python /code_edit.py -t "/search_patch/0.patch" &&     cd /repo && poetry lock &&     cd /repo && poetry install
+#9 CACHED
+
+#10 [6/7] RUN cd /repo && poetry run pytest --collect-only -q
+#10 5.058 tests/test_deltabase.py::test_connect
+#10 5.058 tests/test_deltabase.py::test_add_record_dict
+#10 5.058 tests/test_deltabase.py::test_add_record_dataframe
+#10 5.058 tests/test_deltabase.py::test_add_record_lazyframe
+#10 5.058 tests/test_deltabase.py::test_add_mismatch_schema
+#10 5.058 tests/test_deltabase.py::test_update_record
+#10 5.058 tests/test_deltabase.py::test_update_mismatch_schema_record
+#10 5.058 tests/test_deltabase.py::test_delete_record_sql
+#10 5.058 tests/test_deltabase.py::test_delete_record_lambda
+#10 5.058 tests/test_deltabase.py::test_delete_record_wrong_type
+#10 5.058 tests/test_deltabase.py::test_schema_override
+#10 5.058 tests/test_deltabase.py::test_commit_and_versioning
+#10 5.058 tests/test_deltabase.py::test_commit_with_partitions
+#10 5.058 tests/test_deltabase.py::test_register_with_alias
+#10 5.058 tests/test_deltabase.py::test_json_output
+#10 5.058 tests/test_deltabase.py::test_override_dtype
+#10 5.058 tests/test_deltabase.py::test_collect_schema
+#10 5.058 tests/test_deltabase_workflow.py::test_connect
+#10 5.058 tests/test_deltabase_workflow.py::test_add_data
+#10 5.058 tests/test_deltabase_workflow.py::test_first_commit
+#10 5.058 tests/test_deltabase_workflow.py::test_delete_records
+#10 5.058 tests/test_deltabase_workflow.py::test_second_commit
+#10 5.058 tests/test_deltabase_workflow.py::test_checkout_original_commit
+#10 5.058 
+#10 5.058 23 tests collected in 3.39s
+#10 DONE 5.5s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 7.7s done
+#11 writing image sha256:4ad98a1d091e75a735c8a92122b4b7f0e0920c0d3115aa12f49d8cc83893cbc6 done
+#11 naming to docker.io/library/tmp:tmp done
+#11 DONE 7.7s

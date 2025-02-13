@@ -1,0 +1,755 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.09kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 24.72kB done
+#4 DONE 0.0s
+
+#5 [1/8] FROM docker.io/library/python:3.10
+#5 CACHED
+
+#6 [2/8] COPY search_patch /search_patch
+#6 DONE 0.0s
+
+#7 [3/8] COPY code_edit.py /code_edit.py
+#7 DONE 0.0s
+
+#8 [4/8] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#8 0.676 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#8 1.023 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#8 1.179 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+#8 1.277 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8789 kB]
+#8 1.848 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [8856 B]
+#8 2.000 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [240 kB]
+#8 3.151 Fetched 9292 kB in 3s (3283 kB/s)
+#8 3.151 Reading package lists...
+#8 3.941 Reading package lists...
+#8 4.730 Building dependency tree...
+#8 4.990 Reading state information...
+#8 5.455 curl is already the newest version (7.88.1-10+deb12u8).
+#8 5.455 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+#8 26.29 Retrieving Poetry metadata
+#8 26.29 
+#8 26.29 # Welcome to Poetry!
+#8 26.29 
+#8 26.29 This will download and install the latest version of Poetry,
+#8 26.29 a dependency and package manager for Python.
+#8 26.29 
+#8 26.29 It will add the `poetry` command to Poetry's bin directory, located at:
+#8 26.29 
+#8 26.29 /root/.local/bin
+#8 26.29 
+#8 26.29 You can uninstall at any time by executing this script with the --uninstall option,
+#8 26.29 and these changes will be reverted.
+#8 26.29 
+#8 26.29 Installing Poetry (2.0.0)
+#8 26.29 Installing Poetry (2.0.0): Creating environment
+#8 26.29 Installing Poetry (2.0.0): Installing Poetry
+#8 26.29 Installing Poetry (2.0.0): Creating script
+#8 26.29 Installing Poetry (2.0.0): Done
+#8 26.29 
+#8 26.29 Poetry (2.0.0) is installed now. Great!
+#8 26.29 
+#8 26.29 To get started you need Poetry's bin directory (/root/.local/bin) in your `PATH`
+#8 26.29 environment variable.
+#8 26.29 
+#8 26.29 Add `export PATH="/root/.local/bin:$PATH"` to your shell configuration file.
+#8 26.29 
+#8 26.29 Alternatively, you can call Poetry explicitly with `/root/.local/bin/poetry`.
+#8 26.29 
+#8 26.29 You can test that everything is set up by executing:
+#8 26.29 
+#8 26.29 `poetry --version`
+#8 26.29 
+#8 DONE 26.6s
+
+#9 [5/8] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/jlowin/fastmcp.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /fastmcp/. /repo && rm -rf /fastmcp/ &&     rm -rf /fastmcp &&     cd /repo && git checkout baa30086dad60a7dd530faee809d36d6ff7f5fa4 &&     pip install hatchling==1.27.0 hatch-vcs==0.4.0 &&     pip install hatch==1.14.0 &&     cd /repo && hatch env create &&     pip install pipreqs==0.5.0 &&     pipreqs /repo --force --ignore examples &&     pip install annotated_types==0.7.0 &&     pip install httpx==0.28.1 &&     pip install mcp==1.1.2 &&     pip install pydantic==2.10.4 &&     pip install pydantic_core==2.27.2 &&     pip install pydantic_settings==2.7.0 &&     pip install pytest==8.3.4 &&     pip install python-dotenv==1.0.1 &&     pip install rich==13.9.4 &&     pip install starlette==0.42.0 &&     pip install typer==0.15.1 &&     pip install typing_extensions==4.12.2 &&     pip install uvicorn==0.34.0
+#9 1.880 Looking in indexes: http://simple/
+#9 2.068 Collecting pytest
+#9 2.087   Downloading http://packages/pytest/pytest-8.3.4-py3-none-any.whl (343 kB)
+#9 2.111      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 343.1/343.1 kB 18.0 MB/s eta 0:00:00
+#9 2.196 Collecting pytest-xdist
+#9 2.215   Downloading http://packages/pytest-xdist/pytest_xdist-3.6.1-py3-none-any.whl (46 kB)
+#9 2.223      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.1/46.1 kB 8.8 MB/s eta 0:00:00
+#9 2.301 Collecting pluggy<2,>=1.5
+#9 2.324   Downloading http://packages/pluggy/pluggy-1.5.0-py3-none-any.whl (20 kB)
+#9 2.383 Collecting tomli>=1
+#9 2.401   Downloading http://packages/tomli/tomli-2.2.1-py3-none-any.whl (14 kB)
+#9 2.433 Collecting iniconfig
+#9 2.454   Downloading http://packages/iniconfig/iniconfig-2.0.0-py3-none-any.whl (5.9 kB)
+#9 2.514 Collecting exceptiongroup>=1.0.0rc8
+#9 2.572   Downloading http://packages/exceptiongroup/exceptiongroup-1.2.2-py3-none-any.whl (16 kB)
+#9 2.637 Collecting packaging
+#9 2.656   Downloading http://packages/packaging/packaging-24.2-py3-none-any.whl (65 kB)
+#9 2.669      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 65.5/65.5 kB 6.3 MB/s eta 0:00:00
+#9 2.735 Collecting execnet>=2.1
+#9 2.757   Downloading http://packages/execnet/execnet-2.1.1-py3-none-any.whl (40 kB)
+#9 2.765      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.6/40.6 kB 7.6 MB/s eta 0:00:00
+#9 2.886 Installing collected packages: tomli, pluggy, packaging, iniconfig, execnet, exceptiongroup, pytest, pytest-xdist
+#9 3.417 Successfully installed exceptiongroup-1.2.2 execnet-2.1.1 iniconfig-2.0.0 packaging-24.2 pluggy-1.5.0 pytest-8.3.4 pytest-xdist-3.6.1 tomli-2.2.1
+#9 3.418 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 3.545 
+#9 3.545 [notice] A new release of pip is available: 23.0.1 -> 24.3.1
+#9 3.545 [notice] To update, run: pip install --upgrade pip
+#9 4.215 Looking in indexes: http://simple/
+#9 4.296 Collecting pipdeptree
+#9 4.317   Downloading http://packages/pipdeptree/pipdeptree-2.24.0-py3-none-any.whl (32 kB)
+#9 4.472 Collecting pip>=24.2
+#9 4.483   Using cached http://packages/pip/pip-24.3.1-py3-none-any.whl (1.8 MB)
+#9 4.501 Requirement already satisfied: packaging>=24.1 in /usr/local/lib/python3.10/site-packages (from pipdeptree) (24.2)
+#9 4.605 Installing collected packages: pip, pipdeptree
+#9 4.606   Attempting uninstall: pip
+#9 4.607     Found existing installation: pip 23.0.1
+#9 4.767     Uninstalling pip-23.0.1:
+#9 4.945       Successfully uninstalled pip-23.0.1
+#9 6.184 Successfully installed pip-24.3.1 pipdeptree-2.24.0
+#9 6.184 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 6.367 Cloning into 'fastmcp'...
+#9 8.457 Note: switching to 'baa30086dad60a7dd530faee809d36d6ff7f5fa4'.
+#9 8.457 
+#9 8.457 You are in 'detached HEAD' state. You can look around, make experimental
+#9 8.457 changes and commit them, and you can discard any commits you make in this
+#9 8.457 state without impacting any branches by switching back to a branch.
+#9 8.457 
+#9 8.457 If you want to create a new branch to retain commits you create, you may
+#9 8.457 do so (now or later) by using -c with the switch command. Example:
+#9 8.457 
+#9 8.457   git switch -c <new-branch-name>
+#9 8.457 
+#9 8.457 Or undo this operation with:
+#9 8.457 
+#9 8.457   git switch -
+#9 8.457 
+#9 8.457 Turn off this advice by setting config variable advice.detachedHead to false
+#9 8.457 
+#9 8.457 HEAD is now at baa3008 Merge pull request #56 from jurasofish/decorator_typing
+#9 9.037 Looking in indexes: http://simple/
+#9 9.104 Collecting hatchling==1.27.0
+#9 9.128   Downloading http://packages/hatchling/hatchling-1.27.0-py3-none-any.whl (75 kB)
+#9 9.170 Collecting hatch-vcs==0.4.0
+#9 9.190   Downloading http://packages/hatch-vcs/hatch_vcs-0.4.0-py3-none-any.whl (8.4 kB)
+#9 9.200 Requirement already satisfied: packaging>=24.2 in /usr/local/lib/python3.10/site-packages (from hatchling==1.27.0) (24.2)
+#9 9.224 Collecting pathspec>=0.10.1 (from hatchling==1.27.0)
+#9 9.246   Downloading http://packages/pathspec/pathspec-0.12.1-py3-none-any.whl (31 kB)
+#9 9.256 Requirement already satisfied: pluggy>=1.0.0 in /usr/local/lib/python3.10/site-packages (from hatchling==1.27.0) (1.5.0)
+#9 9.257 Requirement already satisfied: tomli>=1.2.2 in /usr/local/lib/python3.10/site-packages (from hatchling==1.27.0) (2.2.1)
+#9 9.311 Collecting trove-classifiers (from hatchling==1.27.0)
+#9 9.314   Using cached http://packages/trove-classifiers/trove_classifiers-2025.1.6.15-py3-none-any.whl (13 kB)
+#9 9.446 Collecting setuptools-scm>=6.4.0 (from hatch-vcs==0.4.0)
+#9 9.464   Downloading http://packages/setuptools-scm/setuptools_scm-8.1.0-py3-none-any.whl (43 kB)
+#9 9.488 Requirement already satisfied: setuptools in /usr/local/lib/python3.10/site-packages (from setuptools-scm>=6.4.0->hatch-vcs==0.4.0) (65.5.1)
+#9 9.527 Installing collected packages: trove-classifiers, setuptools-scm, pathspec, hatchling, hatch-vcs
+#9 9.721 Successfully installed hatch-vcs-0.4.0 hatchling-1.27.0 pathspec-0.12.1 setuptools-scm-8.1.0 trove-classifiers-2025.1.6.15
+#9 9.722 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 10.42 Looking in indexes: http://simple/
+#9 10.61 Collecting hatch==1.14.0
+#9 10.68   Downloading http://packages/hatch/hatch-1.14.0-py3-none-any.whl (125 kB)
+#9 10.75 Collecting click>=8.0.6 (from hatch==1.14.0)
+#9 10.77   Downloading http://packages/click/click-8.1.8-py3-none-any.whl (98 kB)
+#9 10.79 Requirement already satisfied: hatchling>=1.26.3 in /usr/local/lib/python3.10/site-packages (from hatch==1.14.0) (1.27.0)
+#9 10.84 Collecting httpx>=0.22.0 (from hatch==1.14.0)
+#9 10.86   Downloading http://packages/httpx/httpx-0.28.1-py3-none-any.whl (73 kB)
+#9 10.90 Collecting hyperlink>=21.0.0 (from hatch==1.14.0)
+#9 10.92   Downloading http://packages/hyperlink/hyperlink-21.0.0-py2.py3-none-any.whl (74 kB)
+#9 11.07 Collecting keyring>=23.5.0 (from hatch==1.14.0)
+#9 11.08   Using cached http://packages/keyring/keyring-25.6.0-py3-none-any.whl (39 kB)
+#9 11.09 Requirement already satisfied: packaging>=23.2 in /usr/local/lib/python3.10/site-packages (from hatch==1.14.0) (24.2)
+#9 11.11 Collecting pexpect~=4.8 (from hatch==1.14.0)
+#9 11.13   Downloading http://packages/pexpect/pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
+#9 11.19 Collecting platformdirs>=2.5.0 (from hatch==1.14.0)
+#9 11.19   Using cached http://packages/platformdirs/platformdirs-4.3.6-py3-none-any.whl (18 kB)
+#9 11.34 Collecting rich>=11.2.0 (from hatch==1.14.0)
+#9 11.36   Downloading http://packages/rich/rich-13.9.4-py3-none-any.whl (242 kB)
+#9 11.42 Collecting shellingham>=1.4.0 (from hatch==1.14.0)
+#9 11.42   Using cached http://packages/shellingham/shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+#9 11.45 Collecting tomli-w>=1.0 (from hatch==1.14.0)
+#9 11.47   Downloading http://packages/tomli-w/tomli_w-1.1.0-py3-none-any.whl (6.4 kB)
+#9 11.54 Collecting tomlkit>=0.11.1 (from hatch==1.14.0)
+#9 11.54   Using cached http://packages/tomlkit/tomlkit-0.13.2-py3-none-any.whl (37 kB)
+#9 11.57 Collecting userpath~=1.7 (from hatch==1.14.0)
+#9 11.59   Downloading http://packages/userpath/userpath-1.9.2-py3-none-any.whl (9.1 kB)
+#9 12.04 Collecting uv>=0.1.35 (from hatch==1.14.0)
+#9 12.07   Downloading http://packages/uv/uv-0.5.15-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (15.2 MB)
+#9 12.18      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.2/15.2 MB 166.3 MB/s eta 0:00:00
+#9 12.40 Collecting virtualenv>=20.26.6 (from hatch==1.14.0)
+#9 12.40   Using cached http://packages/virtualenv/virtualenv-20.28.1-py3-none-any.whl (4.3 MB)
+#9 12.59 Collecting zstandard<1 (from hatch==1.14.0)
+#9 12.61   Downloading http://packages/zstandard/zstandard-0.23.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (5.4 MB)
+#9 12.68      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 106.4 MB/s eta 0:00:00
+#9 12.71 Requirement already satisfied: pathspec>=0.10.1 in /usr/local/lib/python3.10/site-packages (from hatchling>=1.26.3->hatch==1.14.0) (0.12.1)
+#9 12.71 Requirement already satisfied: pluggy>=1.0.0 in /usr/local/lib/python3.10/site-packages (from hatchling>=1.26.3->hatch==1.14.0) (1.5.0)
+#9 12.71 Requirement already satisfied: tomli>=1.2.2 in /usr/local/lib/python3.10/site-packages (from hatchling>=1.26.3->hatch==1.14.0) (2.2.1)
+#9 12.71 Requirement already satisfied: trove-classifiers in /usr/local/lib/python3.10/site-packages (from hatchling>=1.26.3->hatch==1.14.0) (2025.1.6.15)
+#9 12.77 Collecting anyio (from httpx>=0.22.0->hatch==1.14.0)
+#9 12.79   Downloading http://packages/anyio/anyio-4.8.0-py3-none-any.whl (96 kB)
+#9 12.86 Collecting certifi (from httpx>=0.22.0->hatch==1.14.0)
+#9 12.86   Using cached http://packages/certifi/certifi-2024.12.14-py3-none-any.whl (164 kB)
+#9 12.92 Collecting httpcore==1.* (from httpx>=0.22.0->hatch==1.14.0)
+#9 12.94   Downloading http://packages/httpcore/httpcore-1.0.7-py3-none-any.whl (78 kB)
+#9 12.99 Collecting idna (from httpx>=0.22.0->hatch==1.14.0)
+#9 12.99   Using cached http://packages/idna/idna-3.10-py3-none-any.whl (70 kB)
+#9 13.02 Collecting h11<0.15,>=0.13 (from httpcore==1.*->httpx>=0.22.0->hatch==1.14.0)
+#9 13.04   Downloading http://packages/h11/h11-0.14.0-py3-none-any.whl (58 kB)
+#9 13.10 Collecting SecretStorage>=3.2 (from keyring>=23.5.0->hatch==1.14.0)
+#9 13.10   Using cached http://packages/secretstorage/SecretStorage-3.3.3-py3-none-any.whl (15 kB)
+#9 13.13 Collecting jeepney>=0.4.2 (from keyring>=23.5.0->hatch==1.14.0)
+#9 13.13   Using cached http://packages/jeepney/jeepney-0.8.0-py3-none-any.whl (48 kB)
+#9 13.24 Collecting importlib_metadata>=4.11.4 (from keyring>=23.5.0->hatch==1.14.0)
+#9 13.25   Using cached http://packages/importlib-metadata/importlib_metadata-8.5.0-py3-none-any.whl (26 kB)
+#9 13.28 Collecting jaraco.classes (from keyring>=23.5.0->hatch==1.14.0)
+#9 13.29   Using cached http://packages/jaraco-classes/jaraco.classes-3.4.0-py3-none-any.whl (6.8 kB)
+#9 13.33 Collecting jaraco.functools (from keyring>=23.5.0->hatch==1.14.0)
+#9 13.33   Using cached http://packages/jaraco-functools/jaraco.functools-4.1.0-py3-none-any.whl (10 kB)
+#9 13.37 Collecting jaraco.context (from keyring>=23.5.0->hatch==1.14.0)
+#9 13.38   Using cached http://packages/jaraco-context/jaraco.context-6.0.1-py3-none-any.whl (6.8 kB)
+#9 13.41 Collecting ptyprocess>=0.5 (from pexpect~=4.8->hatch==1.14.0)
+#9 13.43   Downloading http://packages/ptyprocess/ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
+#9 13.48 Collecting markdown-it-py>=2.2.0 (from rich>=11.2.0->hatch==1.14.0)
+#9 13.50   Downloading http://packages/markdown-it-py/markdown_it_py-3.0.0-py3-none-any.whl (87 kB)
+#9 13.60 Collecting pygments<3.0.0,>=2.13.0 (from rich>=11.2.0->hatch==1.14.0)
+#9 13.67   Downloading http://packages/pygments/pygments-2.19.1-py3-none-any.whl (1.2 MB)
+#9 13.75      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 14.9 MB/s eta 0:00:00
+#9 13.81 Collecting typing-extensions<5.0,>=4.0.0 (from rich>=11.2.0->hatch==1.14.0)
+#9 13.83   Downloading http://packages/typing-extensions/typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+#9 13.88 Collecting distlib<1,>=0.3.7 (from virtualenv>=20.26.6->hatch==1.14.0)
+#9 13.88   Using cached http://packages/distlib/distlib-0.3.9-py2.py3-none-any.whl (468 kB)
+#9 13.94 Collecting filelock<4,>=3.12.2 (from virtualenv>=20.26.6->hatch==1.14.0)
+#9 13.94   Using cached http://packages/filelock/filelock-3.16.1-py3-none-any.whl (16 kB)
+#9 14.02 Collecting zipp>=3.20 (from importlib_metadata>=4.11.4->keyring>=23.5.0->hatch==1.14.0)
+#9 14.02   Using cached http://packages/zipp/zipp-3.21.0-py3-none-any.whl (9.6 kB)
+#9 14.05 Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=11.2.0->hatch==1.14.0)
+#9 14.07   Downloading http://packages/mdurl/mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+#9 14.55 Collecting cryptography>=2.0 (from SecretStorage>=3.2->keyring>=23.5.0->hatch==1.14.0)
+#9 14.55   Using cached http://packages/cryptography/cryptography-44.0.0-cp39-abi3-manylinux_2_28_x86_64.whl (4.2 MB)
+#9 14.59 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio->httpx>=0.22.0->hatch==1.14.0) (1.2.2)
+#9 14.63 Collecting sniffio>=1.1 (from anyio->httpx>=0.22.0->hatch==1.14.0)
+#9 14.64   Downloading http://packages/sniffio/sniffio-1.3.1-py3-none-any.whl (10 kB)
+#9 14.71 Collecting more-itertools (from jaraco.classes->keyring>=23.5.0->hatch==1.14.0)
+#9 14.71   Using cached http://packages/more-itertools/more_itertools-10.5.0-py3-none-any.whl (60 kB)
+#9 14.74 Collecting backports.tarfile (from jaraco.context->keyring>=23.5.0->hatch==1.14.0)
+#9 14.74   Using cached http://packages/backports-tarfile/backports.tarfile-1.2.0-py3-none-any.whl (30 kB)
+#9 14.99 Collecting cffi>=1.12 (from cryptography>=2.0->SecretStorage>=3.2->keyring>=23.5.0->hatch==1.14.0)
+#9 14.99   Using cached http://packages/cffi/cffi-1.17.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (446 kB)
+#9 15.06 Collecting pycparser (from cffi>=1.12->cryptography>=2.0->SecretStorage>=3.2->keyring>=23.5.0->hatch==1.14.0)
+#9 15.06   Using cached http://packages/pycparser/pycparser-2.22-py3-none-any.whl (117 kB)
+#9 15.25 Installing collected packages: ptyprocess, distlib, zstandard, zipp, uv, typing-extensions, tomlkit, tomli-w, sniffio, shellingham, pygments, pycparser, platformdirs, pexpect, more-itertools, mdurl, jeepney, idna, h11, filelock, click, certifi, backports.tarfile, virtualenv, userpath, markdown-it-py, jaraco.functools, jaraco.context, jaraco.classes, importlib_metadata, hyperlink, httpcore, cffi, anyio, rich, httpx, cryptography, SecretStorage, keyring, hatch
+#9 19.25 Successfully installed SecretStorage-3.3.3 anyio-4.8.0 backports.tarfile-1.2.0 certifi-2024.12.14 cffi-1.17.1 click-8.1.8 cryptography-44.0.0 distlib-0.3.9 filelock-3.16.1 h11-0.14.0 hatch-1.14.0 httpcore-1.0.7 httpx-0.28.1 hyperlink-21.0.0 idna-3.10 importlib_metadata-8.5.0 jaraco.classes-3.4.0 jaraco.context-6.0.1 jaraco.functools-4.1.0 jeepney-0.8.0 keyring-25.6.0 markdown-it-py-3.0.0 mdurl-0.1.2 more-itertools-10.5.0 pexpect-4.9.0 platformdirs-4.3.6 ptyprocess-0.7.0 pycparser-2.22 pygments-2.19.1 rich-13.9.4 shellingham-1.5.4 sniffio-1.3.1 tomli-w-1.1.0 tomlkit-0.13.2 typing-extensions-4.12.2 userpath-1.9.2 uv-0.5.15 virtualenv-20.28.1 zipp-3.21.0 zstandard-0.23.0
+#9 19.26 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 20.71 Creating environment: default
+#9 21.21 Installing project in development mode
+#9 33.91 Checking dependencies
+#9 34.65 Looking in indexes: http://simple/
+#9 34.70 Collecting pipreqs==0.5.0
+#9 34.72   Downloading http://packages/pipreqs/pipreqs-0.5.0-py3-none-any.whl (33 kB)
+#9 34.75 Collecting docopt==0.6.2 (from pipreqs==0.5.0)
+#9 34.77   Downloading http://packages/docopt/docopt-0.6.2.tar.gz (25 kB)
+#9 34.79   Preparing metadata (setup.py): started
+#9 35.71   Preparing metadata (setup.py): finished with status 'done'
+#9 35.84 Collecting ipython==8.12.3 (from pipreqs==0.5.0)
+#9 35.86   Downloading http://packages/ipython/ipython-8.12.3-py3-none-any.whl (798 kB)
+#9 35.89      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 798.3/798.3 kB 41.4 MB/s eta 0:00:00
+#9 36.00 Collecting nbconvert<8.0.0,>=7.11.0 (from pipreqs==0.5.0)
+#9 36.02   Downloading http://packages/nbconvert/nbconvert-7.16.5-py3-none-any.whl (258 kB)
+#9 36.07 Collecting yarg==0.1.9 (from pipreqs==0.5.0)
+#9 36.09   Downloading http://packages/yarg/yarg-0.1.9-py2.py3-none-any.whl (19 kB)
+#9 36.12 Collecting backcall (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.14   Downloading http://packages/backcall/backcall-0.2.0-py2.py3-none-any.whl (11 kB)
+#9 36.25 Collecting decorator (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.27   Downloading http://packages/decorator/decorator-5.1.1-py3-none-any.whl (9.1 kB)
+#9 36.31 Collecting jedi>=0.16 (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.33   Downloading http://packages/jedi/jedi-0.19.2-py2.py3-none-any.whl (1.6 MB)
+#9 36.37      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 60.7 MB/s eta 0:00:00
+#9 36.43 Collecting matplotlib-inline (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.45   Downloading http://packages/matplotlib-inline/matplotlib_inline-0.1.7-py3-none-any.whl (9.9 kB)
+#9 36.48 Collecting pickleshare (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.50   Downloading http://packages/pickleshare/pickleshare-0.7.5-py2.py3-none-any.whl (6.9 kB)
+#9 36.59 Collecting prompt-toolkit!=3.0.37,<3.1.0,>=3.0.30 (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.61   Downloading http://packages/prompt-toolkit/prompt_toolkit-3.0.48-py3-none-any.whl (386 kB)
+#9 36.64 Requirement already satisfied: pygments>=2.4.0 in /usr/local/lib/python3.10/site-packages (from ipython==8.12.3->pipreqs==0.5.0) (2.19.1)
+#9 36.66 Collecting stack-data (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.68   Downloading http://packages/stack-data/stack_data-0.6.3-py3-none-any.whl (24 kB)
+#9 36.73 Collecting traitlets>=5 (from ipython==8.12.3->pipreqs==0.5.0)
+#9 36.75   Downloading http://packages/traitlets/traitlets-5.14.3-py3-none-any.whl (85 kB)
+#9 36.77 Requirement already satisfied: pexpect>4.3 in /usr/local/lib/python3.10/site-packages (from ipython==8.12.3->pipreqs==0.5.0) (4.9.0)
+#9 36.84 Collecting requests (from yarg==0.1.9->pipreqs==0.5.0)
+#9 36.85   Using cached http://packages/requests/requests-2.32.3-py3-none-any.whl (64 kB)
+#9 36.89 Collecting beautifulsoup4 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 36.92   Downloading http://packages/beautifulsoup4/beautifulsoup4-4.12.3-py3-none-any.whl (147 kB)
+#9 36.99 Collecting bleach!=5.0.0 (from bleach[css]!=5.0.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.00   Downloading http://packages/bleach/bleach-6.2.0-py3-none-any.whl (163 kB)
+#9 37.05 Collecting defusedxml (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.07   Downloading http://packages/defusedxml/defusedxml-0.7.1-py2.py3-none-any.whl (25 kB)
+#9 37.12 Collecting jinja2>=3.0 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.14   Downloading http://packages/jinja2/jinja2-3.1.5-py3-none-any.whl (134 kB)
+#9 37.21 Collecting jupyter-core>=4.7 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.23   Downloading http://packages/jupyter-core/jupyter_core-5.7.2-py3-none-any.whl (28 kB)
+#9 37.27 Collecting jupyterlab-pygments (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.29   Downloading http://packages/jupyterlab-pygments/jupyterlab_pygments-0.3.0-py3-none-any.whl (15 kB)
+#9 37.42 Collecting markupsafe>=2.0 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.44   Downloading http://packages/markupsafe/MarkupSafe-3.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20 kB)
+#9 37.48 Collecting mistune<4,>=2.0.3 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.50   Downloading http://packages/mistune/mistune-3.1.0-py3-none-any.whl (53 kB)
+#9 37.55 Collecting nbclient>=0.5.0 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.57   Downloading http://packages/nbclient/nbclient-0.10.2-py3-none-any.whl (25 kB)
+#9 37.62 Collecting nbformat>=5.7 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.64   Downloading http://packages/nbformat/nbformat-5.10.4-py3-none-any.whl (78 kB)
+#9 37.66 Requirement already satisfied: packaging in /usr/local/lib/python3.10/site-packages (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0) (24.2)
+#9 37.68 Collecting pandocfilters>=1.4.1 (from nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.70   Downloading http://packages/pandocfilters/pandocfilters-1.5.1-py2.py3-none-any.whl (8.7 kB)
+#9 37.74 Collecting webencodings (from bleach!=5.0.0->bleach[css]!=5.0.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.76   Downloading http://packages/webencodings/webencodings-0.5.1-py2.py3-none-any.whl (11 kB)
+#9 37.80 Collecting tinycss2<1.5,>=1.1.0 (from bleach[css]!=5.0.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 37.82   Downloading http://packages/tinycss2/tinycss2-1.4.0-py3-none-any.whl (26 kB)
+#9 37.86 Collecting parso<0.9.0,>=0.8.4 (from jedi>=0.16->ipython==8.12.3->pipreqs==0.5.0)
+#9 37.88   Downloading http://packages/parso/parso-0.8.4-py2.py3-none-any.whl (103 kB)
+#9 37.91 Requirement already satisfied: platformdirs>=2.5 in /usr/local/lib/python3.10/site-packages (from jupyter-core>=4.7->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0) (4.3.6)
+#9 37.92 Requirement already satisfied: typing-extensions in /usr/local/lib/python3.10/site-packages (from mistune<4,>=2.0.3->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0) (4.12.2)
+#9 38.00 Collecting jupyter-client>=6.1.12 (from nbclient>=0.5.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 38.02   Downloading http://packages/jupyter-client/jupyter_client-8.6.3-py3-none-any.whl (106 kB)
+#9 38.10 Collecting fastjsonschema>=2.15 (from nbformat>=5.7->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 38.11   Using cached http://packages/fastjsonschema/fastjsonschema-2.21.1-py3-none-any.whl (23 kB)
+#9 38.18 Collecting jsonschema>=2.6 (from nbformat>=5.7->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 38.20   Downloading http://packages/jsonschema/jsonschema-4.23.0-py3-none-any.whl (88 kB)
+#9 38.22 Requirement already satisfied: ptyprocess>=0.5 in /usr/local/lib/python3.10/site-packages (from pexpect>4.3->ipython==8.12.3->pipreqs==0.5.0) (0.7.0)
+#9 38.25 Collecting wcwidth (from prompt-toolkit!=3.0.37,<3.1.0,>=3.0.30->ipython==8.12.3->pipreqs==0.5.0)
+#9 38.27   Downloading http://packages/wcwidth/wcwidth-0.2.13-py2.py3-none-any.whl (34 kB)
+#9 38.33 Collecting soupsieve>1.2 (from beautifulsoup4->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 38.35   Downloading http://packages/soupsieve/soupsieve-2.6-py3-none-any.whl (36 kB)
+#9 38.58 Collecting charset-normalizer<4,>=2 (from requests->yarg==0.1.9->pipreqs==0.5.0)
+#9 38.59   Using cached http://packages/charset-normalizer/charset_normalizer-3.4.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (146 kB)
+#9 38.59 Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/site-packages (from requests->yarg==0.1.9->pipreqs==0.5.0) (3.10)
+#9 38.69 Collecting urllib3<3,>=1.21.1 (from requests->yarg==0.1.9->pipreqs==0.5.0)
+#9 38.69   Using cached http://packages/urllib3/urllib3-2.3.0-py3-none-any.whl (128 kB)
+#9 38.70 Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/site-packages (from requests->yarg==0.1.9->pipreqs==0.5.0) (2024.12.14)
+#9 38.73 Collecting executing>=1.2.0 (from stack-data->ipython==8.12.3->pipreqs==0.5.0)
+#9 38.75   Downloading http://packages/executing/executing-2.1.0-py2.py3-none-any.whl (25 kB)
+#9 38.79 Collecting asttokens>=2.1.0 (from stack-data->ipython==8.12.3->pipreqs==0.5.0)
+#9 38.81   Downloading http://packages/asttokens/asttokens-3.0.0-py3-none-any.whl (26 kB)
+#9 38.85 Collecting pure-eval (from stack-data->ipython==8.12.3->pipreqs==0.5.0)
+#9 38.87   Downloading http://packages/pure-eval/pure_eval-0.2.3-py3-none-any.whl (11 kB)
+#9 38.93 Collecting attrs>=22.2.0 (from jsonschema>=2.6->nbformat>=5.7->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 38.96   Downloading http://packages/attrs/attrs-24.3.0-py3-none-any.whl (63 kB)
+#9 39.02 Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=2.6->nbformat>=5.7->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 39.05   Downloading http://packages/jsonschema-specifications/jsonschema_specifications-2024.10.1-py3-none-any.whl (18 kB)
+#9 39.13 Collecting referencing>=0.28.4 (from jsonschema>=2.6->nbformat>=5.7->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 39.15   Downloading http://packages/referencing/referencing-0.35.1-py3-none-any.whl (26 kB)
+#9 39.74 Collecting rpds-py>=0.7.1 (from jsonschema>=2.6->nbformat>=5.7->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 39.76   Downloading http://packages/rpds-py/rpds_py-0.22.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (381 kB)
+#9 39.82 Collecting python-dateutil>=2.8.2 (from jupyter-client>=6.1.12->nbclient>=0.5.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 39.85   Downloading http://packages/python-dateutil/python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#9 40.38 Collecting pyzmq>=23.0 (from jupyter-client>=6.1.12->nbclient>=0.5.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 40.40   Downloading http://packages/pyzmq/pyzmq-26.2.0-cp310-cp310-manylinux_2_28_x86_64.whl (868 kB)
+#9 40.44      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 868.8/868.8 kB 40.0 MB/s eta 0:00:00
+#9 40.52 Collecting tornado>=6.2 (from jupyter-client>=6.1.12->nbclient>=0.5.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 40.55   Downloading http://packages/tornado/tornado-6.4.2-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (437 kB)
+#9 40.66 Collecting six>=1.5 (from python-dateutil>=2.8.2->jupyter-client>=6.1.12->nbclient>=0.5.0->nbconvert<8.0.0,>=7.11.0->pipreqs==0.5.0)
+#9 40.68   Downloading http://packages/six/six-1.17.0-py2.py3-none-any.whl (11 kB)
+#9 40.72 Building wheels for collected packages: docopt
+#9 40.72   Building wheel for docopt (setup.py): started
+#9 41.77   Building wheel for docopt (setup.py): finished with status 'done'
+#9 41.77   Created wheel for docopt: filename=docopt-0.6.2-py2.py3-none-any.whl size=13706 sha256=f0bef57d534fe1a894fd6290b90a29b6db3f7fa79262fe7a34793d92e4c45050
+#9 41.77   Stored in directory: /root/.cache/pip/wheels/7c/dc/14/4270e6eea3687c07faf7569b8b41620e92709a152739d136d5
+#9 41.77 Successfully built docopt
+#9 42.10 Installing collected packages: webencodings, wcwidth, pure-eval, pickleshare, fastjsonschema, docopt, backcall, urllib3, traitlets, tornado, tinycss2, soupsieve, six, rpds-py, pyzmq, prompt-toolkit, parso, pandocfilters, mistune, markupsafe, jupyterlab-pygments, executing, defusedxml, decorator, charset-normalizer, bleach, attrs, asttokens, stack-data, requests, referencing, python-dateutil, matplotlib-inline, jupyter-core, jinja2, jedi, beautifulsoup4, yarg, jupyter-client, jsonschema-specifications, ipython, jsonschema, nbformat, nbclient, nbconvert, pipreqs
+#9 46.29 Successfully installed asttokens-3.0.0 attrs-24.3.0 backcall-0.2.0 beautifulsoup4-4.12.3 bleach-6.2.0 charset-normalizer-3.4.1 decorator-5.1.1 defusedxml-0.7.1 docopt-0.6.2 executing-2.1.0 fastjsonschema-2.21.1 ipython-8.12.3 jedi-0.19.2 jinja2-3.1.5 jsonschema-4.23.0 jsonschema-specifications-2024.10.1 jupyter-client-8.6.3 jupyter-core-5.7.2 jupyterlab-pygments-0.3.0 markupsafe-3.0.2 matplotlib-inline-0.1.7 mistune-3.1.0 nbclient-0.10.2 nbconvert-7.16.5 nbformat-5.10.4 pandocfilters-1.5.1 parso-0.8.4 pickleshare-0.7.5 pipreqs-0.5.0 prompt-toolkit-3.0.48 pure-eval-0.2.3 python-dateutil-2.9.0.post0 pyzmq-26.2.0 referencing-0.35.1 requests-2.32.3 rpds-py-0.22.3 six-1.17.0 soupsieve-2.6 stack-data-0.6.3 tinycss2-1.4.0 tornado-6.4.2 traitlets-5.14.3 urllib3-2.3.0 wcwidth-0.2.13 webencodings-0.5.1 yarg-0.1.9
+#9 46.29 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 47.18 INFO: Not scanning for jupyter notebooks.
+#9 47.43 WARNING: Import named "annotated_types" not found locally. Trying to resolve it at the PyPI server.
+#9 48.37 WARNING: Import named "annotated_types" was resolved to "annotated-types:0.7.0" package (https://pypi.org/project/annotated-types/).
+#9 48.37 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 48.37 WARNING: Import named "httpx" not found locally. Trying to resolve it at the PyPI server.
+#9 49.37 WARNING: Import named "httpx" was resolved to "httpx:0.28.1" package (https://pypi.org/project/httpx/).
+#9 49.37 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 49.37 WARNING: Import named "mcp" not found locally. Trying to resolve it at the PyPI server.
+#9 50.59 WARNING: Import named "mcp" was resolved to "mcp:1.2.0" package (https://pypi.org/project/mcp/).
+#9 50.59 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 50.59 WARNING: Import named "pydantic" not found locally. Trying to resolve it at the PyPI server.
+#9 51.92 WARNING: Import named "pydantic" was resolved to "pydantic:2.10.4" package (https://pypi.org/project/pydantic/).
+#9 51.92 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 51.92 WARNING: Import named "pydantic_core" not found locally. Trying to resolve it at the PyPI server.
+#9 53.62 WARNING: Import named "pydantic_core" was resolved to "pydantic-core:2.27.2" package (https://pypi.org/project/pydantic-core/).
+#9 53.62 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 53.62 WARNING: Import named "pydantic_settings" not found locally. Trying to resolve it at the PyPI server.
+#9 54.97 WARNING: Import named "pydantic_settings" was resolved to "pydantic-settings:2.7.1" package (https://pypi.org/project/pydantic-settings/).
+#9 54.97 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 54.97 WARNING: Import named "python-dotenv" not found locally. Trying to resolve it at the PyPI server.
+#9 56.15 WARNING: Import named "python-dotenv" was resolved to "python-dotenv:1.0.1" package (https://pypi.org/project/python-dotenv/).
+#9 56.15 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 56.15 WARNING: Import named "rich" not found locally. Trying to resolve it at the PyPI server.
+#9 58.00 WARNING: Import named "rich" was resolved to "rich:13.9.4" package (https://pypi.org/project/rich/).
+#9 58.00 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 58.00 WARNING: Import named "starlette" not found locally. Trying to resolve it at the PyPI server.
+#9 59.07 WARNING: Import named "starlette" was resolved to "starlette:0.45.2" package (https://pypi.org/project/starlette/).
+#9 59.07 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 59.07 WARNING: Import named "typer" not found locally. Trying to resolve it at the PyPI server.
+#9 60.75 WARNING: Import named "typer" was resolved to "typer:0.15.1" package (https://pypi.org/project/typer/).
+#9 60.75 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 60.75 WARNING: Import named "typing_extensions" not found locally. Trying to resolve it at the PyPI server.
+#9 61.86 WARNING: Import named "typing_extensions" was resolved to "typing-extensions:4.12.2" package (https://pypi.org/project/typing-extensions/).
+#9 61.86 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 61.86 WARNING: Import named "uvicorn" not found locally. Trying to resolve it at the PyPI server.
+#9 63.81 WARNING: Import named "uvicorn" was resolved to "uvicorn:0.34.0" package (https://pypi.org/project/uvicorn/).
+#9 63.81 Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+#9 63.81 INFO: Successfully saved requirements file in /repo/requirements.txt
+#9 64.49 Looking in indexes: http://simple/
+#9 64.52 Collecting annotated_types==0.7.0
+#9 64.52   Using cached http://packages/annotated-types/annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#9 64.80 Installing collected packages: annotated_types
+#9 64.84 Successfully installed annotated_types-0.7.0
+#9 64.84 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 65.63 Looking in indexes: http://simple/
+#9 65.63 Requirement already satisfied: httpx==0.28.1 in /usr/local/lib/python3.10/site-packages (0.28.1)
+#9 65.63 Requirement already satisfied: anyio in /usr/local/lib/python3.10/site-packages (from httpx==0.28.1) (4.8.0)
+#9 65.63 Requirement already satisfied: certifi in /usr/local/lib/python3.10/site-packages (from httpx==0.28.1) (2024.12.14)
+#9 65.64 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx==0.28.1) (1.0.7)
+#9 65.64 Requirement already satisfied: idna in /usr/local/lib/python3.10/site-packages (from httpx==0.28.1) (3.10)
+#9 65.64 Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx==0.28.1) (0.14.0)
+#9 65.65 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio->httpx==0.28.1) (1.2.2)
+#9 65.65 Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.10/site-packages (from anyio->httpx==0.28.1) (1.3.1)
+#9 65.65 Requirement already satisfied: typing_extensions>=4.5 in /usr/local/lib/python3.10/site-packages (from anyio->httpx==0.28.1) (4.12.2)
+#9 65.93 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 66.76 Looking in indexes: http://simple/
+#9 66.87 Collecting mcp==1.1.2
+#9 66.97   Downloading http://packages/mcp/mcp-1.1.2-py3-none-any.whl (36 kB)
+#9 66.99 Requirement already satisfied: anyio>=4.5 in /usr/local/lib/python3.10/site-packages (from mcp==1.1.2) (4.8.0)
+#9 67.01 Collecting httpx-sse>=0.4 (from mcp==1.1.2)
+#9 67.01   Using cached http://packages/httpx-sse/httpx_sse-0.4.0-py3-none-any.whl (7.8 kB)
+#9 67.01 Requirement already satisfied: httpx>=0.27 in /usr/local/lib/python3.10/site-packages (from mcp==1.1.2) (0.28.1)
+#9 67.32 Collecting pydantic>=2.7.2 (from mcp==1.1.2)
+#9 67.33   Using cached http://packages/pydantic/pydantic-2.10.4-py3-none-any.whl (431 kB)
+#9 67.37 Collecting sse-starlette>=1.6.1 (from mcp==1.1.2)
+#9 67.37   Using cached http://packages/sse-starlette/sse_starlette-2.2.1-py3-none-any.whl (10 kB)
+#9 67.45 Collecting starlette>=0.27 (from mcp==1.1.2)
+#9 67.45   Using cached http://packages/starlette/starlette-0.45.2-py3-none-any.whl (71 kB)
+#9 67.47 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio>=4.5->mcp==1.1.2) (1.2.2)
+#9 67.47 Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.10/site-packages (from anyio>=4.5->mcp==1.1.2) (3.10)
+#9 67.47 Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.10/site-packages (from anyio>=4.5->mcp==1.1.2) (1.3.1)
+#9 67.47 Requirement already satisfied: typing_extensions>=4.5 in /usr/local/lib/python3.10/site-packages (from anyio>=4.5->mcp==1.1.2) (4.12.2)
+#9 67.48 Requirement already satisfied: certifi in /usr/local/lib/python3.10/site-packages (from httpx>=0.27->mcp==1.1.2) (2024.12.14)
+#9 67.48 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/site-packages (from httpx>=0.27->mcp==1.1.2) (1.0.7)
+#9 67.48 Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/site-packages (from httpcore==1.*->httpx>=0.27->mcp==1.1.2) (0.14.0)
+#9 67.49 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic>=2.7.2->mcp==1.1.2) (0.7.0)
+#9 68.88 Collecting pydantic-core==2.27.2 (from pydantic>=2.7.2->mcp==1.1.2)
+#9 68.88   Using cached http://packages/pydantic-core/pydantic_core-2.27.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#9 69.15 Installing collected packages: pydantic-core, httpx-sse, starlette, pydantic, sse-starlette, mcp
+#9 69.74 Successfully installed httpx-sse-0.4.0 mcp-1.1.2 pydantic-2.10.4 pydantic-core-2.27.2 sse-starlette-2.2.1 starlette-0.45.2
+#9 69.74 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 70.77 Looking in indexes: http://simple/
+#9 70.77 Requirement already satisfied: pydantic==2.10.4 in /usr/local/lib/python3.10/site-packages (2.10.4)
+#9 70.78 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic==2.10.4) (0.7.0)
+#9 70.78 Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/site-packages (from pydantic==2.10.4) (2.27.2)
+#9 70.78 Requirement already satisfied: typing-extensions>=4.12.2 in /usr/local/lib/python3.10/site-packages (from pydantic==2.10.4) (4.12.2)
+#9 71.09 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 71.88 Looking in indexes: http://simple/
+#9 71.89 Requirement already satisfied: pydantic_core==2.27.2 in /usr/local/lib/python3.10/site-packages (2.27.2)
+#9 71.89 Requirement already satisfied: typing-extensions!=4.7.0,>=4.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic_core==2.27.2) (4.12.2)
+#9 72.20 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 73.09 Looking in indexes: http://simple/
+#9 73.13 Collecting pydantic_settings==2.7.0
+#9 73.15   Downloading http://packages/pydantic-settings/pydantic_settings-2.7.0-py3-none-any.whl (29 kB)
+#9 73.17 Requirement already satisfied: pydantic>=2.7.0 in /usr/local/lib/python3.10/site-packages (from pydantic_settings==2.7.0) (2.10.4)
+#9 73.21 Collecting python-dotenv>=0.21.0 (from pydantic_settings==2.7.0)
+#9 73.21   Using cached http://packages/python-dotenv/python_dotenv-1.0.1-py3-none-any.whl (19 kB)
+#9 73.22 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/site-packages (from pydantic>=2.7.0->pydantic_settings==2.7.0) (0.7.0)
+#9 73.22 Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/site-packages (from pydantic>=2.7.0->pydantic_settings==2.7.0) (2.27.2)
+#9 73.22 Requirement already satisfied: typing-extensions>=4.12.2 in /usr/local/lib/python3.10/site-packages (from pydantic>=2.7.0->pydantic_settings==2.7.0) (4.12.2)
+#9 73.51 Installing collected packages: python-dotenv, pydantic_settings
+#9 73.60 Successfully installed pydantic_settings-2.7.0 python-dotenv-1.0.1
+#9 73.60 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 74.48 Looking in indexes: http://simple/
+#9 74.48 Requirement already satisfied: pytest==8.3.4 in /usr/local/lib/python3.10/site-packages (8.3.4)
+#9 74.49 Requirement already satisfied: exceptiongroup>=1.0.0rc8 in /usr/local/lib/python3.10/site-packages (from pytest==8.3.4) (1.2.2)
+#9 74.49 Requirement already satisfied: iniconfig in /usr/local/lib/python3.10/site-packages (from pytest==8.3.4) (2.0.0)
+#9 74.49 Requirement already satisfied: packaging in /usr/local/lib/python3.10/site-packages (from pytest==8.3.4) (24.2)
+#9 74.49 Requirement already satisfied: pluggy<2,>=1.5 in /usr/local/lib/python3.10/site-packages (from pytest==8.3.4) (1.5.0)
+#9 74.49 Requirement already satisfied: tomli>=1 in /usr/local/lib/python3.10/site-packages (from pytest==8.3.4) (2.2.1)
+#9 74.80 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 75.65 Looking in indexes: http://simple/
+#9 75.65 Requirement already satisfied: python-dotenv==1.0.1 in /usr/local/lib/python3.10/site-packages (1.0.1)
+#9 75.95 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 76.82 Looking in indexes: http://simple/
+#9 76.82 Requirement already satisfied: rich==13.9.4 in /usr/local/lib/python3.10/site-packages (13.9.4)
+#9 76.83 Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.10/site-packages (from rich==13.9.4) (3.0.0)
+#9 76.83 Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.10/site-packages (from rich==13.9.4) (2.19.1)
+#9 76.83 Requirement already satisfied: typing-extensions<5.0,>=4.0.0 in /usr/local/lib/python3.10/site-packages (from rich==13.9.4) (4.12.2)
+#9 76.84 Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.10/site-packages (from markdown-it-py>=2.2.0->rich==13.9.4) (0.1.2)
+#9 77.13 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 77.89 Looking in indexes: http://simple/
+#9 77.97 Collecting starlette==0.42.0
+#9 78.08   Downloading http://packages/starlette/starlette-0.42.0-py3-none-any.whl (73 kB)
+#9 78.10 Requirement already satisfied: anyio<5,>=3.4.0 in /usr/local/lib/python3.10/site-packages (from starlette==0.42.0) (4.8.0)
+#9 78.14 Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.4.0->starlette==0.42.0) (1.2.2)
+#9 78.15 Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.4.0->starlette==0.42.0) (3.10)
+#9 78.15 Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.4.0->starlette==0.42.0) (1.3.1)
+#9 78.15 Requirement already satisfied: typing_extensions>=4.5 in /usr/local/lib/python3.10/site-packages (from anyio<5,>=3.4.0->starlette==0.42.0) (4.12.2)
+#9 78.41 Installing collected packages: starlette
+#9 78.41   Attempting uninstall: starlette
+#9 78.41     Found existing installation: starlette 0.45.2
+#9 78.42     Uninstalling starlette-0.45.2:
+#9 78.42       Successfully uninstalled starlette-0.45.2
+#9 78.53 Successfully installed starlette-0.42.0
+#9 78.53 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 79.33 Looking in indexes: http://simple/
+#9 79.38 Collecting typer==0.15.1
+#9 79.39   Using cached http://packages/typer/typer-0.15.1-py3-none-any.whl (44 kB)
+#9 79.39 Requirement already satisfied: click>=8.0.0 in /usr/local/lib/python3.10/site-packages (from typer==0.15.1) (8.1.8)
+#9 79.39 Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.10/site-packages (from typer==0.15.1) (4.12.2)
+#9 79.39 Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.10/site-packages (from typer==0.15.1) (1.5.4)
+#9 79.39 Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.10/site-packages (from typer==0.15.1) (13.9.4)
+#9 79.40 Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.10/site-packages (from rich>=10.11.0->typer==0.15.1) (3.0.0)
+#9 79.40 Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.10/site-packages (from rich>=10.11.0->typer==0.15.1) (2.19.1)
+#9 79.41 Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.10/site-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer==0.15.1) (0.1.2)
+#9 79.69 Installing collected packages: typer
+#9 79.76 Successfully installed typer-0.15.1
+#9 79.76 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 80.56 Looking in indexes: http://simple/
+#9 80.56 Requirement already satisfied: typing_extensions==4.12.2 in /usr/local/lib/python3.10/site-packages (4.12.2)
+#9 80.87 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 81.67 Looking in indexes: http://simple/
+#9 81.75 Collecting uvicorn==0.34.0
+#9 81.75   Using cached http://packages/uvicorn/uvicorn-0.34.0-py3-none-any.whl (62 kB)
+#9 81.76 Requirement already satisfied: click>=7.0 in /usr/local/lib/python3.10/site-packages (from uvicorn==0.34.0) (8.1.8)
+#9 81.76 Requirement already satisfied: h11>=0.8 in /usr/local/lib/python3.10/site-packages (from uvicorn==0.34.0) (0.14.0)
+#9 81.76 Requirement already satisfied: typing-extensions>=4.0 in /usr/local/lib/python3.10/site-packages (from uvicorn==0.34.0) (4.12.2)
+#9 82.06 Installing collected packages: uvicorn
+#9 82.15 Successfully installed uvicorn-0.34.0
+#9 82.15 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 DONE 82.6s
+
+#10 [6/8] RUN python /code_edit.py -t "/search_patch/0.patch" &&     python /code_edit.py -t "/search_patch/1.patch" &&     python /code_edit.py -t "/search_patch/2.patch" &&     python /code_edit.py -t "/search_patch/3.patch" &&     pip install -e /repo/src
+#10 0.625 * Succeed Patch:
+#10 0.625 --- areposrcfastmcp__init__.py
+#10 0.625 +++ breposrcfastmcp__init__.py
+#10 0.625 @@ -4,5 +4,5 @@
+#10 0.625  from .server import FastMCP, Context
+#10 0.625  from .utilities.types import Image
+#10 0.625  
+#10 0.625 -__version__ = version("fastmcp")
+#10 0.625 +__version__ = "0.1.0"
+#10 0.625  __all__ = ["FastMCP", "Context", "Image"]
+#10 0.625 
+#10 0.625 
+#10 0.698 * Succeed Patch:
+#10 0.698 --- arepopyproject.toml
+#10 0.698 +++ brepopyproject.toml
+#10 0.698 @@ -1,4 +1,10 @@
+#10 0.698 -[project]
+#10 0.698 +[tool.poetry]
+#10 0.698 +name = "fastmcp"
+#10 0.698 +version = "0.1.0"
+#10 0.698 +description = ""
+#10 0.698 +authors = ["Your Name <you@example.com>"]
+#10 0.698 +license = "MIT"
+#10 0.698 +readme = "README.md"
+#10 0.698  name = "fastmcp"
+#10 0.698  dynamic = ["version"]
+#10 0.698  description = "A more ergonomic interface for MCP servers"
+#10 0.698 
+#10 0.698 
+#10 0.768 * Succeed Patch:
+#10 0.768 --- arepopyproject.toml
+#10 0.768 +++ brepopyproject.toml
+#10 0.768 @@ -1,10 +1,3 @@
+#10 0.768 -[tool.poetry]
+#10 0.768 -name = "fastmcp"
+#10 0.768 -version = "0.1.0"
+#10 0.768 -description = ""
+#10 0.768 -authors = ["Your Name <you@example.com>"]
+#10 0.768 -license = "MIT"
+#10 0.768 -readme = "README.md"
+#10 0.768  name = "fastmcp"
+#10 0.768  dynamic = ["version"]
+#10 0.768  description = "A more ergonomic interface for MCP servers"
+#10 0.768 
+#10 0.768 
+#10 0.838 * Succeed Patch:
+#10 0.838 Create and write /repo/src/setup.py!
+#10 0.838 
+#10 1.450 Looking in indexes: http://simple/
+#10 1.451 Obtaining file:///repo/src
+#10 1.452   Preparing metadata (setup.py): started
+#10 2.078   Preparing metadata (setup.py): finished with status 'done'
+#10 2.386 Installing collected packages: fastmcp
+#10 2.387   DEPRECATION: Legacy editable install of fastmcp==0.1.0 from file:///repo/src (setup.py develop) is deprecated. pip 25.0 will enforce this behaviour change. A possible replacement is to add a pyproject.toml or enable --use-pep517, and use setuptools >= 64. If the resulting installation is not behaving as expected, try using --config-settings editable_mode=compat. Please consult the setuptools documentation for more information. Discussion can be found at https://github.com/pypa/pip/issues/11457
+#10 2.387   Running setup.py develop for fastmcp
+#10 3.248 Successfully installed fastmcp
+#10 3.249 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#10 DONE 3.6s
+
+#11 [7/8] RUN cd /repo && pytest --collect-only -q
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_basic_fn
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_async_fn
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_with_args
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_with_invalid_kwargs
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_returns_message
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_returns_assistant_message
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_returns_multiple_messages
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_returns_list_of_strings
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_returns_resource_content
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_returns_mixed_content
+#11 2.075 tests/prompts/test_base.py::TestRenderPrompt::test_fn_returns_dict_with_resource
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_add_prompt
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_add_duplicate_prompt
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_disable_warn_on_duplicate_prompts
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_list_prompts
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_render_prompt
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_render_prompt_with_args
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_render_unknown_prompt
+#11 2.075 tests/prompts/test_manager.py::TestPromptManager::test_render_prompt_with_missing_args
+#11 2.075 tests/resources/test_file_resources.py::TestFileResource::test_file_resource_creation
+#11 2.075 tests/resources/test_file_resources.py::TestFileResource::test_file_resource_str_path_conversion
+#11 2.075 tests/resources/test_file_resources.py::TestFileResource::test_read_text_file
+#11 2.075 tests/resources/test_file_resources.py::TestFileResource::test_read_binary_file
+#11 2.075 tests/resources/test_file_resources.py::TestFileResource::test_relative_path_error
+#11 2.075 tests/resources/test_file_resources.py::TestFileResource::test_missing_file_error
+#11 2.075 tests/resources/test_file_resources.py::TestFileResource::test_permission_error
+#11 2.075 tests/resources/test_function_resources.py::TestFunctionResource::test_function_resource_creation
+#11 2.075 tests/resources/test_function_resources.py::TestFunctionResource::test_read_text
+#11 2.075 tests/resources/test_function_resources.py::TestFunctionResource::test_read_binary
+#11 2.075 tests/resources/test_function_resources.py::TestFunctionResource::test_json_conversion
+#11 2.075 tests/resources/test_function_resources.py::TestFunctionResource::test_error_handling
+#11 2.075 tests/resources/test_function_resources.py::TestFunctionResource::test_basemodel_conversion
+#11 2.075 tests/resources/test_function_resources.py::TestFunctionResource::test_custom_type_conversion
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_add_resource
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_add_duplicate_resource
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_warn_on_duplicate_resources
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_disable_warn_on_duplicate_resources
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_get_resource
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_get_resource_from_template
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_get_unknown_resource
+#11 2.075 tests/resources/test_resource_manager.py::TestResourceManager::test_list_resources
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_template_creation
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_template_matches
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_create_resource
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_template_error
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_async_text_resource
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_async_binary_resource
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_basemodel_conversion
+#11 2.075 tests/resources/test_resource_template.py::TestResourceTemplate::test_custom_type_conversion
+#11 2.075 tests/resources/test_resources.py::TestResourceValidation::test_resource_uri_validation
+#11 2.075 tests/resources/test_resources.py::TestResourceValidation::test_resource_name_from_uri
+#11 2.075 tests/resources/test_resources.py::TestResourceValidation::test_resource_name_validation
+#11 2.075 tests/resources/test_resources.py::TestResourceValidation::test_resource_mime_type
+#11 2.075 tests/resources/test_resources.py::TestResourceValidation::test_resource_read_abstract
+#11 2.075 tests/servers/test_file_server.py::test_list_resources
+#11 2.075 tests/servers/test_file_server.py::test_read_resource_dir
+#11 2.075 tests/servers/test_file_server.py::test_read_resource_file
+#11 2.075 tests/servers/test_file_server.py::test_delete_file
+#11 2.075 tests/servers/test_file_server.py::test_delete_file_and_check_resources
+#11 2.075 tests/test_cli.py::test_parse_env_var
+#11 2.075 tests/test_cli.py::test_install_with_env_vars[args0-expected_env0]
+#11 2.075 tests/test_cli.py::test_install_with_env_vars[args1-expected_env1]
+#11 2.075 tests/test_cli.py::test_install_with_env_vars[args2-expected_env2]
+#11 2.075 tests/test_cli.py::test_parse_file_path_windows_drive
+#11 2.075 tests/test_cli.py::test_parse_file_path_with_object
+#11 2.075 tests/test_cli.py::test_parse_file_path_windows_with_object
+#11 2.075 tests/test_cli.py::test_install_with_env_file
+#11 2.075 tests/test_cli.py::test_install_preserves_existing_env_vars
+#11 2.075 tests/test_cli.py::test_install_updates_existing_env_vars
+#11 2.075 tests/test_cli.py::test_server_dependencies
+#11 2.075 tests/test_cli.py::test_server_dependencies_empty
+#11 2.075 tests/test_cli.py::test_dev_with_dependencies
+#11 2.075 tests/test_cli.py::test_run_with_dependencies
+#11 2.075 tests/test_func_metadata.py::test_complex_function_runtime_arg_validation_non_json
+#11 2.075 tests/test_func_metadata.py::test_complex_function_runtime_arg_validation_with_json
+#11 2.075 tests/test_func_metadata.py::test_str_vs_list_str
+#11 2.075 tests/test_func_metadata.py::test_str_vs_int
+#11 2.075 tests/test_func_metadata.py::test_skip_names
+#11 2.075 tests/test_func_metadata.py::test_lambda_function
+#11 2.075 tests/test_func_metadata.py::test_complex_function_json_schema
+#11 2.075 tests/test_server.py::TestServer::test_create_server
+#11 2.075 tests/test_server.py::TestServer::test_add_tool_decorator
+#11 2.075 tests/test_server.py::TestServer::test_add_tool_decorator_incorrect_usage
+#11 2.075 tests/test_server.py::TestServer::test_add_resource_decorator
+#11 2.075 tests/test_server.py::TestServer::test_add_resource_decorator_incorrect_usage
+#11 2.075 tests/test_server.py::TestServerTools::test_add_tool
+#11 2.075 tests/test_server.py::TestServerTools::test_list_tools
+#11 2.075 tests/test_server.py::TestServerTools::test_call_tool
+#11 2.075 tests/test_server.py::TestServerTools::test_tool_exception_handling
+#11 2.075 tests/test_server.py::TestServerTools::test_tool_error_handling
+#11 2.075 tests/test_server.py::TestServerTools::test_tool_error_details
+#11 2.075 tests/test_server.py::TestServerTools::test_tool_return_value_conversion
+#11 2.075 tests/test_server.py::TestServerTools::test_tool_image_helper
+#11 2.075 tests/test_server.py::TestServerTools::test_tool_mixed_content
+#11 2.075 tests/test_server.py::TestServerTools::test_tool_mixed_list_with_image
+#11 2.075 tests/test_server.py::TestServerResources::test_text_resource
+#11 2.075 tests/test_server.py::TestServerResources::test_binary_resource
+#11 2.075 tests/test_server.py::TestServerResources::test_file_resource_text
+#11 2.075 tests/test_server.py::TestServerResources::test_file_resource_binary
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_resource_with_params
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_resource_with_uri_params
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_resource_with_untyped_params
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_resource_matching_params
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_resource_mismatched_params
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_resource_multiple_params
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_resource_multiple_mismatched_params
+#11 2.075 tests/test_server.py::TestServerResourceTemplates::test_template_to_resource_conversion
+#11 2.075 tests/test_server.py::TestContextInjection::test_context_detection
+#11 2.075 tests/test_server.py::TestContextInjection::test_context_injection
+#11 2.075 tests/test_server.py::TestContextInjection::test_async_context
+#11 2.075 tests/test_server.py::TestContextInjection::test_context_logging
+#11 2.075 tests/test_server.py::TestContextInjection::test_optional_context
+#11 2.078 tests/test_server.py::TestContextInjection::test_context_resource_access
+#11 2.078 tests/test_server.py::TestServerPrompts::test_prompt_decorator
+#11 2.078 tests/test_server.py::TestServerPrompts::test_prompt_decorator_with_name
+#11 2.078 tests/test_server.py::TestServerPrompts::test_prompt_decorator_with_description
+#11 2.078 tests/test_server.py::TestServerPrompts::test_prompt_decorator_error
+#11 2.078 tests/test_server.py::TestServerPrompts::test_list_prompts
+#11 2.078 tests/test_server.py::TestServerPrompts::test_get_prompt
+#11 2.078 tests/test_server.py::TestServerPrompts::test_get_prompt_with_resource
+#11 2.078 tests/test_server.py::TestServerPrompts::test_get_unknown_prompt
+#11 2.078 tests/test_server.py::TestServerPrompts::test_get_prompt_missing_args
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_basic_function
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_async_function
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_pydantic_model_function
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_add_invalid_tool
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_add_lambda
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_add_lambda_with_no_name
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_warn_on_duplicate_tools
+#11 2.078 tests/test_tool_manager.py::TestAddTools::test_disable_warn_on_duplicate_tools
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_tool
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_async_tool
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_tool_with_default_args
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_tool_with_missing_args
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_unknown_tool
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_tool_with_list_int_input
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_tool_with_list_str_or_str_input
+#11 2.078 tests/test_tool_manager.py::TestCallTools::test_call_tool_with_complex_model
+#11 2.078 tests/test_tool_manager.py::TestToolSchema::test_context_arg_excluded_from_schema
+#11 2.078 tests/test_tool_manager.py::TestContextHandling::test_context_parameter_detection
+#11 2.078 tests/test_tool_manager.py::TestContextHandling::test_context_injection
+#11 2.078 tests/test_tool_manager.py::TestContextHandling::test_context_injection_async
+#11 2.078 tests/test_tool_manager.py::TestContextHandling::test_context_optional
+#11 2.078 tests/test_tool_manager.py::TestContextHandling::test_context_error_handling
+#11 2.078 
+#11 2.078 =============================== warnings summary ===============================
+#11 2.078 ../usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py:1441
+#11 2.078   /usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py:1441: PytestConfigWarning: Unknown config option: asyncio_default_fixture_loop_scope
+#11 2.078   
+#11 2.078     self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+#11 2.078 
+#11 2.078 ../usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py:1441
+#11 2.078   /usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py:1441: PytestConfigWarning: Unknown config option: asyncio_mode
+#11 2.078   
+#11 2.078     self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+#11 2.078 
+#11 2.078 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#11 2.078 144 tests collected in 1.14s
+#11 DONE 2.5s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 3.0s done
+#12 writing image sha256:891e3ad427dc9c78b6e8718b409a2fc08e501439264604430f0505c0d3dcfbc4 done
+#12 naming to docker.io/library/tmp:tmp done
+#12 DONE 3.0s

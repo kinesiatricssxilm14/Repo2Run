@@ -1,0 +1,283 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.89kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/library/python:3.10
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 346B done
+#5 DONE 0.0s
+
+#6 [2/7] COPY search_patch /search_patch
+#6 CACHED
+
+#7 [3/7] COPY code_edit.py /code_edit.py
+#7 CACHED
+
+#8 [4/7] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#8 CACHED
+
+#9 [5/7] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/vysakh0/dravid.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /dravid/. /repo && rm -rf /dravid/ &&     rm -rf /dravid &&     cd /repo && git checkout 25b03bfcf5327be83be0a9721fb24ac7d7157eed &&     cd /repo && poetry install &&     echo "from .server_monitor import DevServerMonitor" >> /repo/src/drd/cli/monitor/__init__.py &&     python /code_edit.py -t "/search_patch/0.patch" &&     python /code_edit.py -t "/search_patch/1.patch" &&     python /code_edit.py -t "/search_patch/2.patch" &&     cd /repo/src/drd/cli/monitor && git restore server_monitor.py &&     python /code_edit.py -t "/search_patch/3.patch" &&     echo "from .main import run_dev_server_with_monitoring  __all__ = ['run_dev_server_with_monitoring'] from .server_monitor import DevServerMonitor" > /repo/src/drd/cli/monitor/__init__.py &&     python /code_edit.py -t "/search_patch/4.patch" &&     python /code_edit.py -t "/search_patch/5.patch" &&     python /code_edit.py -t "/search_patch/6.patch"
+#9 CACHED
+
+#10 [6/7] RUN cd /repo && poetry run pytest --collect-only -q
+#10 1.171 The "poetry.dev-dependencies" section is deprecated and will be removed in a future version. Use "poetry.group.dev.dependencies" instead.
+#10 4.370 ============================= test session starts ==============================
+#10 4.370 platform linux -- Python 3.10.16, pytest-7.4.4, pluggy-1.5.0
+#10 4.370 rootdir: /repo
+#10 4.370 configfile: pyproject.toml
+#10 4.370 testpaths: tests
+#10 4.370 plugins: anyio-4.4.0, cov-5.0.0
+#10 4.370 collected 182 items
+#10 4.370 
+#10 4.370 <Module tests/api/test_api_main.py>
+#10 4.370   <UnitTestCase TestDravidAPI>
+#10 4.370     <TestCaseFunction test_call_dravid_api>
+#10 4.370     <TestCaseFunction test_call_dravid_vision_api>
+#10 4.370     <TestCaseFunction test_stream_dravid_api>
+#10 4.370 <Module tests/api/test_claude_api.py>
+#10 4.370   <UnitTestCase TestApiUtils>
+#10 4.370     <TestCaseFunction test_call_claude_api_with_pagination>
+#10 4.370     <TestCaseFunction test_call_claude_vision_api_with_pagination>
+#10 4.370     <TestCaseFunction test_get_api_key>
+#10 4.370     <TestCaseFunction test_get_api_key_missing>
+#10 4.370     <TestCaseFunction test_get_headers>
+#10 4.370     <TestCaseFunction test_make_api_call>
+#10 4.370     <TestCaseFunction test_parse_response_invalid_xml>
+#10 4.370     <TestCaseFunction test_parse_response_valid_xml>
+#10 4.370     <TestCaseFunction test_stream_claude_response>
+#10 4.370 <Module tests/api/test_openai_api.py>
+#10 4.370   <UnitTestCase TestOpenAIApiUtils>
+#10 4.370     <TestCaseFunction test_call_api_with_pagination>
+#10 4.370     <TestCaseFunction test_call_api_with_pagination_ollama>
+#10 4.370     <TestCaseFunction test_call_api_with_pagination_ollama_error>
+#10 4.370     <TestCaseFunction test_call_vision_api_with_pagination>
+#10 4.370     <TestCaseFunction test_call_vision_api_with_pagination_ollama>
+#10 4.370     <TestCaseFunction test_get_client_azure>
+#10 4.370     <TestCaseFunction test_get_client_custom>
+#10 4.370     <TestCaseFunction test_get_client_ollama>
+#10 4.370     <TestCaseFunction test_get_client_openai>
+#10 4.370     <TestCaseFunction test_get_env_variable_existing>
+#10 4.370     <TestCaseFunction test_get_env_variable_missing>
+#10 4.370     <TestCaseFunction test_get_model_azure>
+#10 4.370     <TestCaseFunction test_get_model_custom>
+#10 4.370     <TestCaseFunction test_get_model_ollama>
+#10 4.370     <TestCaseFunction test_get_model_openai>
+#10 4.370     <TestCaseFunction test_parse_response_invalid_xml>
+#10 4.370     <TestCaseFunction test_parse_response_valid_xml>
+#10 4.370     <TestCaseFunction test_stream_response>
+#10 4.370     <TestCaseFunction test_stream_response_ollama>
+#10 4.370     <TestCaseFunction test_stream_response_ollama_error>
+#10 4.370 <Module tests/cli/monitor/test_dev_server_monitor.py>
+#10 4.370   <UnitTestCase TestDevServerMonitor>
+#10 4.370     <TestCaseFunction test_invalid_command_restart_limit>
+#10 4.370     <TestCaseFunction test_perform_restart>
+#10 4.370     <TestCaseFunction test_start>
+#10 4.370     <TestCaseFunction test_start_process>
+#10 4.370     <TestCaseFunction test_stop>
+#10 4.370 <Module tests/cli/monitor/test_error_resolvers.py>
+#10 4.370   <UnitTestCase TestErrorResolver>
+#10 4.370     <TestCaseFunction test_monitoring_handle_error_with_dravid_apply_fix_restart_declined>
+#10 4.370     <TestCaseFunction test_monitoring_handle_error_with_dravid_apply_fix_with_restart>
+#10 4.370     <TestCaseFunction test_monitoring_handle_error_with_dravid_apply_fix_without_restart>
+#10 4.370     <TestCaseFunction test_monitoring_handle_error_with_dravid_parse_error>
+#10 4.370 <Module tests/cli/monitor/test_input_handler.py>
+#10 4.370   <UnitTestCase TestInputHandler>
+#10 4.370     <TestCaseFunction test_autocomplete>
+#10 4.370     <TestCaseFunction test_autocomplete_directory>
+#10 4.370     <TestCaseFunction test_get_input_with_autocomplete>
+#10 4.370     <TestCaseFunction test_handle_general_input>
+#10 4.370     <TestCaseFunction test_handle_input>
+#10 4.370     <TestCaseFunction test_handle_vision_input>
+#10 4.370     <TestCaseFunction test_process_input>
+#10 4.370     <TestCaseFunction test_show_options>
+#10 4.370 <Module tests/cli/monitor/test_input_parser.py>
+#10 4.370   <UnitTestCase TestInputParser>
+#10 4.370     <TestCaseFunction test_file_with_spaces>
+#10 4.370     <TestCaseFunction test_image_and_file>
+#10 4.370     <TestCaseFunction test_image_path_with_spaces>
+#10 4.370     <TestCaseFunction test_image_path_with_spaces_beginning>
+#10 4.370     <TestCaseFunction test_multiple_files_no_image>
+#10 4.370     <TestCaseFunction test_no_image_or_file_path>
+#10 4.370     <TestCaseFunction test_non_existent_file_path>
+#10 4.370     <TestCaseFunction test_simple_file>
+#10 4.370     <TestCaseFunction test_simple_image_and_text>
+#10 4.370 <Module tests/cli/monitor/test_output_monitor.py>
+#10 4.370   <UnitTestCase TestOutputMonitor>
+#10 4.370     <TestCaseFunction test_check_for_errors>
+#10 4.370     <TestCaseFunction test_check_idle_state>
+#10 4.370     <TestCaseFunction test_check_idle_state_not_idle>
+#10 4.370     <TestCaseFunction test_monitor_output_process_ended>
+#10 4.370     <TestCaseFunction test_monitor_output_read_line>
+#10 4.370 <Module tests/cli/query/test_dynamic_command_handler.py>
+#10 4.370   <UnitTestCase TestDynamicCommandHandler>
+#10 4.370     <TestCaseFunction test_execute_commands>
+#10 4.370     <TestCaseFunction test_execute_commands_with_no_output>
+#10 4.370     <TestCaseFunction test_execute_commands_with_requires_restart>
+#10 4.370     <TestCaseFunction test_execute_commands_with_skipped_steps>
+#10 4.370     <TestCaseFunction test_execute_commands_with_unknown_type>
+#10 4.370     <TestCaseFunction test_handle_error_with_dravid>
+#10 4.370     <TestCaseFunction test_handle_file_operation>
+#10 4.370     <TestCaseFunction test_handle_shell_command>
+#10 4.370     <TestCaseFunction test_handle_shell_command_skipped>
+#10 4.370     <TestCaseFunction test_update_file_metadata>
+#10 4.370 <Module tests/cli/query/test_file_operations.py>
+#10 4.370   <UnitTestCase TestFileOperations>
+#10 4.370     <TestCaseFunction test_find_file_with_dravid_existing_file>
+#10 4.370     <TestCaseFunction test_find_file_with_dravid_no_suggestion>
+#10 4.370     <TestCaseFunction test_find_file_with_dravid_suggested_file>
+#10 4.370     <TestCaseFunction test_get_files_to_modify>
+#10 4.370 <Module tests/cli/query/test_image_handler.py>
+#10 4.370   <UnitTestCase TestImageHandler>
+#10 4.370     <TestCaseFunction test_handle_image_query>
+#10 4.370     <TestCaseFunction test_handle_image_query_without_instruction>
+#10 4.370 <Module tests/cli/query/test_query_main.py>
+#10 4.370   <UnitTestCase TestExecuteDravidCommand>
+#10 4.370     <TestCaseFunction test_execute_dravid_command_api_error>
+#10 4.370     <TestCaseFunction test_execute_dravid_command_debug_mode>
+#10 4.370     <TestCaseFunction test_execute_dravid_command_with_error>
+#10 4.370     <TestCaseFunction test_execute_dravid_command_with_image>
+#10 4.370 <Module tests/metadata/test_common_utils.py>
+#10 4.370   <UnitTestCase TestCommonUtils>
+#10 4.370     <TestCaseFunction test_find_file_with_dravid>
+#10 4.370     <TestCaseFunction test_generate_file_description>
+#10 4.370     <TestCaseFunction test_get_folder_structure>
+#10 4.370     <TestCaseFunction test_get_ignore_patterns>
+#10 4.370     <TestCaseFunction test_parse_gitignore>
+#10 4.370     <TestCaseFunction test_should_ignore>
+#10 4.370 <Module tests/metadata/test_initializer.py>
+#10 4.370   <UnitTestCase TestProjectMetadataInitializer>
+#10 4.370     <TestCaseFunction test_initialize_project_metadata>
+#10 4.370 <Module tests/metadata/test_project_metadata.py>
+#10 4.370   <UnitTestCase TestProjectMetadataManager>
+#10 4.370     <TestCaseFunction test_analyze_file>
+#10 4.370     <TestCaseFunction test_build_metadata>
+#10 4.370     <TestCaseFunction test_get_directory_structure>
+#10 4.370     <TestCaseFunction test_get_ignore_patterns>
+#10 4.370     <TestCaseFunction test_is_binary_file>
+#10 4.370     <TestCaseFunction test_should_ignore>
+#10 4.370 <Module tests/metadata/test_rate_limit_handler.py>
+#10 4.370   <UnitTestCase TestRateLimitHandler>
+#10 4.370     <TestCaseFunction test_process_files>
+#10 4.370     <TestCaseFunction test_process_files_concurrency>
+#10 4.370     <TestCaseFunction test_process_single_file>
+#10 4.370     <TestCaseFunction test_process_single_file_error>
+#10 4.370     <TestCaseFunction test_rate_limiter>
+#10 4.370 <Module tests/metadata/test_updater.py>
+#10 4.370   <UnitTestCase TestMetadataUpdater>
+#10 4.370     <TestCaseFunction test_update_metadata_with_dravid>
+#10 4.370 <Module tests/utils/test_apply_changes.py>
+#10 4.370   <UnitTestCase TestApplyChangesSpecific>
+#10 4.370     <TestCaseFunction test_add_email_and_move_paragraph>
+#10 4.370     <TestCaseFunction test_complex_changes>
+#10 4.370     <TestCaseFunction test_multiple_additions_with_indentation>
+#10 4.370     <TestCaseFunction test_multiple_deletions>
+#10 4.370     <TestCaseFunction test_python_code_add_replace>
+#10 4.370     <TestCaseFunction test_replace_with_preserved_indentation>
+#10 4.370 <Module tests/utils/test_diff.py>
+#10 4.370   <UnitTestCase TestDiffUtils>
+#10 4.370     <TestCaseFunction test_generate_colored_diff>
+#10 4.370     <TestCaseFunction test_preview_file_changes_create>
+#10 4.370     <TestCaseFunction test_preview_file_changes_delete>
+#10 4.370     <TestCaseFunction test_preview_file_changes_update>
+#10 4.370 <Module tests/utils/test_file_utils.py>
+#10 4.370   <UnitTestCase TestFileOperations>
+#10 4.370     <TestCaseFunction test_fetch_project_guidelines_existing_file>
+#10 4.370     <TestCaseFunction test_fetch_project_guidelines_non_existing_file>
+#10 4.370     <TestCaseFunction test_get_file_content_existing_file>
+#10 4.370     <TestCaseFunction test_get_file_content_non_existing_file>
+#10 4.370 <Module tests/utils/test_loader.py>
+#10 4.370   <UnitTestCase TestLoader>
+#10 4.370     <TestCaseFunction test_loader_animation>
+#10 4.370     <TestCaseFunction test_loader_custom_message>
+#10 4.374     <TestCaseFunction test_loader_start_stop>
+#10 4.374     <TestCaseFunction test_loader_stop_clears_line>
+#10 4.374     <TestCaseFunction test_run_with_loader>
+#10 4.374     <TestCaseFunction test_run_with_loader_exception>
+#10 4.374 <Module tests/utils/test_parser.py>
+#10 4.374   <UnitTestCase TestDravidParser>
+#10 4.374     <TestCaseFunction test_complex_cdata_content>
+#10 4.374     <TestCaseFunction test_extract_and_parse_xml>
+#10 4.374     <TestCaseFunction test_extract_and_parse_xml_with_html>
+#10 4.374     <TestCaseFunction test_extract_outermost_xml>
+#10 4.374     <TestCaseFunction test_malformed_html_in_cdata>
+#10 4.374     <TestCaseFunction test_malformed_xml>
+#10 4.374     <TestCaseFunction test_nested_cdata>
+#10 4.374     <TestCaseFunction test_nested_react_cdata>
+#10 4.374     <TestCaseFunction test_nested_tags_in_cdata>
+#10 4.374     <TestCaseFunction test_parse_dravid_response>
+#10 4.374     <TestCaseFunction test_parse_dravid_response_with_changes>
+#10 4.374     <TestCaseFunction test_parse_file_list_response_error>
+#10 4.374     <TestCaseFunction test_parse_file_list_response_success>
+#10 4.374     <TestCaseFunction test_parse_find_file_response_error>
+#10 4.374     <TestCaseFunction test_parse_find_file_response_success>
+#10 4.374 <Module tests/utils/test_pretty_print_stream.py>
+#10 4.374   <Function test_basic_explanation>
+#10 4.374   <Function test_spaced_tags>
+#10 4.374   <Function test_newline_in_tags>
+#10 4.374   <Function test_mixed_spacing_and_newlines>
+#10 4.374   <Function test_multiple_chunks>
+#10 4.374   <Function test_multiple_explanations>
+#10 4.374   <Function test_explanation_and_shell_command>
+#10 4.374   <Function test_file_operation_and_cdata>
+#10 4.374   <Function test_multiple_shell_commands>
+#10 4.374   <Function test_mixed_content>
+#10 4.374   <Function test_multiple_file_operations>
+#10 4.374   <Function test_mixed_operations>
+#10 4.374   <Function test_cdata_with_xml_content>
+#10 4.374   <Function test_large_cdata_content>
+#10 4.374   <Function test_split_step>
+#10 4.374   <Function test_split_cdata>
+#10 4.374   <Function test_nested_cdata>
+#10 4.374   <Function test_multiple_nested_cdata>
+#10 4.374   <Function test_cdata_with_xml_like_content>
+#10 4.374   <Function test_cdata_with_instruction_like_content>
+#10 4.374 <Module tests/utils/test_step_executor.py>
+#10 4.374   <UnitTestCase TestExecutor>
+#10 4.374     <TestCaseFunction test_execute_shell_command>
+#10 4.374     <TestCaseFunction test_execute_shell_command_cd>
+#10 4.374     <TestCaseFunction test_execute_shell_command_echo>
+#10 4.374     <TestCaseFunction test_execute_shell_command_user_cancel>
+#10 4.374     <TestCaseFunction test_execute_single_command>
+#10 4.374     <TestCaseFunction test_get_folder_structure>
+#10 4.374     <TestCaseFunction test_handle_cd_command>
+#10 4.374     <TestCaseFunction test_handle_source_command>
+#10 4.374     <TestCaseFunction test_is_safe_command>
+#10 4.374     <TestCaseFunction test_is_safe_path>
+#10 4.374     <TestCaseFunction test_is_safe_rm_command>
+#10 4.374     <TestCaseFunction test_merge_json>
+#10 4.374     <TestCaseFunction test_parse_json>
+#10 4.374     <TestCaseFunction test_perform_file_operation_create>
+#10 4.374     <TestCaseFunction test_perform_file_operation_delete>
+#10 4.374     <TestCaseFunction test_perform_file_operation_update>
+#10 4.374     <TestCaseFunction test_perform_file_operation_user_cancel>
+#10 4.374     <TestCaseFunction test_reset_directory>
+#10 4.374     <TestCaseFunction test_update_env_from_command>
+#10 4.374 <Module tests/utils/test_utils.py>
+#10 4.374   <UnitTestCase TestUtilityFunctions>
+#10 4.374     <TestCaseFunction test_print_debug>
+#10 4.374     <TestCaseFunction test_print_error>
+#10 4.374     <TestCaseFunction test_print_info>
+#10 4.374     <TestCaseFunction test_print_step>
+#10 4.374     <TestCaseFunction test_print_success>
+#10 4.374     <TestCaseFunction test_print_warning>
+#10 4.374 
+#10 4.374 ========================= 182 tests collected in 1.96s =========================
+#10 DONE 4.9s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 1.1s done
+#11 writing image sha256:efac09f00391baec2c6c2cab63fba2941f5037c705f0f8faba2edcb2aebf91cf done
+#11 naming to docker.io/library/tmp:tmp done
+#11 DONE 1.1s

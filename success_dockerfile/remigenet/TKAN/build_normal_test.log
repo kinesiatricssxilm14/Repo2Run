@@ -1,0 +1,86 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.04kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/5] FROM docker.io/library/python:3.10
+#4 DONE 0.0s
+
+#5 [2/5] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#5 CACHED
+
+#6 [3/5] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/remigenet/TKAN.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /TKAN/. /repo && rm -rf /TKAN/ &&     rm -rf /TKAN &&     cd /repo && git checkout 8a1de0cfda6f0bd90a91e6793255a29ca80f5134 &&     cd /repo && poetry install
+#6 CACHED
+
+#7 [4/5] RUN cd /repo && pytest --collect-only -q
+#7 1.091 ============================= test session starts ==============================
+#7 1.091 platform linux -- Python 3.10.16, pytest-8.3.4, pluggy-1.5.0
+#7 1.091 rootdir: /repo
+#7 1.091 configfile: pyproject.toml
+#7 1.091 testpaths: tests
+#7 1.091 plugins: xdist-3.6.1
+#7 1.091 collected 0 items / 3 errors
+#7 1.091 
+#7 1.091 ==================================== ERRORS ====================================
+#7 1.091 ______________________ ERROR collecting tests/test_jax.py ______________________
+#7 1.091 ImportError while importing test module '/repo/tests/test_jax.py'.
+#7 1.091 Hint: make sure your test modules/packages have valid Python names.
+#7 1.091 Traceback:
+#7 1.091 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+#7 1.091     return _bootstrap._gcd_import(name[level:], package, level)
+#7 1.091 tests/test_jax.py:7: in <module>
+#7 1.091     import keras
+#7 1.091 E   ModuleNotFoundError: No module named 'keras'
+#7 1.091 __________________ ERROR collecting tests/test_tensorflow.py ___________________
+#7 1.091 ImportError while importing test module '/repo/tests/test_tensorflow.py'.
+#7 1.091 Hint: make sure your test modules/packages have valid Python names.
+#7 1.091 Traceback:
+#7 1.091 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+#7 1.091     return _bootstrap._gcd_import(name[level:], package, level)
+#7 1.091 tests/test_tensorflow.py:7: in <module>
+#7 1.091     import keras
+#7 1.091 E   ModuleNotFoundError: No module named 'keras'
+#7 1.091 _____________________ ERROR collecting tests/test_torch.py _____________________
+#7 1.091 ImportError while importing test module '/repo/tests/test_torch.py'.
+#7 1.091 Hint: make sure your test modules/packages have valid Python names.
+#7 1.091 Traceback:
+#7 1.091 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+#7 1.091     return _bootstrap._gcd_import(name[level:], package, level)
+#7 1.091 tests/test_torch.py:7: in <module>
+#7 1.091     import keras
+#7 1.091 E   ModuleNotFoundError: No module named 'keras'
+#7 1.091 =========================== short test summary info ============================
+#7 1.091 ERROR tests/test_jax.py
+#7 1.091 ERROR tests/test_tensorflow.py
+#7 1.091 ERROR tests/test_torch.py
+#7 1.091 !!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+#7 1.091 ==================== no tests collected, 3 errors in 0.27s =====================
+#7 ERROR: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2
+------
+ > [4/5] RUN cd /repo && pytest --collect-only -q:
+1.091     return _bootstrap._gcd_import(name[level:], package, level)
+1.091 tests/test_torch.py:7: in <module>
+1.091     import keras
+1.091 E   ModuleNotFoundError: No module named 'keras'
+1.091 =========================== short test summary info ============================
+1.091 ERROR tests/test_jax.py
+1.091 ERROR tests/test_tensorflow.py
+1.091 ERROR tests/test_torch.py
+1.091 !!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+1.091 ==================== no tests collected, 3 errors in 0.27s =====================
+------
+Dockerfile:20
+--------------------
+  18 |         cd /repo && git checkout 8a1de0cfda6f0bd90a91e6793255a29ca80f5134 && \
+  19 |         cd /repo && poetry install
+  20 | >>> RUN cd /repo && pytest --collect-only -q
+--------------------
+ERROR: failed to solve: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2

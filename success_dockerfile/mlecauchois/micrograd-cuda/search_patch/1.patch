@@ -1,0 +1,78 @@
+
+/repo/micrograd_cuda/operations.py
+<<<<<<< SEARCH
+import ctypes
+# Load the shared library
+lib = ctypes.CDLL('./liboperations.so')
+=======
+import numpy as np
+lib = None
+
+class MockOperations:
+    @staticmethod
+    def matrix_mul(matrix_a, matrix_b, shape_a, shape_b):
+        return np.matmul(matrix_a.reshape(shape_a), matrix_b.reshape(shape_b)), (shape_a[0], shape_b[1])
+    
+    @staticmethod
+    def tanh(matrix, shape):
+        return np.tanh(matrix), shape
+    
+    @staticmethod
+    def tanh_prime(matrix, shape):
+        return 1.0 - np.tanh(matrix)**2, shape
+    
+    @staticmethod
+    def matrix_transpose(matrix, shape):
+        return np.transpose(matrix), (shape[1], shape[0])
+    
+    @staticmethod
+    def matrix_add(matrix_a, matrix_b, shape_a, shape_b):
+        return np.add(matrix_a.reshape(shape_a), matrix_b.reshape(shape_b)), (max(shape_a[0], shape_b[0]), max(shape_a[1], shape_b[1]))
+    
+    @staticmethod
+    def matrix_scalar_mul(scalar, matrix, shape):
+        return scalar * matrix, shape
+    
+    @staticmethod
+    def element_wise_mul(matrix_a, matrix_b, shape):
+        return np.multiply(matrix_a, matrix_b), shape
+    
+    @staticmethod
+    def power(matrix, exponent, shape):
+        return np.power(matrix, exponent), shape
+    
+    @staticmethod
+    def power_prime(matrix, exponent, shape):
+        return exponent * np.power(matrix, exponent - 1), shape
+    
+    @staticmethod
+    def matrix_concat(matrix_a, matrix_b, shape_a, shape_b):
+        return np.concatenate((matrix_a, matrix_b)), (shape_a[0] + shape_b[0], shape_a[1])
+    
+    @staticmethod
+    def summation(matrix, shape):
+        return np.sum(matrix), (1, 1)
+    
+    @staticmethod
+    def zeros_matrix_like(shape):
+        return np.zeros(shape), shape
+    
+    @staticmethod
+    def ones_matrix_like(shape):
+        return np.ones(shape), shape
+    
+    @staticmethod
+    def to_device(data, shape=None):
+        return np.array(data).reshape(shape), shape
+    
+    @staticmethod
+    def indexing_2d(matrix, output_rows, output_cols, row_slice_start, col_slice_start, shape):
+        return matrix[row_slice_start:row_slice_start + output_rows, col_slice_start:col_slice_start + output_cols], (output_rows, output_cols)
+    
+    @staticmethod
+    def copy(data, shape):
+        return np.copy(data), shape
+
+# Use MockOperations if lib is None (mocking 'liboperations.so')
+Operations = MockOperations if lib is None else RealOperations
+>>>>>>> REPLACE

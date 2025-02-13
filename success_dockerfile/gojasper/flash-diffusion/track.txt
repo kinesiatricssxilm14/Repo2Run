@@ -1,0 +1,1954 @@
+gojasper/flash-diffusion
+48e3bcd654d98be3891e1e02cf215ae6218f924b
+Container nostalgic_rubin f45896cc9d6d started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought:
+I need to understand the structure of the root directory to check which configuration files are available.
+
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+LICENSE.txt  assets    requirements.txt  src
+README.md    examples  setup.py		 tests
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 99 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I've identified several important files in the root directory: `requirements.txt`, `setup.py`, and the `src` and `tests` folders. Next, I need to inspect the `setup.py` file as it often contains information about dependencies and environment setup.
+
+### Action:
+```bash
+cat /repo/setup.py
+```
+### Observation:
+Running `cat /repo/setup.py`...
+from setuptools import find_packages, setup
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+setup(
+    name="flash",
+    version="0.1",
+    author="Clement Chadebec",
+    author_email="clement.chadebec@jasper.ai",
+    description="Flash Diffusion paper implementation",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/gojasper/flash-diffusion",
+    project_urls={"Bug Tracker": "https://github.com/gojasper/flash-diffusion/issues"},
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.10",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+    ],
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
+    install_requires=[
+        "black>=24.2.0",
+        "einops==0.7.0",
+        "isort>=5.13.2",
+        "lightning==2.2.5",
+        "opencv-python==4.9.0.80",
+        "pydantic>=2.6.1",
+        "scipy>=1.12.0",
+        "sentencepiece>=0.2.0",
+        "tokenizers>=0.15.2",
+        "transformers==4.38.0",
+        "wandb==0.16.2",
+        "webdataset>=0.2.86",
+        "peft==0.9.0",
+        "timm==0.9.16",
+        "controlnet-aux==0.0.7",
+        "lpips==0.1.4",
+    ],
+    python_requires=">=3.10",
+)
+`cat /repo/setup.py` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 98 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+The `setup.py` file includes a list of required dependencies under the `install_requires` keyword. I should proceed to install these dependencies by running `pip install -e .`, which will install the package and its dependencies listed in this file.
+
+### Action:
+```bash
+cd /repo && pip install -e .
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `pip install -e .`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install -e .`...
+Looking in indexes: http://simple/
+Obtaining file:///repo
+  Preparing metadata (setup.py) ... [?25l- done
+  Downloading http://packages/black/black-24.10.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+  Downloading http://packages/einops/einops-0.7.0-py3-none-any.whl (44 kB)
+Collecting isort>=5.13.2 (from flash==0.1)
+  Downloading http://packages/isort/isort-5.13.2-py3-none-any.whl (92 kB)
+Collecting lightning==2.2.5 (from flash==0.1)
+  Downloading http://packages/lightning/lightning-2.2.5-py3-none-any.whl (2.0 MB)
+  Downloading http://packages/opencv-python/opencv_python-4.9.0.80-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (62.2 MB)
+  Downloading http://packages/pydantic/pydantic-2.10.4-py3-none-any.whl (431 kB)
+Collecting scipy>=1.12.0 (from flash==0.1)
+  Downloading http://packages/scipy/scipy-1.15.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (40.6 MB)
+  Downloading http://packages/sentencepiece/sentencepiece-0.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+  Downloading http://packages/tokenizers/tokenizers-0.21.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+  Downloading http://packages/transformers/transformers-4.38.0-py3-none-any.whl (8.5 MB)
+  Downloading http://packages/wandb/wandb-0.16.2-py3-none-any.whl (2.2 MB)
+  Downloading http://packages/webdataset/webdataset-0.2.100-py3-none-any.whl (74 kB)
+Collecting peft==0.9.0 (from flash==0.1)
+  Downloading http://packages/peft/peft-0.9.0-py3-none-any.whl (190 kB)
+Collecting timm==0.9.16 (from flash==0.1)
+  Downloading http://packages/timm/timm-0.9.16-py3-none-any.whl (2.2 MB)
+  Downloading http://packages/controlnet-aux/controlnet_aux-0.0.7.tar.gz (202 kB)
+  Preparing metadata (setup.py) ... [?25l- \ done
+  Downloading http://packages/lpips/lpips-0.1.4-py3-none-any.whl (53 kB)
+Collecting torch (from controlnet-aux==0.0.7->flash==0.1)
+  Downloading http://packages/torch/torch-2.5.1-cp310-cp310-manylinux1_x86_64.whl (906.4 MB)
+  Using cached http://packages/importlib-metadata/importlib_metadata-8.5.0-py3-none-any.whl (26 kB)
+Collecting huggingface_hub (from controlnet-aux==0.0.7->flash==0.1)
+  Downloading http://packages/huggingface-hub/huggingface_hub-0.27.1-py3-none-any.whl (450 kB)
+Collecting filelock (from controlnet-aux==0.0.7->flash==0.1)
+  Using cached http://packages/filelock/filelock-3.16.1-py3-none-any.whl (16 kB)
+Collecting numpy (from controlnet-aux==0.0.7->flash==0.1)
+  Downloading http://packages/numpy/numpy-2.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.4 MB)
+  Downloading http://packages/pillow/pillow-11.1.0-cp310-cp310-manylinux_2_28_x86_64.whl (4.5 MB)
+  Downloading http://packages/torchvision/torchvision-0.20.1-cp310-cp310-manylinux1_x86_64.whl (7.2 MB)
+  Downloading http://packages/scikit-image/scikit_image-0.25.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (14.8 MB)
+  Downloading http://packages/pyyaml/PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (751 kB)
+  Downloading http://packages/fsspec/fsspec-2024.12.0-py3-none-any.whl (183 kB)
+Collecting lightning-utilities<2.0,>=0.8.0 (from lightning==2.2.5->flash==0.1)
+  Downloading http://packages/lightning-utilities/lightning_utilities-0.11.9-py3-none-any.whl (28 kB)
+Requirement already satisfied: packaging<25.0,>=20.0 in /usr/local/lib/python3.10/site-packages (from lightning==2.2.5->flash==0.1) (24.2)
+Collecting torchmetrics<3.0,>=0.7.0 (from lightning==2.2.5->flash==0.1)
+  Downloading http://packages/torchmetrics/torchmetrics-1.6.1-py3-none-any.whl (927 kB)
+  Downloading http://packages/tqdm/tqdm-4.67.1-py3-none-any.whl (78 kB)
+Collecting typing-extensions<6.0,>=4.4.0 (from lightning==2.2.5->flash==0.1)
+  Downloading http://packages/typing-extensions/typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+Collecting pytorch-lightning (from lightning==2.2.5->flash==0.1)
+  Downloading http://packages/pytorch-lightning/pytorch_lightning-2.5.0.post0-py3-none-any.whl (819 kB)
+  Downloading http://packages/psutil/psutil-6.1.1-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (287 kB)
+Collecting accelerate>=0.21.0 (from peft==0.9.0->flash==0.1)
+  Downloading http://packages/accelerate/accelerate-1.2.1-py3-none-any.whl (336 kB)
+Collecting safetensors (from peft==0.9.0->flash==0.1)
+  Downloading http://packages/safetensors/safetensors-0.5.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (461 kB)
+Collecting regex!=2019.12.17 (from transformers==4.38.0->flash==0.1)
+  Downloading http://packages/regex/regex-2024.11.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (781 kB)
+  Using cached http://packages/requests/requests-2.32.3-py3-none-any.whl (64 kB)
+Collecting tokenizers>=0.15.2 (from flash==0.1)
+  Downloading http://packages/tokenizers/tokenizers-0.15.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.6 MB)
+  Downloading http://packages/click/click-8.1.8-py3-none-any.whl (98 kB)
+Collecting GitPython!=3.1.29,>=1.0.0 (from wandb==0.16.2->flash==0.1)
+  Downloading http://packages/gitpython/GitPython-
+...[Truncation]...
+24.3.0-py3-none-any.whl (63 kB)
+Collecting frozenlist>=1.1.1 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning==2.2.5->flash==0.1)
+  Downloading http://packages/frozenlist/frozenlist-1.5.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+Collecting multidict<7.0,>=4.5 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning==2.2.5->flash==0.1)
+  Downloading http://packages/multidict/multidict-6.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (124 kB)
+Collecting propcache>=0.2.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning==2.2.5->flash==0.1)
+  Downloading http://packages/propcache/propcache-0.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (205 kB)
+Collecting yarl<2.0,>=1.17.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<2025.0,>=2022.5.0->lightning==2.2.5->flash==0.1)
+  Downloading http://packages/yarl/yarl-1.18.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (319 kB)
+Collecting smmap<6,>=3.0.1 (from gitdb<5,>=4.0.1->GitPython!=3.1.29,>=1.0.0->wandb==0.16.2->flash==0.1)
+  Downloading http://packages/smmap/smmap-5.0.2-py3-none-any.whl (24 kB)
+Collecting MarkupSafe>=2.0 (from jinja2->torch->controlnet-aux==0.0.7->flash==0.1)
+  Downloading http://packages/markupsafe/MarkupSafe-3.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20 kB)
+Building wheels for collected packages: controlnet-aux
+  Building wheel for controlnet-aux (setup.py) ... [?25l- \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | done
+[?25h  Created wheel for controlnet-aux: filename=controlnet_aux-0.0.7-py3-none-any.whl size=274340 sha256=c3b9277de89fe523d2a61e9cbc93f5bc414d2892ff5399aab6278233a861de56
+  Stored in directory: /root/.cache/pip/wheels/9c/e1/f0/303e1f7f404783d26c63f64897e2574e2107e9935cc3538a19
+Successfully built controlnet-aux
+Installing collected packages: sentencepiece, mpmath, braceexpand, appdirs, zipp, urllib3, typing-extensions, tqdm, sympy, smmap, six, setproctitle, safetensors, regex, PyYAML, psutil, protobuf, propcache, platformdirs, Pillow, pathspec, nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpy, networkx, mypy-extensions, MarkupSafe, lazy-loader, isort, idna, fsspec, frozenlist, filelock, einops, Click, charset-normalizer, certifi, attrs, async-timeout, annotated-types, aiohappyeyeballs, webdataset, triton, tifffile, sentry-sdk, scipy, requests, pydantic-core, opencv-python, nvidia-cusparse-cu12, nvidia-cudnn-cu12, multidict, lightning-utilities, jinja2, importlib_metadata, imageio, gitdb, docker-pycreds, black, aiosignal, yarl, scikit-image, pydantic, nvidia-cusolver-cu12, huggingface_hub, GitPython, wandb, torch, tokenizers, aiohttp, transformers, torchvision, torchmetrics, accelerate, timm, pytorch-lightning, peft, lpips, lightning, controlnet-aux, flash
+[33m  DEPRECATION: Legacy editable install of flash==0.1 from file:///repo (setup.py develop) is deprecated. pip 25.0 will enforce this behaviour change. A possible replacement is to add a pyproject.toml or enable --use-pep517, and use setuptools >= 64. If the resulting installation is not behaving as expected, try using --config-settings editable_mode=compat. Please consult the setuptools documentation for more information. Discussion can be found at https://github.com/pypa/pip/issues/11457[0m[33m
+[0m  Running setup.py develop for flash
+Successfully installed Click-8.1.8 GitPython-3.1.44 MarkupSafe-3.0.2 Pillow-11.1.0 PyYAML-6.0.2 accelerate-1.2.1 aiohappyeyeballs-2.4.4 aiohttp-3.11.11 aiosignal-1.3.2 annotated-types-0.7.0 appdirs-1.4.4 async-timeout-5.0.1 attrs-24.3.0 black-24.10.0 braceexpand-0.1.7 certifi-2024.12.14 charset-normalizer-3.4.1 controlnet-aux-0.0.7 docker-pycreds-0.4.0 einops-0.7.0 filelock-3.16.1 flash frozenlist-1.5.0 fsspec-2024.12.0 gitdb-4.0.12 huggingface_hub-0.27.1 idna-3.10 imageio-2.36.1 importlib_metadata-8.5.0 isort-5.13.2 jinja2-3.1.5 lazy-loader-0.4 lightning-2.2.5 lightning-utilities-0.11.9 lpips-0.1.4 mpmath-1.3.0 multidict-6.1.0 mypy-extensions-1.0.0 networkx-3.4.2 numpy-2.2.1 nvidia-cublas-cu12-12.4.5.8 nvidia-cuda-cupti-cu12-12.4.127 nvidia-cuda-nvrtc-cu12-12.4.127 nvidia-cuda-runtime-cu12-12.4.127 nvidia-cudnn-cu12-9.1.0.70 nvidia-cufft-cu12-11.2.1.3 nvidia-curand-cu12-10.3.5.147 nvidia-cusolver-cu12-11.6.1.9 nvidia-cusparse-cu12-12.3.1.170 nvidia-nccl-cu12-2.21.5 nvidia-nvjitlink-cu12-12.4.127 nvidia-nvtx-cu12-12.4.127 opencv-python-4.9.0.80 pathspec-0.12.1 peft-0.9.0 platformdirs-4.3.6 propcache-0.2.1 protobuf-4.25.5 psutil-6.1.1 pydantic-2.10.4 pydantic-core-2.27.2 pytorch-lightning-2.5.0.post0 regex-2024.11.6 requests-2.32.3 safetensors-0.5.2 scikit-image-0.25.0 scipy-1.15.0 sentencepiece-0.2.0 sentry-sdk-2.19.2 setproctitle-1.3.4 six-1.17.0 smmap-5.0.2 sympy-1.13.1 tifffile-2024.12.12 timm-0.9.16 tokenizers-0.15.2 torch-2.5.1 torchmetrics-1.6.1 torchvision-0.20.1 tqdm-4.67.1 transformers-4.38.0 triton-3.1.0 typing-extensions-4.12.2 urllib3-2.3.0 wandb-0.16.2 webdataset-0.2.100 yarl-1.18.3 zipp-3.21.0
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -e .` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 97 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+---------------------------
+### Thought:
+The dependencies specified in the `setup.py` file have been installed. Now I need to see if the current setup is sufficient to run the tests successfully. I will proceed by executing the `runtest` command to check if the environment is correctly set up and all tests pass.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/test_dataset/test_filters.py ______________
+ImportError while importing test module '/repo/tests/test_dataset/test_filters.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_dataset/test_filters.py:1: in <module>
+    from flash.data.filters import FilterWrapper, KeyFilter, KeyFilterConfig
+src/flash/data/__init__.py:1: in <module>
+    from .datasets import DataModule, DataModuleConfig
+src/flash/data/datasets/__init__.py:1: in <module>
+    from .dataset import DataModule
+src/flash/data/datasets/dataset.py:8: in <module>
+    from ..mappers import BaseMapper, MapperWrapper
+src/flash/data/mappers/__init__.py:2: in <module>
+    from .mappers import (
+src/flash/data/mappers/mappers.py:5: in <module>
+    from controlnet_aux import CannyDetector, MidasDetector
+/usr/local/lib/python3.10/site-packages/controlnet_aux/__init__.py:3: in <module>
+    from .hed import HEDdetector
+/usr/local/lib/python3.10/site-packages/controlnet_aux/hed/__init__.py:11: in <module>
+    import cv2
+/usr/local/lib/python3.10/site-packages/cv2/__init__.py:181: in <module>
+    bootstrap()
+/usr/local/lib/python3.10/site-packages/cv2/__init__.py:153: in bootstrap
+    native_module = importlib.import_module("cv2")
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+E   ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+_____________ ERROR collecting tests/test_dataset/test_mappers.py ______________
+ImportError while importing test module '/repo/tests/test_dataset/test_mappers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_dataset/test_mappers.py:7: in <module>
+    from flash.data.mappers import (
+src/flash/data/__init__.py:1: in <module>
+    from .datasets import DataModule, DataModuleConfig
+src/flash/data/datasets/__init__.py:1: in <module>
+    from .dataset import DataModule
+src/flash/data/datasets/dataset.py:8: in <module>
+    from ..mappers import BaseMapper, MapperWrapper
+src/flash/data/mappers/__init__.py:2: in <module>
+    from .mappers import (
+src/flash/data/mappers/mappers.py:5: in <module>
+    from controlnet_aux import CannyDetector, MidasDetector
+/usr/local/lib/python3.10/site-packages/controlnet_aux/__init__.py:3: in <module>
+    from .hed import HEDdetector
+/usr/local/lib/python3.10/site-packages/controlnet_aux/hed/__init__.py:11: in <module>
+    import cv2
+E   ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+_________ ERROR collecting tests/test_embedders/test_clip_embedders.py _________
+ImportError while importing test module '/repo/tests/test_embedders/test_clip_embedders.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_embedders/test_clip_embedders.py:5: in <module>
+    from flash.models.embedders import (
+src/flash/models/embedders/__init__.py:5: in <module>
+    from .timesteps import TimestepsEmbedder, TimestepsEmbedderConfig
+src/flash/models/embedders/timesteps/__init__.py:2: in <module>
+    from .timesteps_embedding import TimestepsEmbedder
+src/flash/models/embedders/timesteps/timesteps_embedding.py:1: in <module>
+    from diffusers.models.embeddings import Timesteps
+E   ModuleNotFoundError: No module named 'diffusers'
+______ ERROR collecting tests/test_embedders/test_conditioners_wrapper.py ______
+ImportError while importing test module '/repo/tests/test_embedders/test_conditioners_wrapper.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_embedders/test_conditioners_wrapper.py:4: in <module>
+    from flash.models.embedders import (
+src/flash/models/embedders/__init__.py:5: in <module>
+    from .timesteps import TimestepsEmbedder, TimestepsEmbedderConfig
+src/flash/models/embedders/timesteps/__init__.py:2: in <module>
+    from .timesteps_embedding import TimestepsEmbedder
+src/flash/models/embedders/timesteps/timesteps_embedding.py:1: in <module>
+    from diffusers.models.embeddings import Timesteps
+E   ModuleNotFoundError: No module named 'diffusers'
+__________ ERROR collecting tests/test_embedders/test_t5_embedder.py ___________
+ImportError while importing test module '/repo/tests/test_embedders/test_t5_embedder.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_embedders/test_t5_embedder.py:5: in <module>
+    from flash.models.embedders import T5TextEmbedder, T5TextEmbedderConfig
+src/flash/models/embedders/__init__.py:5: in <module>
+    from .timesteps import TimestepsEmbedder, TimestepsEmbedderConfig
+src/flash/models/embedders/timesteps/__init__.py:2: in <module>
+    from .timesteps_embedding import TimestepsEmbedder
+src/flash/models/embedders/timesteps/timesteps_embedding.py:1: in <module>
+    from diffusers.models.embeddings import Timesteps
+E   ModuleNotFoundError: No module named 'diffusers'
+_________ ERROR collecting tests/test_embedders/test_time_embedders.py _________
+ImportError while impor
+...[Truncation]...
+s_embedding import TimestepsEmbedder
+src/flash/models/embedders/timesteps/timesteps_embedding.py:1: in <module>
+    from diffusers.models.embeddings import Timesteps
+E   ModuleNotFoundError: No module named 'diffusers'
+_________ ERROR collecting tests/test_embedders/test_time_embedders.py _________
+ImportError while importing test module '/repo/tests/test_embedders/test_time_embedders.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_embedders/test_time_embedders.py:4: in <module>
+    from flash.models.embedders import TimestepsEmbedder, TimestepsEmbedderConfig
+src/flash/models/embedders/__init__.py:5: in <module>
+    from .timesteps import TimestepsEmbedder, TimestepsEmbedderConfig
+src/flash/models/embedders/timesteps/__init__.py:2: in <module>
+    from .timesteps_embedding import TimestepsEmbedder
+src/flash/models/embedders/timesteps/timesteps_embedding.py:1: in <module>
+    from diffusers.models.embeddings import Timesteps
+E   ModuleNotFoundError: No module named 'diffusers'
+________ ERROR collecting tests/test_embedders/test_torchnn_embedder.py ________
+ImportError while importing test module '/repo/tests/test_embedders/test_torchnn_embedder.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_embedders/test_torchnn_embedder.py:5: in <module>
+    from flash.models.embedders import TorchNNEmbedder, TorchNNEmbedderConfig
+src/flash/models/embedders/__init__.py:5: in <module>
+    from .timesteps import TimestepsEmbedder, TimestepsEmbedderConfig
+src/flash/models/embedders/timesteps/__init__.py:2: in <module>
+    from .timesteps_embedding import TimestepsEmbedder
+src/flash/models/embedders/timesteps/timesteps_embedding.py:1: in <module>
+    from diffusers.models.embeddings import Timesteps
+E   ModuleNotFoundError: No module named 'diffusers'
+__________ ERROR collecting tests/test_flash/test_flash_diffusion.py ___________
+ImportError while importing test module '/repo/tests/test_flash/test_flash_diffusion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_flash/test_flash_diffusion.py:6: in <module>
+    from diffusers import DDPMScheduler
+E   ModuleNotFoundError: No module named 'diffusers'
+____ ERROR collecting tests/test_transformers/test_transformers_wrappers.py ____
+ImportError while importing test module '/repo/tests/test_transformers/test_transformers_wrappers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_transformers/test_transformers_wrappers.py:4: in <module>
+    from flash.models.transformers import DiffusersTransformer2DWrapper
+src/flash/models/transformers/__init__.py:1: in <module>
+    from .tranformers import DiffusersSD3Transformer2DWrapper, DiffusersTransformer2DWrapper
+src/flash/models/transformers/tranformers.py:4: in <module>
+    from diffusers.models.transformers import SD3Transformer2DModel, Transformer2DModel
+E   ModuleNotFoundError: No module named 'diffusers'
+___________ ERROR collecting tests/test_unet/test_unets_wrappers.py ____________
+ImportError while importing test module '/repo/tests/test_unet/test_unets_wrappers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_unet/test_unets_wrappers.py:4: in <module>
+    from flash.models.unets import DiffusersUNet2DCondWrapper, DiffusersUNet2DWrapper
+src/flash/models/unets/__init__.py:1: in <module>
+    from .unet import DiffusersUNet2DCondWrapper, DiffusersUNet2DWrapper
+src/flash/models/unets/unet.py:4: in <module>
+    from diffusers.models import UNet2DConditionModel, UNet2DModel
+E   ModuleNotFoundError: No module named 'diffusers'
+____________ ERROR collecting tests/test_vaes/test_autoencoderKL.py ____________
+ImportError while importing test module '/repo/tests/test_vaes/test_autoencoderKL.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_vaes/test_autoencoderKL.py:4: in <module>
+    from flash.models.vae import AutoencoderKLDiffusers, AutoencoderKLDiffusersConfig
+src/flash/models/vae/__init__.py:1: in <module>
+    from .autoencoderKL import AutoencoderKLDiffusers
+src/flash/models/vae/autoencoderKL.py:2: in <module>
+    from diffusers.models import AutoencoderKL
+E   ModuleNotFoundError: No module named 'diffusers'
+=========================== short test summary info ============================
+ERROR tests/test_dataset/test_filters.py
+ERROR tests/test_dataset/test_mappers.py
+ERROR tests/test_embedders/test_clip_embedders.py
+ERROR tests/test_embedders/test_conditioners_wrapper.py
+ERROR tests/test_embedders/test_t5_embedder.py
+ERROR tests/test_embedders/test_time_embedders.py
+ERROR tests/test_embedders/test_torchnn_embedder.py
+ERROR tests/test_flash/test_flash_diffusion.py
+ERROR tests/test_transformers/test_transformers_wrappers.py
+ERROR tests/test_unet/test_unets_wrappers.py
+ERROR tests/test_vaes/test_autoencoderKL.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 11 errors during collection !!!!!!!!!!!!!!!!!!!
+no tests collected, 11 errors in 9.74s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 96 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+---------------------------
+### Thought:
+The error logs indicate that several modules are missing:
+1. `libGL.so.1` related to `cv2` from OpenCV.
+2. `diffusers`.
+
+I will first resolve the missing `libGL.so.1` by installing `libgl1-mesa-glx`, which provides this library.
+
+### Action:
+```bash
+apt-get update -qq && apt-get install -y -qq libgl1-mesa-glx
+```
+### Observation:
+Running `apt-get update -qq`...
+`apt-get update -qq` executes with returncode: 0
+Running `apt-get install -y -qq libgl1-mesa-glx`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `apt-get install -y -qq libgl1-mesa-glx`...
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package libdrm-common.
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 23969 files and directories currently installed.)
+Preparing to unpack .../00-libdrm-common_2.4.114-1_all.deb ...
+Unpacking libdrm-common (2.4.114-1) ...
+Selecting previously unselected package libdrm2:amd64.
+Preparing to unpack .../01-libdrm2_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm2:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libdrm-amdgpu1:amd64.
+Preparing to unpack .../02-libdrm-amdgpu1_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-amdgpu1:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libpciaccess0:amd64.
+Preparing to unpack .../03-libpciaccess0_0.17-2_amd64.deb ...
+Unpacking libpciaccess0:amd64 (0.17-2) ...
+Selecting previously unselected package libdrm-intel1:amd64.
+Preparing to unpack .../04-libdrm-intel1_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-intel1:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libdrm-nouveau2:amd64.
+Preparing to unpack .../05-libdrm-nouveau2_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-nouveau2:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libdrm-radeon1:amd64.
+Preparing to unpack .../06-libdrm-radeon1_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-radeon1:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libglvnd0:amd64.
+Preparing to unpack .../07-libglvnd0_1.6.0-1_amd64.deb ...
+Unpacking libglvnd0:amd64 (1.6.0-1) ...
+Selecting previously unselected package libglapi-mesa:amd64.
+Preparing to unpack .../08-libglapi-mesa_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libglapi-mesa:amd64 (22.3.6-1+deb12u1) ...
+Selecting previously unselected package libx11-xcb1:amd64.
+Preparing to unpack .../09-libx11-xcb1_2%3a1.8.4-2+deb12u2_amd64.deb ...
+Unpacking libx11-xcb1:amd64 (2:1.8.4-2+deb12u2) ...
+Selecting previously unselected package libxcb-dri2-0:amd64.
+Preparing to unpack .../10-libxcb-dri2-0_1.15-1_amd64.deb ...
+Unpacking libxcb-dri2-0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-dri3-0:amd64.
+Preparing to unpack .../11-libxcb-dri3-0_1.15-1_amd64.deb ...
+Unpacking libxcb-dri3-0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-glx0:amd64.
+Preparing to unpack .../12-libxcb-glx0_1.15-1_amd64.deb ...
+Unpacking libxcb-glx0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-present0:amd64.
+Preparing to unpack .../13-libxcb-present0_1.15-1_amd64.deb ...
+Unpacking libxcb-present0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-randr0:amd64.
+Preparing to unpack .../14-libxcb-randr0_1.15-1_amd64.deb ...
+Unpacking libxcb-randr0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-sync1:amd64.
+Preparing to unpack .../15-libxcb-sync1_1.15-1_amd64.deb ...
+Unpacking libxcb-sync1:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-xfixes0:amd64.
+Preparing to unpack .../16-libxcb-xfixes0_1.15-1_amd64.deb ...
+Unpacking libxcb-xfixes0:amd64 (1.15-1) ...
+Selecting previously unselected package libxfixes3:amd64.
+Preparing to unpack .../17-libxfixes3_1%3a6.0.0-2_amd64.deb ...
+Unpacking libxfixes3:amd64 (1:6.0.0-2) ...
+Selecting previously unselected package libxshmfence1:amd64.
+Preparing to unpack .../18-libxshmfence1_1.3-1_amd64.deb ...
+Unpacking libxshmfence1:amd64 (1.3-1) ...
+Selecting previously unselected package libxxf86vm1:amd64.
+Preparing to unpack .../19-libxxf86vm1_1%3a1.1.4-1+b2_amd64.deb ...
+Unpacking libxxf86vm1:amd64 (1:1.1.4-1+b2) ...
+Selecting previously unselected package libz3-4:amd64.
+Preparing to unpack .../20-libz3-4_4.8.12-3.1_amd64.deb ...
+Unpacking libz3-4:amd64 (4.8.12-3.1) ...
+Selecting previously unselected package libllvm15:amd64.
+Preparing to unpack .../21-libllvm15_1%3a15.0.6-4+b1_amd64.deb ...
+Unpacking libllvm15:amd64 (1:15.0.6-4+b1) ...
+Selecting previously unselected package libsensors-config.
+Preparing to unpack .../22-libsensors-config_1%3a3.6.0-7.1_all.deb ...
+Unpacking libsensors-config (1:3.6.0-7.1) ...
+Selecting previously unselected package libsensors5:amd64.
+Preparing to unpack .../23-libsensors5_1%3a3.6.0-7.1_amd64.deb ...
+Unpacking libsensors5:amd64 (1:3.6.0-7.1) ...
+Selecting previously unselected package libgl1-mesa-dri:amd64.
+Preparing to unpack .../24-libgl1-mesa-dri_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libgl1-mesa-dri:amd64 (22.3.6-1+deb12u1) ...
+Selecting previously unselected package libglx-mesa0:amd64.
+Preparing to unpack .../25-libglx-mesa0_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libglx-mesa0:amd64 (22.3.6-1+deb12u1) ...
+Selecting previously unselected package libglx0:amd64.
+Preparing to unpack .../26-libglx0_1.6.0-1_amd64.deb ...
+Unpacking libglx0:amd64 (1.6.0-1) ...
+Selecting previously unselected package libgl1:amd64.
+Preparing to unpack .../27-libgl1_1.6.0-1_amd64.deb ...
+Unpacking libgl1:amd64 (1.6.0-1) ...
+Selecting previously unselected package libgl1-mesa-glx:amd64.
+Preparing to unpack .../28-libgl1-mesa-glx_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libgl1-mesa-glx:amd64 (22.3.6-1+deb12u1) ...
+Setting up libxcb-dri3-0:amd64 (1.15-1) ...
+Setting up libx11-xcb1:amd64 (2:1.8.4-2+deb12u2) ...
+Setting up libpciaccess0:amd64 (0.17-2) ...
+Setting up libxcb-xfixes0:amd64 (1.15-1) ...
+Setting up libglvnd0:amd64 (1.6.0-1) ...
+Setting up libxcb-glx0:amd64 (1.15-1) ...
+Setting up libsensors-config (1:3.6.0-7.1) ...
+Settin
+...[Truncation]...
+unselected package libdrm-amdgpu1:amd64.
+Preparing to unpack .../02-libdrm-amdgpu1_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-amdgpu1:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libpciaccess0:amd64.
+Preparing to unpack .../03-libpciaccess0_0.17-2_amd64.deb ...
+Unpacking libpciaccess0:amd64 (0.17-2) ...
+Selecting previously unselected package libdrm-intel1:amd64.
+Preparing to unpack .../04-libdrm-intel1_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-intel1:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libdrm-nouveau2:amd64.
+Preparing to unpack .../05-libdrm-nouveau2_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-nouveau2:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libdrm-radeon1:amd64.
+Preparing to unpack .../06-libdrm-radeon1_2.4.114-1+b1_amd64.deb ...
+Unpacking libdrm-radeon1:amd64 (2.4.114-1+b1) ...
+Selecting previously unselected package libglvnd0:amd64.
+Preparing to unpack .../07-libglvnd0_1.6.0-1_amd64.deb ...
+Unpacking libglvnd0:amd64 (1.6.0-1) ...
+Selecting previously unselected package libglapi-mesa:amd64.
+Preparing to unpack .../08-libglapi-mesa_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libglapi-mesa:amd64 (22.3.6-1+deb12u1) ...
+Selecting previously unselected package libx11-xcb1:amd64.
+Preparing to unpack .../09-libx11-xcb1_2%3a1.8.4-2+deb12u2_amd64.deb ...
+Unpacking libx11-xcb1:amd64 (2:1.8.4-2+deb12u2) ...
+Selecting previously unselected package libxcb-dri2-0:amd64.
+Preparing to unpack .../10-libxcb-dri2-0_1.15-1_amd64.deb ...
+Unpacking libxcb-dri2-0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-dri3-0:amd64.
+Preparing to unpack .../11-libxcb-dri3-0_1.15-1_amd64.deb ...
+Unpacking libxcb-dri3-0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-glx0:amd64.
+Preparing to unpack .../12-libxcb-glx0_1.15-1_amd64.deb ...
+Unpacking libxcb-glx0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-present0:amd64.
+Preparing to unpack .../13-libxcb-present0_1.15-1_amd64.deb ...
+Unpacking libxcb-present0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-randr0:amd64.
+Preparing to unpack .../14-libxcb-randr0_1.15-1_amd64.deb ...
+Unpacking libxcb-randr0:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-sync1:amd64.
+Preparing to unpack .../15-libxcb-sync1_1.15-1_amd64.deb ...
+Unpacking libxcb-sync1:amd64 (1.15-1) ...
+Selecting previously unselected package libxcb-xfixes0:amd64.
+Preparing to unpack .../16-libxcb-xfixes0_1.15-1_amd64.deb ...
+Unpacking libxcb-xfixes0:amd64 (1.15-1) ...
+Selecting previously unselected package libxfixes3:amd64.
+Preparing to unpack .../17-libxfixes3_1%3a6.0.0-2_amd64.deb ...
+Unpacking libxfixes3:amd64 (1:6.0.0-2) ...
+Selecting previously unselected package libxshmfence1:amd64.
+Preparing to unpack .../18-libxshmfence1_1.3-1_amd64.deb ...
+Unpacking libxshmfence1:amd64 (1.3-1) ...
+Selecting previously unselected package libxxf86vm1:amd64.
+Preparing to unpack .../19-libxxf86vm1_1%3a1.1.4-1+b2_amd64.deb ...
+Unpacking libxxf86vm1:amd64 (1:1.1.4-1+b2) ...
+Selecting previously unselected package libz3-4:amd64.
+Preparing to unpack .../20-libz3-4_4.8.12-3.1_amd64.deb ...
+Unpacking libz3-4:amd64 (4.8.12-3.1) ...
+Selecting previously unselected package libllvm15:amd64.
+Preparing to unpack .../21-libllvm15_1%3a15.0.6-4+b1_amd64.deb ...
+Unpacking libllvm15:amd64 (1:15.0.6-4+b1) ...
+Selecting previously unselected package libsensors-config.
+Preparing to unpack .../22-libsensors-config_1%3a3.6.0-7.1_all.deb ...
+Unpacking libsensors-config (1:3.6.0-7.1) ...
+Selecting previously unselected package libsensors5:amd64.
+Preparing to unpack .../23-libsensors5_1%3a3.6.0-7.1_amd64.deb ...
+Unpacking libsensors5:amd64 (1:3.6.0-7.1) ...
+Selecting previously unselected package libgl1-mesa-dri:amd64.
+Preparing to unpack .../24-libgl1-mesa-dri_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libgl1-mesa-dri:amd64 (22.3.6-1+deb12u1) ...
+Selecting previously unselected package libglx-mesa0:amd64.
+Preparing to unpack .../25-libglx-mesa0_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libglx-mesa0:amd64 (22.3.6-1+deb12u1) ...
+Selecting previously unselected package libglx0:amd64.
+Preparing to unpack .../26-libglx0_1.6.0-1_amd64.deb ...
+Unpacking libglx0:amd64 (1.6.0-1) ...
+Selecting previously unselected package libgl1:amd64.
+Preparing to unpack .../27-libgl1_1.6.0-1_amd64.deb ...
+Unpacking libgl1:amd64 (1.6.0-1) ...
+Selecting previously unselected package libgl1-mesa-glx:amd64.
+Preparing to unpack .../28-libgl1-mesa-glx_22.3.6-1+deb12u1_amd64.deb ...
+Unpacking libgl1-mesa-glx:amd64 (22.3.6-1+deb12u1) ...
+Setting up libxcb-dri3-0:amd64 (1.15-1) ...
+Setting up libx11-xcb1:amd64 (2:1.8.4-2+deb12u2) ...
+Setting up libpciaccess0:amd64 (0.17-2) ...
+Setting up libxcb-xfixes0:amd64 (1.15-1) ...
+Setting up libglvnd0:amd64 (1.6.0-1) ...
+Setting up libxcb-glx0:amd64 (1.15-1) ...
+Setting up libsensors-config (1:3.6.0-7.1) ...
+Setting up libxxf86vm1:amd64 (1:1.1.4-1+b2) ...
+Setting up libxcb-present0:amd64 (1.15-1) ...
+Setting up libz3-4:amd64 (4.8.12-3.1) ...
+Setting up libxfixes3:amd64 (1:6.0.0-2) ...
+Setting up libxcb-sync1:amd64 (1.15-1) ...
+Setting up libsensors5:amd64 (1:3.6.0-7.1) ...
+Setting up libglapi-mesa:amd64 (22.3.6-1+deb12u1) ...
+Setting up libxcb-dri2-0:amd64 (1.15-1) ...
+Setting up libxshmfence1:amd64 (1.3-1) ...
+Setting up libxcb-randr0:amd64 (1.15-1) ...
+Setting up libllvm15:amd64 (1:15.0.6-4+b1) ...
+Setting up libdrm-common (2.4.114-1) ...
+Setting up libdrm2:amd64 (2.4.114-1+b1) ...
+Setting up libdrm-amdgpu1:amd64 (2.4.114-1+b1) ...
+Setting up libdrm-nouveau2:amd64 (2.4.114-1+b1) ...
+Setting up libdrm-radeon1:amd64 (2.4.114-1+b1) ...
+Setting up libdrm-intel1:amd64 (2.4.114-1+b1) ...
+Setting up libgl1-mesa-dri:amd64 (22.3.6-1+deb12u1) ...
+Setting up libglx-mesa0:amd64 (22.3.6-1+deb12u1) ...
+Setting up libglx0:amd64 (1.6.0-1) ...
+Setting up libgl1:amd64 (1.6.0-1) ...
+Setting up libgl1-mesa-glx:amd64 (22.3.6-1+deb12u1) ...
+Processing triggers for libc-bin (2.36-9+deb12u9) ...
+`apt-get install -y -qq libgl1-mesa-glx` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 95 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+---------------------------
+### Thought:
+The `libGL.so.1` issue should be resolved now. Next, I need to install the `diffusers` package which is missing from several test files.
+
+### Action:
+```bash
+waitinglist add -p diffusers -t pip
+```
+### Observation:
+Running `waitinglist add -p diffusers -t pip`...
+'diffusers' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 94 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+---------------------------
+### Thought:
+The `diffusers` package has been successfully added to the waiting list. I will now proceed to download all the packages in the waiting list.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'diffusers' has been removed from the waiting list.
+"diffusers" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+diffusers (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 93 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+---------------------------
+### Thought:
+The missing `diffusers` package has been installed. Let's run the tests again to check if the previous issues have been resolved and if there are any new problems.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-1.0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_wrong_config
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_time_embedders.py::TestTimeStepsEmbedder::test_instanciate
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::test_raises_len_mismatch
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::te
+...[Truncation]...
+.py", line 201, in console_main
+    code = main()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 175, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 330, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 283, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 336, in _main
+    config.hook.pytest_collection(session=session)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 347, in pytest_collection
+    session.perform_collect()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 809, in perform_collect
+    self.items.extend(self.genitems(node))
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 970, in genitems
+    rep, duplicate = self._collect_one_node(node, handle_dupes)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 835, in _collect_one_node
+    rep = collect_one_node(node)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 567, in collect_one_node
+    rep: CollectReport = ihook.pytest_make_collect_report(collector=collector)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 391, in pytest_make_collect_report
+    call = CallInfo.from_call(
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 341, in from_call
+    result: TResult | None = func()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 389, in collect
+    return list(collector.collect())
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 549, in collect
+    self._register_setup_module_fixture()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 562, in _register_setup_module_fixture
+    self.obj, ("setUpModule", "setup_module")
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 284, in obj
+    self._obj = obj = self._getobj()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 546, in _getobj
+    return importtestmodule(self.path, self.config)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 493, in importtestmodule
+    mod = import_path(
+  File "/usr/local/lib/python3.10/site-packages/_pytest/pathlib.py", line 587, in import_path
+    importlib.import_module(module_name)
+  File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py", line 184, in exec_module
+    exec(co, module.__dict__)
+  File "/repo/tests/test_dataset/test_mappers.py", line 7, in <module>
+    from flash.data.mappers import (
+  File "/repo/src/flash/data/__init__.py", line 1, in <module>
+    from .datasets import DataModule, DataModuleConfig
+  File "/repo/src/flash/data/datasets/__init__.py", line 1, in <module>
+    from .dataset import DataModule
+  File "/repo/src/flash/data/datasets/dataset.py", line 8, in <module>
+    from ..mappers import BaseMapper, MapperWrapper
+  File "/repo/src/flash/data/mappers/__init__.py", line 2, in <module>
+    from .mappers import (
+  File "/repo/src/flash/data/mappers/mappers.py", line 5, in <module>
+    from controlnet_aux import CannyDetector, MidasDetector
+  File "/usr/local/lib/python3.10/site-packages/controlnet_aux/__init__.py", line 3, in <module>
+    from .hed import HEDdetector
+  File "/usr/local/lib/python3.10/site-packages/controlnet_aux/hed/__init__.py", line 11, in <module>
+    import cv2
+AttributeError: _ARRAY_API not found
+=========================== short test summary info ============================
+ERROR tests/test_dataset/test_filters.py
+ERROR tests/test_dataset/test_mappers.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+90 tests collected, 2 errors in 7.70s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 92 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+---------------------------
+### Thought:
+The current errors are related to the `_ARRAY_API` and `cv2` attributes from the `controlnet_aux` library, which indicates some compatibility issue with the installed `controlnet_aux` or `opencv-python` packages.
+
+As a first step, I will verify the version of `opencv-python` and `controlnet_aux` installed and check for any updates or specific versions required that might solve this issue.
+
+### Action:
+```bash
+pip show opencv-python controlnet_aux
+```
+### Observation:
+Running `pip show opencv-python controlnet_aux`...
+Name: opencv-python
+Version: 4.9.0.80
+Summary: Wrapper package for OpenCV python bindings.
+Home-page: https://github.com/opencv/opencv-python
+Author: 
+Author-email: 
+License: Apache 2.0
+Location: /usr/local/lib/python3.10/site-packages
+Requires: numpy
+Required-by: controlnet-aux, flash
+---
+Name: controlnet-aux
+Version: 0.0.7
+Summary: Auxillary models for controlnet
+Home-page: https://github.com/patrickvonplaten/controlnet_aux
+Author: The HuggingFace team
+Author-email: patrick@huggingface.co
+License: Apache
+Location: /usr/local/lib/python3.10/site-packages
+Requires: einops, filelock, huggingface-hub, importlib-metadata, numpy, opencv-python, Pillow, scikit-image, scipy, timm, torch, torchvision
+Required-by: flash
+`pip show opencv-python controlnet_aux` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 91 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+---------------------------
+### Thought:
+The installed versions of `opencv-python` (4.9.0.80) and `controlnet-aux` (0.0.7) appear to be recent. The issue might stem from the compatibility between these packages or a missing dependency that isn't properly documented.
+
+To rule out compatibility issues, I'll first update the numpy package to the latest version, as OpenCV relies on numpy heavily. This is likely to resolve the `_ARRAY_API` error.
+
+### Action:
+```bash
+pip install -q numpy --upgrade
+```
+### Observation:
+Running `pip install -q numpy --upgrade`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q numpy --upgrade` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 90 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+---------------------------
+### Thought:
+The numpy upgrade has been successful. I will now rerun the tests to check if the `_ARRAY_API` error with `cv2` has been resolved.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-1.0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_wrong_config
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_time_embedders.py::TestTimeStepsEmbedder::test_instanciate
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::test_raises_len_mismatch
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::te
+...[Truncation]...
+.py", line 201, in console_main
+    code = main()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 175, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 330, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 283, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 336, in _main
+    config.hook.pytest_collection(session=session)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 347, in pytest_collection
+    session.perform_collect()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 809, in perform_collect
+    self.items.extend(self.genitems(node))
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 970, in genitems
+    rep, duplicate = self._collect_one_node(node, handle_dupes)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 835, in _collect_one_node
+    rep = collect_one_node(node)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 567, in collect_one_node
+    rep: CollectReport = ihook.pytest_make_collect_report(collector=collector)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 391, in pytest_make_collect_report
+    call = CallInfo.from_call(
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 341, in from_call
+    result: TResult | None = func()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 389, in collect
+    return list(collector.collect())
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 549, in collect
+    self._register_setup_module_fixture()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 562, in _register_setup_module_fixture
+    self.obj, ("setUpModule", "setup_module")
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 284, in obj
+    self._obj = obj = self._getobj()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 546, in _getobj
+    return importtestmodule(self.path, self.config)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 493, in importtestmodule
+    mod = import_path(
+  File "/usr/local/lib/python3.10/site-packages/_pytest/pathlib.py", line 587, in import_path
+    importlib.import_module(module_name)
+  File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py", line 184, in exec_module
+    exec(co, module.__dict__)
+  File "/repo/tests/test_dataset/test_mappers.py", line 7, in <module>
+    from flash.data.mappers import (
+  File "/repo/src/flash/data/__init__.py", line 1, in <module>
+    from .datasets import DataModule, DataModuleConfig
+  File "/repo/src/flash/data/datasets/__init__.py", line 1, in <module>
+    from .dataset import DataModule
+  File "/repo/src/flash/data/datasets/dataset.py", line 8, in <module>
+    from ..mappers import BaseMapper, MapperWrapper
+  File "/repo/src/flash/data/mappers/__init__.py", line 2, in <module>
+    from .mappers import (
+  File "/repo/src/flash/data/mappers/mappers.py", line 5, in <module>
+    from controlnet_aux import CannyDetector, MidasDetector
+  File "/usr/local/lib/python3.10/site-packages/controlnet_aux/__init__.py", line 3, in <module>
+    from .hed import HEDdetector
+  File "/usr/local/lib/python3.10/site-packages/controlnet_aux/hed/__init__.py", line 11, in <module>
+    import cv2
+AttributeError: _ARRAY_API not found
+=========================== short test summary info ============================
+ERROR tests/test_dataset/test_filters.py
+ERROR tests/test_dataset/test_mappers.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+90 tests collected, 2 errors in 7.88s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 89 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+---------------------------
+### Thought:
+Upgrading `numpy` did not resolve the `_ARRAY_API` error with `cv2`. Another possible solution is to downgrade the `opencv-python` package since the compatibility issues could stem from the current version. Let's try downgrading `opencv-python` to an earlier stable version.
+
+### Action:
+```bash
+pip install -q opencv-python==4.5.5.64
+```
+### Observation:
+Running `pip install -q opencv-python==4.5.5.64`...
+[31mERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+flash 0.1 requires opencv-python==4.9.0.80, but you have opencv-python 4.5.5.64 which is incompatible.[0m[31m
+[0m[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q opencv-python==4.5.5.64` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 88 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+---------------------------
+### Thought:
+The downgrade of `opencv-python` to version 4.5.5.64 was successful but it caused a compatibility conflict with the `flash` package which requires version 4.9.0.80. This indicates a potential dependency issue between `flash` and `opencv-python`.
+
+Given this specific conflict, it's crucial to ensure the compatibility between `flash`, `controlnet-aux`, and `opencv-python`. To investigate further, we should check if a different version of `controlnet-aux` can work with the required version of `opencv-python`.
+
+### Action:
+```bash
+pip install -q controlnet-aux==0.0.6
+```
+### Observation:
+Running `pip install -q controlnet-aux==0.0.6`...
+[31mERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+flash 0.1 requires controlnet-aux==0.0.7, but you have controlnet-aux 0.0.6 which is incompatible.
+flash 0.1 requires opencv-python==4.9.0.80, but you have opencv-python 4.5.5.64 which is incompatible.[0m[31m
+[0m[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q controlnet-aux==0.0.6` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 87 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+pip install -q controlnet-aux==0.0.6
+---------------------------
+### Thought:
+Downgrading `controlnet-aux` to version 0.0.6 also resulted in a compatibility conflict with the `flash` package, which requires version 0.0.7 of `controlnet-aux`.
+
+To solve this, another approach would be to re-install the dependencies with the versions specified in `setup.py` while ensuring compatibility with the `flash` package. I will first revert `opencv-python` to the required version (4.9.0.80) and re-install the latest version of `controlnet-aux`.
+
+### Action:
+```bash
+pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7
+```
+### Observation:
+Running `pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 86 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+pip install -q controlnet-aux==0.0.6
+pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7
+---------------------------
+### Thought:
+Both `opencv-python` and `controlnet-aux` have been reverted to their required versions specified in `setup.py`. I'll now rerun the tests to check if the compatibility issue causing the `_ARRAY_API` error has been resolved.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-1.0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_wrong_config
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_time_embedders.py::TestTimeStepsEmbedder::test_instanciate
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::test_raises_len_mismatch
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::te
+...[Truncation]...
+.py", line 201, in console_main
+    code = main()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/config/__init__.py", line 175, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 330, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 283, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 336, in _main
+    config.hook.pytest_collection(session=session)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 347, in pytest_collection
+    session.perform_collect()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 809, in perform_collect
+    self.items.extend(self.genitems(node))
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 975, in genitems
+    yield from self.genitems(subnode)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 970, in genitems
+    rep, duplicate = self._collect_one_node(node, handle_dupes)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/main.py", line 835, in _collect_one_node
+    rep = collect_one_node(node)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 567, in collect_one_node
+    rep: CollectReport = ihook.pytest_make_collect_report(collector=collector)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_hooks.py", line 513, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/usr/local/lib/python3.10/site-packages/pluggy/_callers.py", line 103, in _multicall
+    res = hook_impl.function(*args)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 391, in pytest_make_collect_report
+    call = CallInfo.from_call(
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 341, in from_call
+    result: TResult | None = func()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/runner.py", line 389, in collect
+    return list(collector.collect())
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 549, in collect
+    self._register_setup_module_fixture()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 562, in _register_setup_module_fixture
+    self.obj, ("setUpModule", "setup_module")
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 284, in obj
+    self._obj = obj = self._getobj()
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 546, in _getobj
+    return importtestmodule(self.path, self.config)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/python.py", line 493, in importtestmodule
+    mod = import_path(
+  File "/usr/local/lib/python3.10/site-packages/_pytest/pathlib.py", line 587, in import_path
+    importlib.import_module(module_name)
+  File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py", line 184, in exec_module
+    exec(co, module.__dict__)
+  File "/repo/tests/test_dataset/test_mappers.py", line 7, in <module>
+    from flash.data.mappers import (
+  File "/repo/src/flash/data/__init__.py", line 1, in <module>
+    from .datasets import DataModule, DataModuleConfig
+  File "/repo/src/flash/data/datasets/__init__.py", line 1, in <module>
+    from .dataset import DataModule
+  File "/repo/src/flash/data/datasets/dataset.py", line 8, in <module>
+    from ..mappers import BaseMapper, MapperWrapper
+  File "/repo/src/flash/data/mappers/__init__.py", line 2, in <module>
+    from .mappers import (
+  File "/repo/src/flash/data/mappers/mappers.py", line 5, in <module>
+    from controlnet_aux import CannyDetector, MidasDetector
+  File "/usr/local/lib/python3.10/site-packages/controlnet_aux/__init__.py", line 3, in <module>
+    from .hed import HEDdetector
+  File "/usr/local/lib/python3.10/site-packages/controlnet_aux/hed/__init__.py", line 11, in <module>
+    import cv2
+AttributeError: _ARRAY_API not found
+=========================== short test summary info ============================
+ERROR tests/test_dataset/test_filters.py
+ERROR tests/test_dataset/test_mappers.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+90 tests collected, 2 errors in 7.98s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 85 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+pip install -q controlnet-aux==0.0.6
+pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7
+---------------------------
+### Thought:
+The issue persists despite reverting the packages to their required versions. Clearly, there seems to be some compatibility issue between `opencv-python`, `numpy`, and other involved packages.
+
+Next, I will attempt to upgrade the entire `opencv-python-headless` package, which could potentially address the `_ARRAY_API` issue and optimize the environment for headless systems (without a graphical user interface).
+
+### Action:
+```bash
+pip install -q opencv-python-headless
+```
+### Observation:
+Running `pip install -q opencv-python-headless`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q opencv-python-headless` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 84 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+pip install -q controlnet-aux==0.0.6
+pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7
+pip install -q opencv-python-headless
+---------------------------
+### Thought:
+I have installed the `opencv-python-headless` package, which is more suitable for environments without GUI support. Now, I will rerun the tests to see if this resolves the `_ARRAY_API` issue and other test failures.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/test_dataset/test_mappers.py::TestKeyRenameMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[1-else_key_map0]
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[1-None]
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[2-else_key_map0]
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[2-None]
+tests/test_dataset/test_mappers.py::TestMapperWrapper::test_mapper
+tests/test_dataset/test_mappers.py::TestTorchvisionMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestRescaleMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestKeysFromJSONMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestSelectKeysMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestRemoveKeysMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestSetValueMapper::test_mapper[1]
+tests/test_dataset/test_mappers.py::TestSetValueMapper::test_mapper[2]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrap
+...[Truncation]...
+appers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[10.0-vector_conditioning1-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-None-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-None-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-vector_conditioning1-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-vector_conditioning1-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-None-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-None-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-vector_conditioning1-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-vector_conditioning1-concat_conditioning1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_model_initialization[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_model_initialization[model_config1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_encode[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_encode[model_config1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode[model_config1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode_tiling[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode_tiling[model_config1]
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/test_dataset/test_filters.py ______________
+tests/test_dataset/test_filters.py:1: in <module>
+    from flash.data.filters import FilterWrapper, KeyFilter, KeyFilterConfig
+src/flash/data/__init__.py:1: in <module>
+    from .datasets import DataModule, DataModuleConfig
+src/flash/data/datasets/__init__.py:1: in <module>
+    from .dataset import DataModule
+src/flash/data/datasets/dataset.py:8: in <module>
+    from ..mappers import BaseMapper, MapperWrapper
+src/flash/data/mappers/__init__.py:2: in <module>
+    from .mappers import (
+src/flash/data/mappers/mappers.py:5: in <module>
+    from controlnet_aux import CannyDetector, MidasDetector
+/usr/local/lib/python3.10/site-packages/controlnet_aux/__init__.py:7: in <module>
+    from .midas import MidasDetector
+/usr/local/lib/python3.10/site-packages/controlnet_aux/midas/__init__.py:11: in <module>
+    from .api import MiDaSInference
+/usr/local/lib/python3.10/site-packages/controlnet_aux/midas/api.py:9: in <module>
+    from .midas.dpt_depth import DPTDepthModel
+/usr/local/lib/python3.10/site-packages/controlnet_aux/midas/midas/dpt_depth.py:6: in <module>
+    from .blocks import (
+/usr/local/lib/python3.10/site-packages/controlnet_aux/midas/midas/blocks.py:4: in <module>
+    from .vit import (
+/usr/local/lib/python3.10/site-packages/controlnet_aux/midas/midas/vit.py:3: in <module>
+    import timm
+/usr/local/lib/python3.10/site-packages/timm/__init__.py:3: in <module>
+    from .models import create_model, list_models, list_pretrained, is_model, list_modules, model_entrypoint, \
+/usr/local/lib/python3.10/site-packages/timm/models/__init__.py:1: in <module>
+    from .beit import *
+/usr/local/lib/python3.10/site-packages/timm/models/beit.py:49: in <module>
+    from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+/usr/local/lib/python3.10/site-packages/timm/data/__init__.py:5: in <module>
+    from .dataset import ImageDataset, IterableImageDataset, AugMixDataset
+/usr/local/lib/python3.10/site-packages/timm/data/dataset.py:13: in <module>
+    from .readers import create_reader
+/usr/local/lib/python3.10/site-packages/timm/data/readers/__init__.py:1: in <module>
+    from .reader_factory import create_reader
+/usr/local/lib/python3.10/site-packages/timm/data/readers/reader_factory.py:4: in <module>
+    from .reader_image_folder import ReaderImageFolder
+/usr/local/lib/python3.10/site-packages/timm/data/readers/reader_image_folder.py:11: in <module>
+    from timm.utils.misc import natural_key
+/usr/local/lib/python3.10/site-packages/timm/utils/__init__.py:15: in <module>
+    from .summary import update_summary, get_outdir
+/usr/local/lib/python3.10/site-packages/timm/utils/summary.py:9: in <module>
+    import wandb
+/usr/local/lib/python3.10/site-packages/wandb/__init__.py:27: in <module>
+    from wandb import sdk as wandb_sdk
+/usr/local/lib/python3.10/site-packages/wandb/sdk/__init__.py:25: in <module>
+    from .artifacts.artifact import Artifact
+/usr/local/lib/python3.10/site-packages/wandb/sdk/artifacts/artifact.py:35: in <module>
+    from wandb import data_types, env, util
+/usr/local/lib/python3.10/site-packages/wandb/data_types.py:33: in <module>
+    from .sdk.data_types import _dtypes
+/usr/local/lib/python3.10/site-packages/wandb/sdk/data_types/_dtypes.py:396: in <module>
+    NumberType.types.append(np.float_)
+/usr/local/lib/python3.10/site-packages/numpy/__init__.py:400: in __getattr__
+    raise AttributeError(
+E   AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+=========================== short test summary info ============================
+ERROR tests/test_dataset/test_filters.py - AttributeError: `np.float_` was re...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+103 tests collected, 1 error in 8.59s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 83 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+pip install -q controlnet-aux==0.0.6
+pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7
+pip install -q opencv-python-headless
+---------------------------
+### Thought:
+The `numpy` version seems to cause compatibility issues with some packages as `np.float_` has been removed in the `numpy 2.0` release. Therefore, I will downgrade `numpy` to `numpy < 2.0`.
+
+### Action:
+```bash
+pip install -q numpy<2.0
+```
+### Observation:
+Running `pip install -q numpy<2.0`...
+bash: 2.0: No such file or directory
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`pip install -q numpy<2.0` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 82 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+pip install -q controlnet-aux==0.0.6
+pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7
+pip install -q opencv-python-headless
+---------------------------
+### Thought:
+The command syntax for specifying a version range was incorrect. I will correct this and reattempt downgrading `numpy` to a version below 2.0.
+
+### Action:
+```bash
+pip install -q numpy==1.25.0
+```
+### Observation:
+Running `pip install -q numpy==1.25.0`...
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install -q numpy==1.25.0` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 81 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+cd /repo && pip install -e .
+apt-get update -qq
+apt-get install -y -qq libgl1-mesa-glx
+pip install diffusers
+pip show opencv-python controlnet_aux
+pip install -q numpy --upgrade
+pip install -q opencv-python==4.5.5.64
+pip install -q controlnet-aux==0.0.6
+pip install -q opencv-python==4.9.0.80 controlnet-aux==0.0.7
+pip install -q opencv-python-headless
+pip install -q numpy==1.25.0
+---------------------------
+### Thought:
+The `numpy` package has been successfully downgraded to version 1.25.0, which is compatible with `np.float_`. Now I will rerun the tests to check if this resolves the compatibility issue.
+
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/test_dataset/test_filters.py::TestKeyFilter::test_key_filter
+tests/test_dataset/test_filters.py::TestKeyFilter::test_key_filter_single_key
+tests/test_dataset/test_filters.py::TestFilterWrapper::test_filter_wrapper
+tests/test_dataset/test_mappers.py::TestKeyRenameMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[1-else_key_map0]
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[1-None]
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[2-else_key_map0]
+tests/test_dataset/test_mappers.py::TestKeyRenameMapperWithCondition::test_mapper[2-None]
+tests/test_dataset/test_mappers.py::TestMapperWrapper::test_mapper
+tests/test_dataset/test_mappers.py::TestTorchvisionMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestRescaleMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestKeysFromJSONMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestSelectKeysMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestRemoveKeysMapper::test_mapper
+tests/test_dataset/test_mappers.py::TestSetValueMapper::test_mapper[1]
+tests/test_dataset/test_mappers.py::TestSetValueMapper::test_mapper[2]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_wrong_config
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_clip_embedders.py::TestClipEmbedderWithProjection::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner[1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys0-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys1-1.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-0.0-1.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-0.0-1.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-0.0]
+tests/test_embedders/test_conditioners_wrapper.py::TestConditionerWrapper::test_conditioner_with_ucg[ucg_keys2-1.0-1.0-1.0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_wrong_config
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[True-model_config_and_output_shape1]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape0]
+tests/test_embedders/test_t5_embedder.py::TestT5TextEmbedder::test_model_forward[False-model_config_and_output_shape1]
+tests/test_embedders/test_time_embedders.py::TestTimeStepsEmbedder::test_instanciate
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::test_raises_len_mismatch
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::test_instanciate[config0]
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderInstanciation::test_instanciate[config1]
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderForward::test_conditioner_forward[True-config0]
+tests/test_embedders/test_torchnn_embedder.py::TestTorchNNEmbedderForward::test_conditioner_forward[False-config0]
+tests/test_flash/test_flash_diffusion.py::TestTurbo::test_model_forward
+tests/test_flash/test_flash_diffusion.py::TestTurbo::test_optimizers
+tests/test_flash/test_flash_diffusion.py::TestTurbo::test_optimizers_no_reg
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-None-None-None]
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-None-None-concat_conditioning1]
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-None-crossattn_conditioning1-None]
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-None-crossattn_conditioning1-concat_conditioning1]
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-vector_conditioning1-None-None]
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-vector_conditioning1-None-concat_conditioning1]
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-vector_conditioning1-crossattn_conditioning1-None]
+tests/test_transformers/test_transformers_wrappers.py::TestDiffusersTransformer2DWrapper::test_transformer2d_wrapper[timesteps0-vector_conditioning1-crossattn_conditioning1-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DWrapper::test_unet2d_wrapper[10.0-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DWrapper::test_unet2d_wrapper[10.0-conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DWrapper::test_unet2d_wrapper[timesteps1-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DWrapper::test_unet2d_wrapper[timesteps1-conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DWrapper::test_unet2d_wrapper[3-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DWrapper::test_unet2d_wrapper[3-conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[10.0-None-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[10.0-None-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[10.0-vector_conditioning1-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[10.0-vector_conditioning1-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-None-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-None-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-vector_conditioning1-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[timesteps1-vector_conditioning1-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-None-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-None-concat_conditioning1]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-vector_conditioning1-None]
+tests/test_unet/test_unets_wrappers.py::TestDiffusersUNet2DCondWrapper::test_unet2d_cond_wrapper[3-vector_conditioning1-concat_conditioning1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_model_initialization[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_model_initialization[model_config1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_encode[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_encode[model_config1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode[model_config1]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode_tiling[model_config0]
+tests/test_vaes/test_autoencoderKL.py::TestAutoencoderKLDiffusers::test_decode_tiling[model_config1]
+
+106 tests collected in 8.25s
+Container ba8f7434eb2f stopped and removed
+Spend totally 1569.8451416492462.

@@ -1,0 +1,45 @@
+diff --git a/Dockerfile b/Dockerfile
+deleted file mode 100644
+index d991715..0000000
+--- a/Dockerfile
++++ /dev/null
+@@ -1,14 +0,0 @@
+-# Dockerfile to build installer for Cover Agent
+-FROM python:3.12-bullseye
+-
+-WORKDIR /app
+-
+-# Copy all files
+-COPY . .
+-
+-# Install required packages
+-RUN pip install poetry wandb
+-RUN poetry install
+-
+-# Run the make installer as a CMD
+-CMD ["make", "installer"]
+\ No newline at end of file
+diff --git a/pyproject.toml b/pyproject.toml
+index 40c1a68..ca55ce4 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -49,13 +49,18 @@ fastapi = "^0.111.0"
+ requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+ build-backend = "poetry_dynamic_versioning.backend"
+ 
++[tool.poetry.source]
++name = "pypi"
++url = "https://pypi.org/simple"
++default = true
++
+ [tool.poetry.scripts]
+ cover-agent = "cover_agent.main:main"
+ cover-agent-full-repo = "cover_agent.main_full_repo:main"
+ generate-report = "cover_agent.UnitTestDB:dump_to_report_cli"
+ 
+ [tool.poetry-dynamic-versioning]
+-enable = true
++enable = false
+ 
+ [tool.poetry-dynamic-versioning.from-file]
+ source = "cover_agent/version.txt"

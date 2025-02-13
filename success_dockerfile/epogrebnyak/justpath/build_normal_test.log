@@ -1,0 +1,69 @@
+#0 building with "default" instance using docker driver
+
+#1 [1/5] FROM docker.io/library/python:3.10
+#1 DONE 0.0s
+
+#2 [2/5] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#2 CACHED
+
+#3 [internal] load build definition from Dockerfile
+#3 transferring dockerfile: 1.05kB done
+#3 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/python:3.10
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [3/5] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/epogrebnyak/justpath.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /justpath/. /repo && rm -rf /justpath/ &&     rm -rf /justpath &&     cd /repo && git checkout 0aca516bba87253e19e8dc09ca17685e749c6a4f &&     cd /repo && poetry install
+#6 CACHED
+
+#7 [4/5] RUN cd /repo && pytest --collect-only -q
+#7 16.84 
+#7 16.84 ==================================== ERRORS ====================================
+#7 16.84 __________________ ERROR collecting tests/test_one_liners.py ___________________
+#7 16.84 ImportError while importing test module '/repo/tests/test_one_liners.py'.
+#7 16.84 Hint: make sure your test modules/packages have valid Python names.
+#7 16.84 Traceback:
+#7 16.84 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+#7 16.84     return _bootstrap._gcd_import(name[level:], package, level)
+#7 16.84 tests/test_one_liners.py:1: in <module>
+#7 16.84     from justpath.oneliners import BY_LINE, DUPLICATES, RAW
+#7 16.84 E   ModuleNotFoundError: No module named 'justpath'
+#7 16.84 _____________________ ERROR collecting tests/test_show.py ______________________
+#7 16.84 ImportError while importing test module '/repo/tests/test_show.py'.
+#7 16.84 Hint: make sure your test modules/packages have valid Python names.
+#7 16.84 Traceback:
+#7 16.84 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+#7 16.84     return _bootstrap._gcd_import(name[level:], package, level)
+#7 16.84 tests/test_show.py:5: in <module>
+#7 16.84     from typer.testing import CliRunner
+#7 16.84 E   ModuleNotFoundError: No module named 'typer'
+#7 16.84 =========================== short test summary info ============================
+#7 16.84 ERROR tests/test_one_liners.py
+#7 16.84 ERROR tests/test_show.py
+#7 16.84 !!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+#7 16.84 no tests collected, 2 errors in 0.23s
+#7 ERROR: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2
+------
+ > [4/5] RUN cd /repo && pytest --collect-only -q:
+16.84 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+16.84     return _bootstrap._gcd_import(name[level:], package, level)
+16.84 tests/test_show.py:5: in <module>
+16.84     from typer.testing import CliRunner
+16.84 E   ModuleNotFoundError: No module named 'typer'
+16.84 =========================== short test summary info ============================
+16.84 ERROR tests/test_one_liners.py
+16.84 ERROR tests/test_show.py
+16.84 !!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+16.84 no tests collected, 2 errors in 0.23s
+------
+Dockerfile:20
+--------------------
+  18 |         cd /repo && git checkout 0aca516bba87253e19e8dc09ca17685e749c6a4f && \
+  19 |         cd /repo && poetry install
+  20 | >>> RUN cd /repo && pytest --collect-only -q
+--------------------
+ERROR: failed to solve: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2

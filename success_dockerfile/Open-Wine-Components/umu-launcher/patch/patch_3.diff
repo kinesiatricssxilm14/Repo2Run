@@ -1,0 +1,54 @@
+diff --git a/umu/umu_proton.py b/umu/umu_proton.py
+index 87cdce9..6f37f97 100644
+--- a/umu/umu_proton.py
++++ b/umu/umu_proton.py
+@@ -1,7 +1,24 @@
+ import os
+ from concurrent.futures import Future, ThreadPoolExecutor
+-from hashlib import file_digest, sha512
+-from http import HTTPMethod, HTTPStatus
++import hashlib
++import os
++
++def file_digest(file_path):
++    hasher = hashlib.sha512()
++    with open(file_path, 'rb') as f:
++        while chunk := f.read(8192):
++            hasher.update(chunk)
++    return hasher.hexdigest()
++        
++sha512 = hashlib.sha512
++from http import HTTPStatus
++from enum import Enum
++
++class HTTPMethod(Enum):
++    GET = 'GET'
++    POST = 'POST'
++    PUT = 'PUT'
++    DELETE = 'DELETE'
+ from pathlib import Path
+ from re import split as resplit
+ from shutil import move, rmtree
+diff --git a/umu/umu_runtime.py b/umu/umu_runtime.py
+index 3ab3ab3..bc9be04 100644
+--- a/umu/umu_runtime.py
++++ b/umu/umu_runtime.py
+@@ -1,7 +1,17 @@
+ import os
+ from collections.abc import Callable
+ from concurrent.futures import Future, ThreadPoolExecutor
+-from hashlib import file_digest, sha256
++import hashlib
++import os
++
++def file_digest(file_path):
++    hasher = hashlib.sha256()
++    with open(file_path, 'rb') as f:
++        while chunk := f.read(8192):
++            hasher.update(chunk)
++    return hasher.hexdigest()
++        
++sha256 = hashlib.sha256
+ 
+ try:
+     from importlib.resources.abc import Traversable

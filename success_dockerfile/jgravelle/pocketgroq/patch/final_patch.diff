@@ -1,0 +1,99 @@
+diff --git a/pocketgroq.egg-info/PKG-INFO b/pocketgroq.egg-info/PKG-INFO
+index cfb1715..956f9f1 100644
+--- a/pocketgroq.egg-info/PKG-INFO
++++ b/pocketgroq.egg-info/PKG-INFO
+@@ -1,10 +1,10 @@
+ Metadata-Version: 2.1
+ Name: pocketgroq
+-Version: 0.4.9
++Version: 0.5.6
+ Summary: A library for easy integration with Groq API, including web scraping, image handling, and Chain of Thought reasoning
+ Home-page: https://github.com/jgravelle/pocketgroq
+ Author: PocketGroq Team
+-Author-email: pocketgroq@example.com
++Author-email: j@gravelle.us
+ Project-URL: Bug Tracker, https://github.com/jgravelle/pocketgroq/issues
+ Classifier: Development Status :: 3 - Alpha
+ Classifier: Intended Audience :: Developers
+@@ -16,25 +16,56 @@ Classifier: Programming Language :: Python :: 3.8
+ Classifier: Programming Language :: Python :: 3.9
+ Classifier: Programming Language :: Python :: 3.10
+ Classifier: Programming Language :: Python :: 3.11
++Classifier: Programming Language :: Python :: 3.12
+ Requires-Python: >=3.7
+ Description-Content-Type: text/markdown
+-Requires-Dist: bs4>=0.0.2
+-Requires-Dist: groq>=0.8.0
+-Requires-Dist: python-dotenv>=0.19.1
+-Requires-Dist: requests>=2.32.3
+-Requires-Dist: langchain>=0.3.1
+-Requires-Dist: langchain-groq>=0.2.0
+-Requires-Dist: langchain-community>=0.3.1
+-Requires-Dist: markdown2>=2.5.0
+-Requires-Dist: faiss-cpu>=1.8.0.post1
+-Requires-Dist: ollama>=0.3.3
+ Provides-Extra: dev
+-Requires-Dist: pytest>=7.3.1; extra == "dev"
+-Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+ 
+-# PocketGroq v0.4.8: Enhanced Web Capabilities and Flexible Ollama Integration
++# PocketGroq v0.5.4: Introducing AUTONOMOUS AGENTS!!!
+ ![PocketGroq Logo](https://github.com/user-attachments/assets/d06b6aaf-400e-40db-bdaf-626aaa1040ef)
+ 
++## What's NEW in v0.5.4!
++
++## Autonomous Agent
++
++PocketGroq now includes an AutonomousAgent class that can autonomously research and answer questions:
++
++```python
++from pocketgroq import GroqProvider
++from pocketgroq.autonomous_agent import AutonomousAgent
++
++groq = GroqProvider()
++agent = AutonomousAgent(groq)
++
++request = "What is the current temperature in Sheboygan, Wisconsin?"
++response = agent.process_request(request)
++
++print(f"Final response: {response}")
++```
++
++The AutonomousAgent:
++- Attempts to answer the question using its initial knowledge.
++- If unsuccessful, it uses web search tools to find relevant information.
++- Evaluates each potential response for accuracy and completeness.
++- Keeps the user informed of its progress throughout the process.
++- Handles rate limiting and errors gracefully.
++
++You can customize the agent's behavior:
++
++```python
++# Set a custom maximum number of sources to check
++agent = AutonomousAgent(groq, max_sources=10)
++
++# Or specify it for a single request
++response = agent.process_request(request, max_sources=8)
++```
++
++The agent will search up to the specified number of sources, waiting at least 2 seconds between requests to avoid overwhelming the search services.
++
++### ALSO: get_available_models()
++
++(It does what you think it does.)
++
+ ## What's New in v0.4.9
+ 
+ ## Response Evaluation
+diff --git a/pocketgroq.egg-info/SOURCES.txt b/pocketgroq.egg-info/SOURCES.txt
+index 5939202..85b9070 100644
+--- a/pocketgroq.egg-info/SOURCES.txt
++++ b/pocketgroq.egg-info/SOURCES.txt
+@@ -1,6 +1,7 @@
+ README.md
+ setup.py
+ pocketgroq/__init__.py
++pocketgroq/autonomous_agent.py
+ pocketgroq/config.py
+ pocketgroq/enhanced_web_tool.py
+ pocketgroq/exceptions.py

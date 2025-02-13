@@ -1,0 +1,1025 @@
+yihong1120/Construction-Hazard-Detection
+f5e1ca28d9999fd04c12a7ef30106b14410fa6db
+Container beautiful_shockley 0d8e1e76d927 started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version**: Decide if you need to switch the Python version in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version.
+    *Note*: You can only switch the Python version within the container; switching to other images is not allowed.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run `runtest` or `poetryruntest` to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+If you encounter import errors such as ModuleNotFoundError or ImportError, you can consider two solutions. One solution is to use external tools like pip or apt-get to download these dependencies. The other solution is to check for local dependencies in the repository; if local dependencies are available, you can use `export PYTHONPATH=` statements to set environment variables (preferably), or modify the __init__.py file to resolve the issue.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+In each round of the conversation, we will inform you of the commands that have been correctly executed and have changed the state of the current Docker container. Please reflect on each round's Observation in relation to the current state of the Docker container and decide the subsequent Action.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+    * You are not allowed to use commands like `hatch shell` that would open a new shell!!!
+
+---------------------------
+### Thought:
+I need to understand the structure of the root directory to identify configuration files related to setting up the environment.
+
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+LICENSE		 assets		     docs      models		 scripts
+README-zh-tw.md  config		     examples  notebooks	 src
+README.md	 docker-compose.yml  main.py   requirements.txt  tests
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I see various directories and files in the root directory including `requirements.txt`, `README.md`, `main.py`, and more. I should start by checking the `requirements.txt` file to get details on the dependencies needed.
+
+### Action:
+```bash
+cat /repo/requirements.txt
+```
+### Observation:
+Running `cat /repo/requirements.txt`...
+aiofiles==24.1.0
+aiosqlite==0.20.0
+albumentations==1.4.21
+apscheduler==3.11.0
+asyncmy==0.2.9
+authlib==1.3.2
+bcrypt==4.2.0
+cloudinary==1.41.0
+codecov==2.1.13
+fastapi==0.115.5
+fastapi_jwt==0.3.0
+fastapi_limiter==0.1.6
+imagecorruptions==1.1.2
+imageio==2.35.1
+imgaug==0.4.0
+line-bot-sdk==3.14.2
+numpy==1.26.4
+onnx==1.17.0
+opencv_python==4.9.0.80
+opencv_python_headless==4.9.0.80
+Pillow==10.4.0
+pre-commit==4.0.1
+pycocotools==2.0.8
+pydantic_settings==2.6.1
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-xdist==3.6.1
+python-dotenv==1.0.1
+python-multipart==0.0.18
+python-socketio==5.11.4
+python-telegram-bot==21.7
+redis==5.2.0
+sahi==0.11.19
+schedule==1.2.2
+scikit-learn==1.5.2
+shapely==2.0.6
+speedtest-cli==2.1.3
+sqlalchemy[asyncio]==2.0.36
+streamlink==7.0.0
+streamlit==1.40.2
+tenacity==9.0.0
+torch==2.5.1
+torchvision==0.20.1
+twilio==9.3.7
+ultralytics==8.3.40
+uvicorn==0.32.1
+uvloop==0.21.0
+waitress==3.0.2
+watchdog==6.0.0
+werkzeug==3.1.3
+`cat /repo/requirements.txt` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I have identified the dependencies listed in the `requirements.txt`. Next, I need to add this file to the waiting list to ensure all dependencies are downloaded.
+
+### Action:
+```bash
+waitinglist addfile /repo/requirements.txt
+```
+### Observation:
+Running `waitinglist addfile /repo/requirements.txt`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `waitinglist addfile /repo/requirements.txt`...
+'aiofiles==24.1.0' (using pip to download) has been added into the waiting list. 
+'aiosqlite==0.20.0' (using pip to download) has been added into the waiting list. 
+'albumentations==1.4.21' (using pip to download) has been added into the waiting list. 
+'apscheduler==3.11.0' (using pip to download) has been added into the waiting list. 
+'asyncmy==0.2.9' (using pip to download) has been added into the waiting list. 
+'authlib==1.3.2' (using pip to download) has been added into the waiting list. 
+'bcrypt==4.2.0' (using pip to download) has been added into the waiting list. 
+'cloudinary==1.41.0' (using pip to download) has been added into the waiting list. 
+'codecov==2.1.13' (using pip to download) has been added into the waiting list. 
+'fastapi==0.115.5' (using pip to download) has been added into the waiting list. 
+'fastapi_jwt==0.3.0' (using pip to download) has been added into the waiting list. 
+'fastapi_limiter==0.1.6' (using pip to download) has been added into the waiting list. 
+'imagecorruptions==1.1.2' (using pip to download) has been added into the waiting list. 
+'imageio==2.35.1' (using pip to download) has been added into the waiting list. 
+'imgaug==0.4.0' (using pip to download) has been added into the waiting list. 
+'line-bot-sdk==3.14.2' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect m
+...[Truncation]...
+e waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+'streamlink==7.0.0' (using pip to download) has been added into the waiting list. 
+'streamlit==1.40.2' (using pip to download) has been added into the waiting list. 
+'tenacity==9.0.0' (using pip to download) has been added into the waiting list. 
+'torch==2.5.1' (using pip to download) has been added into the waiting list. 
+'torchvision==0.20.1' (using pip to download) has been added into the waiting list. 
+'twilio==9.3.7' (using pip to download) has been added into the waiting list. 
+'ultralytics==8.3.40' (using pip to download) has been added into the waiting list. 
+'uvicorn==0.32.1' (using pip to download) has been added into the waiting list. 
+'uvloop==0.21.0' (using pip to download) has been added into the waiting list. 
+'waitress==3.0.2' (using pip to download) has been added into the waiting list. 
+'watchdog==6.0.0' (using pip to download) has been added into the waiting list. 
+'werkzeug==3.1.3' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+The following entries in "/repo/requirements.txt" have been successfully added to the waiting list:
+aiofiles==24.1.0
+aiosqlite==0.20.0
+albumentations==1.4.21
+apscheduler==3.11.0
+asyncmy==0.2.9
+authlib==1.3.2
+bcrypt==4.2.0
+cloudinary==1.41.0
+codecov==2.1.13
+fastapi==0.115.5
+fastapi_jwt==0.3.0
+fastapi_limiter==0.1.6
+imagecorruptions==1.1.2
+imageio==2.35.1
+imgaug==0.4.0
+line-bot-sdk==3.14.2
+numpy==1.26.4
+onnx==1.17.0
+opencv_python==4.9.0.80
+opencv_python_headless==4.9.0.80
+Pillow==10.4.0
+pre-commit==4.0.1
+pycocotools==2.0.8
+pydantic_settings==2.6.1
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-xdist==3.6.1
+python-dotenv==1.0.1
+python-multipart==0.0.18
+python-socketio==5.11.4
+python-telegram-bot==21.7
+redis==5.2.0
+sahi==0.11.19
+schedule==1.2.2
+scikit-learn==1.5.2
+shapely==2.0.6
+speedtest-cli==2.1.3
+sqlalchemy[asyncio]==2.0.36
+streamlink==7.0.0
+streamlit==1.40.2
+tenacity==9.0.0
+torch==2.5.1
+torchvision==0.20.1
+twilio==9.3.7
+ultralytics==8.3.40
+uvicorn==0.32.1
+uvloop==0.21.0
+waitress==3.0.2
+watchdog==6.0.0
+werkzeug==3.1.3
+There are no correctly formatted entries in "/repo/requirements.txt" that have been placed in the conflict list.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+The container remains in its original state.
+---------------------------
+### Thought:
+I have successfully added all the dependencies listed in `requirements.txt` to the waiting list. Now, I need to proceed with the installation of these dependencies.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `download`...
+'aiofiles==24.1.0' has been removed from the waiting list.
+"aiofiles==24.1.0" installed successfully.
+'aiosqlite==0.20.0' has been removed from the waiting list.
+"aiosqlite==0.20.0" installed successfully.
+'albumentations==1.4.21' has been removed from the waiting list.
+"albumentations==1.4.21" installed successfully.
+'apscheduler==3.11.0' has been removed from the waiting list.
+"apscheduler==3.11.0" installed successfully.
+'asyncmy==0.2.9' has been removed from the waiting list.
+"asyncmy==0.2.9" installed successfully.
+'authlib==1.3.2' has been removed from the waiting list.
+"authlib==1.3.2" installed successfully.
+'bcrypt==4.2.0' has been removed from the waiting list.
+"bcrypt==4.2.0" installed successfully.
+'cloudinary==1.41.0' has been removed from the waiting list.
+"cloudinary==1.41.0" installed successfully.
+'codecov==2.1.13' has been removed from the waiting list.
+"codecov==2.1.13" installed successfully.
+'fastapi==0.115.5' has been removed from the waiting list.
+"fastapi==0.115.5" installed successfully.
+'fastapi_jwt==0.3.0' has been removed from the waiting list.
+"fastapi_jwt==0.3.0" installed successfully.
+'fastapi_limiter==0.1.6' has been removed from the waiting list.
+"fastapi_limiter==0.1.6" installed successfully.
+'imagecorruptions==1.1.2' has been removed from the waiting list.
+"imagecorruptions==1.1.2" installed successfully.
+'imageio==2.35.1' has been removed from the waiting list.
+"imageio==2.35.1" installed successfully.
+'imgaug==0.4.0' has been removed from the waiting list.
+"imgaug==0.4.0" installed successfully.
+'line-bot-sdk==3.14.2' has been removed from the waiting list.
+"line-bot-sdk==3.14.2" installed successfully.
+'numpy==1.26.4' has been removed from the waiting list.
+"numpy==1.26.4" installed successfully.
+'onnx==1.17.0' has been removed from the waiting list.
+"onnx==1.17.0" installed successfully.
+'opencv_python==4.9.0.80' has been removed from the waiting list.
+"opencv_python==4.9.0.80" installed successfully.
+'opencv_python_headless==4.9.0.80' has been removed from the waiting list.
+"opencv_python_headless==4.9.0.80" installed successfully.
+'Pillow==10.4.0' has been removed from the waiting list.
+"Pillow==10.4.0" installed successfully.
+'pre-commit==4.0.1' has been removed from the waiting list.
+"pre-commit==4.0.1" installed successfully.
+'pycocotools==2.0.8' has been removed from the waiting list.
+"pycocotools==2.0.8" installed successfully.
+'pydantic_settings==2.6.1' has been removed from the waiting list.
+"pydantic_settings==2.6.1" installed successfully.
+'pytest==8.3.4' has been removed from the waiting list.
+"pytest==8.3.4" installed successfully.
+'pytest-cov==6.0.0' has been removed from the waiting list.
+"pytest-cov==6.0.0" installed successfully.
+'pytest-xdist==3.6.1' has been removed from the waiting list.
+"pytest-xdist==3.6.1" installed successfully.
+'python-dotenv==1.0.1' has been removed from the waiting list.
+"python-dotenv==1.0.1" installed successfully.
+'python-multipart==0.0.18' has been removed from the waiting list.
+"python-multipart==0.0.18" installed successfully.
+'python-socketio==5.11.4' has been removed from the waiting list.
+"python-socketio==5.11.4" installed successfully.
+'python-telegram-bot==21.7' has been removed from the waiting list.
+"python-telegram-bot==21.7" installed successfully.
+'redis==5.2.0' has been removed from the waiting list.
+"redis==5.2.0" installed successfully.
+'sahi==0.11.19' has been removed from the waiting list.
+"sahi==0.11.19" installed successfully.
+'schedule==1.2.2' has been removed from the waiting list.
+"schedule==1.2.2" installed successfully.
+'scikit-learn==1.5.2' has been removed from the waiting list.
+"scikit-learn==1.5.2" installed successfully.
+'shapely==2.0.6' has been removed from the waiting list.
+"shapely==2.0.6" installed successfully.
+'speedtest-cli==2.1.3' has been removed from the waiting list.
+"speedtest-cli==2.1.3" installed successfully.
+'sqlalchemy[asyncio]==2.0.36' has been removed from the waiting list.
+"sqlalchemy[asyncio]==2.0.36" installed successfully.
+'streamlink==7.0.0' has been removed from the waiting list.
+"streamlink==7.0.0" installed successfully.
+'streamlit==1.40.2' has been removed from the waiting list.
+"streamlit==1.40.2" installed successfully.
+'tenacity==9.0.0' has been removed from the waiting list.
+"tenacity==9.0.0" installed successfully.
+'torch==2.5.1' has been removed from the waiting list.
+"torch==2.5.1" installed successfully.
+'torchvision==0.20.1' has been removed from the waiting list.
+"torchvision==0.20.1" installed successfully.
+'twilio==9.3.7' has been removed from the waiting list.
+"twilio==9.3.7" installed successfully.
+'ultralytics==8.3.40' has been removed from the waiting list.
+"ultralytics==8.3.40" installed successfully.
+'uvicorn==0.32.1' has been removed from the waiting list.
+"uvicorn==0.32.1" installed successfully.
+'uvloop==0.21.0' has been removed from the waiting list.
+"uvloop==0.21.0" installed successfully.
+'waitress==3.0.2' has been removed from the waiting list.
+"waitress==3.0.2" installed successfully.
+'watchdog==6.0.0' has been removed from the waiting list.
+"watchdog==6.0.0" installed successfully.
+'werkzeug==3.1.3' has been removed from the waiting list.
+"werkzeug==3.1.3" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+aiofiles==24.1.0 (using tool pip)
+aiosqlite==0.20.0 (using tool pip)
+albumentations==1.4.21 (using tool pip)
+apscheduler==3.11.0 (using tool pip)
+asyncmy==0.2.9 (using tool pip)
+authlib==1.3.2 (using tool pip)
+bcrypt==4.2.0 (using tool pip)
+cloudinary==1.41.0 (using tool pip)
+codecov==2.1.13 (using tool pip)
+fastapi==0.115.5 (using tool pip)
+fastapi_jwt==0.3.0 (using tool pip)
+fastapi_limiter==0.1.6 (using tool pip)
+imagecorruptions==1.1.2 (using tool pip)
+imageio==2.35.1 (using tool pip)
+imgaug==0.4.0 (using tool pip)
+line-bot-sdk==3.14.2 (using tool pip)
+numpy==1.26.4 (using tool pip)
+onnx==1.17.0 (using tool pip)
+opencv_python
+...[Truncation]...
+d from the waiting list.
+"fastapi_limiter==0.1.6" installed successfully.
+'imagecorruptions==1.1.2' has been removed from the waiting list.
+"imagecorruptions==1.1.2" installed successfully.
+'imageio==2.35.1' has been removed from the waiting list.
+"imageio==2.35.1" installed successfully.
+'imgaug==0.4.0' has been removed from the waiting list.
+"imgaug==0.4.0" installed successfully.
+'line-bot-sdk==3.14.2' has been removed from the waiting list.
+"line-bot-sdk==3.14.2" installed successfully.
+'numpy==1.26.4' has been removed from the waiting list.
+"numpy==1.26.4" installed successfully.
+'onnx==1.17.0' has been removed from the waiting list.
+"onnx==1.17.0" installed successfully.
+'opencv_python==4.9.0.80' has been removed from the waiting list.
+"opencv_python==4.9.0.80" installed successfully.
+'opencv_python_headless==4.9.0.80' has been removed from the waiting list.
+"opencv_python_headless==4.9.0.80" installed successfully.
+'Pillow==10.4.0' has been removed from the waiting list.
+"Pillow==10.4.0" installed successfully.
+'pre-commit==4.0.1' has been removed from the waiting list.
+"pre-commit==4.0.1" installed successfully.
+'pycocotools==2.0.8' has been removed from the waiting list.
+"pycocotools==2.0.8" installed successfully.
+'pydantic_settings==2.6.1' has been removed from the waiting list.
+"pydantic_settings==2.6.1" installed successfully.
+'pytest==8.3.4' has been removed from the waiting list.
+"pytest==8.3.4" installed successfully.
+'pytest-cov==6.0.0' has been removed from the waiting list.
+"pytest-cov==6.0.0" installed successfully.
+'pytest-xdist==3.6.1' has been removed from the waiting list.
+"pytest-xdist==3.6.1" installed successfully.
+'python-dotenv==1.0.1' has been removed from the waiting list.
+"python-dotenv==1.0.1" installed successfully.
+'python-multipart==0.0.18' has been removed from the waiting list.
+"python-multipart==0.0.18" installed successfully.
+'python-socketio==5.11.4' has been removed from the waiting list.
+"python-socketio==5.11.4" installed successfully.
+'python-telegram-bot==21.7' has been removed from the waiting list.
+"python-telegram-bot==21.7" installed successfully.
+'redis==5.2.0' has been removed from the waiting list.
+"redis==5.2.0" installed successfully.
+'sahi==0.11.19' has been removed from the waiting list.
+"sahi==0.11.19" installed successfully.
+'schedule==1.2.2' has been removed from the waiting list.
+"schedule==1.2.2" installed successfully.
+'scikit-learn==1.5.2' has been removed from the waiting list.
+"scikit-learn==1.5.2" installed successfully.
+'shapely==2.0.6' has been removed from the waiting list.
+"shapely==2.0.6" installed successfully.
+'speedtest-cli==2.1.3' has been removed from the waiting list.
+"speedtest-cli==2.1.3" installed successfully.
+'sqlalchemy[asyncio]==2.0.36' has been removed from the waiting list.
+"sqlalchemy[asyncio]==2.0.36" installed successfully.
+'streamlink==7.0.0' has been removed from the waiting list.
+"streamlink==7.0.0" installed successfully.
+'streamlit==1.40.2' has been removed from the waiting list.
+"streamlit==1.40.2" installed successfully.
+'tenacity==9.0.0' has been removed from the waiting list.
+"tenacity==9.0.0" installed successfully.
+'torch==2.5.1' has been removed from the waiting list.
+"torch==2.5.1" installed successfully.
+'torchvision==0.20.1' has been removed from the waiting list.
+"torchvision==0.20.1" installed successfully.
+'twilio==9.3.7' has been removed from the waiting list.
+"twilio==9.3.7" installed successfully.
+'ultralytics==8.3.40' has been removed from the waiting list.
+"ultralytics==8.3.40" installed successfully.
+'uvicorn==0.32.1' has been removed from the waiting list.
+"uvicorn==0.32.1" installed successfully.
+'uvloop==0.21.0' has been removed from the waiting list.
+"uvloop==0.21.0" installed successfully.
+'waitress==3.0.2' has been removed from the waiting list.
+"waitress==3.0.2" installed successfully.
+'watchdog==6.0.0' has been removed from the waiting list.
+"watchdog==6.0.0" installed successfully.
+'werkzeug==3.1.3' has been removed from the waiting list.
+"werkzeug==3.1.3" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+aiofiles==24.1.0 (using tool pip)
+aiosqlite==0.20.0 (using tool pip)
+albumentations==1.4.21 (using tool pip)
+apscheduler==3.11.0 (using tool pip)
+asyncmy==0.2.9 (using tool pip)
+authlib==1.3.2 (using tool pip)
+bcrypt==4.2.0 (using tool pip)
+cloudinary==1.41.0 (using tool pip)
+codecov==2.1.13 (using tool pip)
+fastapi==0.115.5 (using tool pip)
+fastapi_jwt==0.3.0 (using tool pip)
+fastapi_limiter==0.1.6 (using tool pip)
+imagecorruptions==1.1.2 (using tool pip)
+imageio==2.35.1 (using tool pip)
+imgaug==0.4.0 (using tool pip)
+line-bot-sdk==3.14.2 (using tool pip)
+numpy==1.26.4 (using tool pip)
+onnx==1.17.0 (using tool pip)
+opencv_python==4.9.0.80 (using tool pip)
+opencv_python_headless==4.9.0.80 (using tool pip)
+Pillow==10.4.0 (using tool pip)
+pre-commit==4.0.1 (using tool pip)
+pycocotools==2.0.8 (using tool pip)
+pydantic_settings==2.6.1 (using tool pip)
+pytest==8.3.4 (using tool pip)
+pytest-cov==6.0.0 (using tool pip)
+pytest-xdist==3.6.1 (using tool pip)
+python-dotenv==1.0.1 (using tool pip)
+python-multipart==0.0.18 (using tool pip)
+python-socketio==5.11.4 (using tool pip)
+python-telegram-bot==21.7 (using tool pip)
+redis==5.2.0 (using tool pip)
+sahi==0.11.19 (using tool pip)
+schedule==1.2.2 (using tool pip)
+scikit-learn==1.5.2 (using tool pip)
+shapely==2.0.6 (using tool pip)
+speedtest-cli==2.1.3 (using tool pip)
+sqlalchemy[asyncio]==2.0.36 (using tool pip)
+streamlink==7.0.0 (using tool pip)
+streamlit==1.40.2 (using tool pip)
+tenacity==9.0.0 (using tool pip)
+torch==2.5.1 (using tool pip)
+torchvision==0.20.1 (using tool pip)
+twilio==9.3.7 (using tool pip)
+ultralytics==8.3.40 (using tool pip)
+uvicorn==0.32.1 (using tool pip)
+uvloop==0.21.0 (using tool pip)
+waitress==3.0.2 (using tool pip)
+watchdog==6.0.0 (using tool pip)
+werkzeug==3.1.3 (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+The container has successfully executed the following commands in order. Please refer to the execution history, reflect, and decide the subsequent actions. Remember, your ultimate goal is to pass the tests by executing `runtest` or `poetryruntest`.
+python /home/tools/pip_download.py -p aiofiles -v "==24.1.0"
+python /home/tools/pip_download.py -p aiosqlite -v "==0.20.0"
+python /home/tools/pip_download.py -p albumentations -v "==1.4.21"
+python /home/tools/pip_download.py -p apscheduler -v "==3.11.0"
+python /home/tools/pip_download.py -p asyncmy -v "==0.2.9"
+python /home/tools/pip_download.py -p authlib -v "==1.3.2"
+python /home/tools/pip_download.py -p bcrypt -v "==4.2.0"
+python /home/tools/pip_download.py -p cloudinary -v "==1.41.0"
+python /home/tools/pip_download.py -p codecov -v "==2.1.13"
+python /home/tools/pip_download.py -p fastapi -v "==0.115.5"
+python /home/tools/pip_download.py -p fastapi_jwt -v "==0.3.0"
+python /home/tools/pip_download.py -p fastapi_limiter -v "==0.1.6"
+python /home/tools/pip_download.py -p imagecorruptions -v "==1.1.2"
+python /home/tools/pip_download.py -p imageio -v "==2.35.1"
+python /home/tools/pip_download.py -p imgaug -v "==0.4.0"
+python /home/tools/pip_download.py -p line-bot-sdk -v "==3.14.2"
+python /home/tools/pip_download.py -p numpy -v "==1.26.4"
+python /home/tools/pip_download.py -p onnx -v "==1.17.0"
+python /home/tools/pip_download.py -p opencv_python -v "==4.9.0.80"
+python /home/tools/pip_download.py -p opencv_python_headless -v "==4.9.0.80"
+python /home/tools/pip_download.py -p Pillow -v "==10.4.0"
+python /home/tools/pip_download.py -p pre-commit -v "==4.0.1"
+python /home/tools/pip_download.py -p pycocotools -v "==2.0.8"
+python /home/tools/pip_download.py -p pydantic_settings -v "==2.6.1"
+python /home/tools/pip_download.py -p pytest -v "==8.3.4"
+python /home/tools/pip_download.py -p pytest-cov -v "==6.0.0"
+python /home/tools/pip_download.py -p pytest-xdist -v "==3.6.1"
+python /home/tools/pip_download.py -p python-dotenv -v "==1.0.1"
+python /home/tools/pip_download.py -p python-multipart -v "==0.0.18"
+python /home/tools/pip_download.py -p python-socketio -v "==5.11.4"
+python /home/tools/pip_download.py -p python-telegram-bot -v "==21.7"
+python /home/tools/pip_download.py -p redis -v "==5.2.0"
+python /home/tools/pip_download.py -p sahi -v "==0.11.19"
+python /home/tools/pip_download.py -p schedule -v "==1.2.2"
+python /home/tools/pip_download.py -p scikit-learn -v "==1.5.2"
+python /home/tools/pip_download.py -p shapely -v "==2.0.6"
+python /home/tools/pip_download.py -p speedtest-cli -v "==2.1.3"
+python /home/tools/pip_download.py -p sqlalchemy[asyncio] -v "==2.0.36"
+python /home/tools/pip_download.py -p streamlink -v "==7.0.0"
+python /home/tools/pip_download.py -p streamlit -v "==1.40.2"
+python /home/tools/pip_download.py -p tenacity -v "==9.0.0"
+python /home/tools/pip_download.py -p torch -v "==2.5.1"
+python /home/tools/pip_download.py -p torchvision -v "==0.20.1"
+python /home/tools/pip_download.py -p twilio -v "==9.3.7"
+python /home/tools/pip_download.py -p ultralytics -v "==8.3.40"
+python /home/tools/pip_download.py -p uvicorn -v "==0.32.1"
+python /home/tools/pip_download.py -p uvloop -v "==0.21.0"
+python /home/tools/pip_download.py -p waitress -v "==3.0.2"
+python /home/tools/pip_download.py -p watchdog -v "==6.0.0"
+python /home/tools/pip_download.py -p werkzeug -v "==3.1.3"
+---------------------------
+### Thought:
+I have successfully installed all dependencies listed in the `requirements.txt` file. It is now prudent to check if the tests pass in the current environment configuration.
+
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_augment_data
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_augment_image
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_augment_image_exception
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_augment_image_none
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_augment_image_with_alpha_channel
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_main
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_main_exception
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_random_crop_with_random_size
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_read_label_file
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_resize_large_image
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_resize_small_image
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_shuffle_data
+tests/examples/YOLO_data_augmentation/data_augmentation_albumentations_test.py::TestDataAugmentation::test_write_label_file
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_augment_data
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_augment_image
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_augment_image_exception
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_augment_image_no_shape
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_augment_image_none
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_augment_image_resize_large
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_augment_image_resize_small
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_main
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_read_label_file
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_shuffle_data
+tests/examples/YOLO_data_augmentation/data_augmentation_test.py::TestDataAugmentation::test_write_label_file
+tests/examples/YOLO_data_augmentation/visualise_bounding_boxes_test.py::TestBoundingBoxVisualiser::test_display_image
+tests/examples/YOLO_data_augmentation/visualise_bounding_boxes_test.py::TestBoundingBoxVisualiser::test_draw_bounding_boxes
+tests/examples/YOLO_data_augmentation/visualise_bounding_boxes_test.py::TestBoundingBoxVisualiser::test_image_loading_failure
+tests/examples/YOLO_data_augmentation/visualise_bounding_boxes_test.py::TestBoundingBoxVisualiser::test_main
+tests/examples/YOLO_data_augmentation/visualise_bounding_boxes_test.py::TestBoundingBoxVisualiser::test_save_image
+tests/examples/YOLO_evaluation/convert_yolo_to_coco_test.py::TestCOCOConverter::test_convert_annotations
+tests/examples/YOLO_evaluation/convert_yolo_to_coco_test.py::TestCOCOConverter::test_initialise_categories
+tests/examples/YOLO_evaluation/convert_yolo_to_coco_test.py::TestCOCOConverter::test_main
+tests/examples/YOLO_evaluation/convert_yolo_to_coco_test.py::TestCOCOConverter::test_save_to_json
+tests/examples/YOLO_evaluation/evaluate_sahi_yolo_test.py::TestCOCOEvaluator::test_evaluate
+tests/examples/YOLO_evaluation/evaluate_sahi_yolo_test.py::TestCOCOEvaluator::test_main
+tests/examples/YOLO_evaluation/evaluate_yolo_test.py::TestModelEvaluator::test_evaluate
+tests/examples/YOLO_evaluation/evaluate_yolo_test.py::TestModelEvaluator::test_main
+tests/examples/YOLO_server_api/app_test.py::TestApp::test_jwt_initialization
+tests/examples/YOLO_server_api/app_test.py::TestApp::test_lifespan_context
+tests/examples/YOLO_server_api/app_test.py::TestApp::test_redis_initialization
+tests/examples/YOLO_server_api/app_test.py::TestApp::test_routes_exist
+tests/examples/YOLO_server_api/app_test.py::TestApp::test_socketio_connect_disconnect
+tests/examples/YOLO_server_api/auth_test.py::TestAuth::test_create_token_incorrect_password
+tests/examples/YOLO_server_api/auth_test.py::TestAuth::test_create_token_successful_login
+tests/examples/YOLO_server_api/auth_test.py::TestAuth::test_create_token_user_in_cache
+tests/examples/YOLO_server_api/auth_test.py::TestAuth::test_create_token_user_not_found
+tests/examples/YOLO_server_api/cache_test.py::CacheTestCase::test_add_to_cache
+tests/examples/YOLO_server_api/cache_test.py::CacheTestCase::test_clear_cache
+tests/examples/YOLO_server_api/cache_test.py::CacheTestCase::test_rate_limiter_guest_role
+tests/examples/YOLO_server_api/cache_test.py::CacheTestCase::test_remove_from_cache
+tests/examples/YOLO_server_api/cache_test.py::CacheTestCase::test_update_cache
+tests/examples/YOLO_server_api/config_test.py::TestSettings::test_settings_with_default_values
+tests/examples/YOLO_server_api/config_test.py::TestSettings::test_settings_with_env_variables
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_calculate_area
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_calculate_intersection
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_calculate_overlap
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_check_containment
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_compile_detection_data
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_convert_to_image
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_find_contained_indices
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_find_contained_labels
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_find_overlapping_indices
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_find_overlaps
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_get_category_indices
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_get_prediction_result
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_is_contained
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_process_labels
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_remove_completely_contained_labels
+tests/examples/YOLO_server_api/detection_test.py::TestDetection::test_remove_overlapping_labels
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_get_new_model_file_no_file
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_get_new_model_file_not_updated
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_get_new_model_file_read_error
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_get_new_model_file_updated
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_update_model_file_invalid_file
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_update_model_file_invalid_model
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_update_model_file_invalid_torch_file
+tests/examples/YOLO_server_api/model_files_test.py::TestModelFilesWithMock::test_update_model_file_valid
+tests/examples/YOLO_server_api/models_test.py::TestUserModel::test_check_password
+tests/examples/YOLO_server_api/models_test.py::TestUserModel::test_set_password
+tests/examples/YOLO_server_api/models_test.py::TestUserModel::test_to_dict
+tests/examples/YOLO_server_api/models_test.py::TestDetectionModelManager::test_cleanup_on_delete
+tests/examples/YOLO_server_api/models_test.py::TestDetectionModelManager::test_get_model
+tests/examples/YOLO_server_api/models_test.py::TestDetectionModelManager::test_load_single_model
+tests/examples/YOLO_server_api/models_test.py::TestModelFileChangeHandler::test_on_modified_with_directory
+tests/examples/YOLO_server_api/models_test.py::TestModelFileChangeHandler::test_on_modified_with_model_file
+tests/examples/YOLO_server_api/models_test.py::TestDatabase::test_get_db
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_add_user
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_delete_user
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_detect_endpoint
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_get_new_model
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_model_file_update
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_set_user_active_status
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_update_password
+tests/examples/YOLO_server_api/routers_test.py::TestRouters::test_update_username
+tests/examples/YOLO_server_api/security_test.py::TestUpdateSecretKey::test_update_secret_key
+tests/examples/YOLO_server_api/security_test.py::TestUpdateSecretKey::test_update_secret_key_different_keys
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_add_user_duplicate_username
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_add_user_success
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_delete_user_not_found
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_delete_user_success
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_set_user_active_status_success
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_set_user_active_status_user_not_found
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_update_password_success
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_update_password_user_not_found
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_update_username_not_found
+tests/examples/YOLO_server_api/user_operation_test.py::UserOperationTestCase::test_update_username_success
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_cross_validate_model
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_cross_validate_model_without_loading
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_export_model
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_export_model_without_loading
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_load_model
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_load_model_with_pt_and_device_selection
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_load_model_with_unsupported_format
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_load_model_with_yaml
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_main
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_main_exception_handling
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_main_with_cross_validate
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_predict_image
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_predict_image_sahi
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_predict_image_sahi_without_model_path
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_predict_image_without_loading
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_save_model
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_save_model_without_loading
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_train_model
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_train_model_without_loading
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_validate_model
+tests/examples/YOLO_train/train_test.py::TestYOLOModelHandler::test_validate_model_without_loading
+tests/examples/streaming_web/backend/app_test.py::TestStreamingWebApp::test_app_running_configuration
+tests/examples/streaming_web/backend/app_test.py::TestStreamingWebApp::test_cors_initialization
+tests/examples/streaming_web/backend/app_test.py::TestStreamingWebApp::test_rate_limiter_initialization
+tests/examples/streaming_web/backend/app_test.py::TestStreamingWebApp::test_redis_connection
+tests/examples/streaming_web/backend/routes_test.py::TestRoutes::test_index
+tests/examples/streaming_web/backend/routes_test.py::TestRoutes::test_label_page_found
+tests/examples/streaming_web/backend/routes_test.py::TestRoutes::test_webhook
+tests/examples/streaming_web/backend/sockets_test.py::TestSockets::test_connect
+tests/examples/streaming_web/backend/sockets_test.py::TestSockets::test_disconnect
+tests/examples/streaming_web/backend/sockets_test.py::TestSockets::test_error
+tests/examples/streaming_web/backend/sockets_test.py::TestSockets::test_update_images
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_delete_config_cache
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_fetch_latest_frame_for_key_no_data
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_fetch_latest_frame_for_key_with_data
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_fetch_latest_frames
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_get_config_cache
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_get_keys_for_label
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_get_labels
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_get_partial_config
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_set_config_cache
+tests/examples/streaming_web/backend/utils_test.py::TestRedisManager::test_update_partial_config
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_decode_invalid_base64
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_decode_valid_base64
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_encode
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_is_base64
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_load_configuration
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_save_configuration
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_send_frames
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_update_configuration
+tests/examples/streaming_web/backend/utils_test.py::TestUtils::test_verify_localhost
+tests/src/danger_detector_test.py::TestDangerDetector::test_calculate_people_in_controlled_area
+tests/src/danger_detector_test.py::TestDangerDetector::test_detect_danger
+tests/src/danger_detector_test.py::TestDangerDetector::test_driver_detection_coverage
+tests/src/danger_detector_test.py::TestDangerDetector::test_height_check
+tests/src/danger_detector_test.py::TestDangerDetector::test_horizontal_position_check
+tests/src/danger_detector_test.py::TestDangerDetector::test_is_dangerously_close
+tests/src/danger_detector_test.py::TestDangerDetector::test_is_driver
+tests/src/danger_detector_test.py::TestDangerDetector::test_main
+tests/src/danger_detector_test.py::TestDangerDetector::test_no_cones
+tests/src/danger_detector_test.py::TestDangerDetector::test_no_data
+tests/src/danger_detector_test.py::TestDangerDetector::test_overlap_percentage
+tests/src/danger_detector_test.py::TestDangerDetector::test_person_inside_polygon
+tests/src/danger_detector_test.py::TestDangerDetector::test_vehicle_too_close
+tests/src/drawing_manager_test.py::TestDrawingManager::test_draw_detections_on_frame
+tests/src/drawing_manager_test.py::TestDrawingManager::test_draw_detections_on_frame_with_invalid_label
+tests/src/drawing_manager_test.py::TestDrawingManager::test_draw_detections_on_frame_with_no_detections
+tests/src/drawing_manager_test.py::TestDrawingManager::test_draw_detections_on_frame_with_thai_language
+tests/src/drawing_manager_test.py::TestDrawingManager::test_draw_polygons
+tests/src/drawing_manager_test.py::TestDrawingManager::test_get_font_cache
+tests/src/drawing_manager_test.py::TestDrawingManager::test_get_font_fallback_to_default
+tests/src/drawing_manager_test.py::TestDrawingManager::test_main
+tests/src/drawing_manager_test.py::TestDrawingManager::test_save_frame
+tests/src/lang_config_test.py::TestLangConfig::test_all_keys_exist_for_each_language
+tests/src/lang_config_test.py::TestLangConfig::test_all_languages_exist
+tests/src/lang_config_test.py::TestLangConfig::test_language_code_case_insensitivity
+tests/src/lang_config_test.py::TestLangConfig::test_main_as_script
+tests/src/lang_config_test.py::TestLangConfig::test_main_function
+tests/src/lang_config_test.py::TestLangConfig::test_no_extra_keys_for_each_language
+tests/src/lang_config_test.py::TestLangConfig::test_placeholder_replacement_correctness
+tests/src/lang_config_test.py::TestLangConfig::test_specific_language_translation_correctness
+tests/src/lang_config_test.py::TestLangConfig::test_translate_warning_no_match
+tests/src/lang_config_test.py::TestLangConfig::test_translate_warning_no_safety_vest
+tests/src/lang_config_test.py::TestLangConfig::test_translate_warning_with_unsupported_language
+tests/src/lang_config_test.py::TestLangConfig::test_translation_format
+tests/src/lang_config_test.py::TestLangConfig::test_translation_values_are_not_empty
+tests/src/lang_config_test.py::TestLangConfig::test_translation_with_missing_placeholders
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_authenticate
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_authenticate_error
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_ensure_authenticated
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_generate_detections
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_generate_detections_cloud
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_generate_detections_local
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_initialisation
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_is_contained
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_main
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_overlap_percentage
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_remove_completely_contained_labels
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_remove_overlapping_labels
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_run_detection
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_run_detection_fail_read_frame
+tests/src/live_stream_detection_test.py::TestLiveStreamDetector::test_token_expired
+tests/src/live_stream_tracker_test.py::TestLiveStreamDetector::test_generate_detections
+tests/src/live_stream_tracker_test.py::TestLiveStreamDetector::test_initialisation
+tests/src/live_stream_tracker_test.py::TestLiveStreamDetector::test_main
+tests/src/live_stream_tracker_test.py::TestLiveStreamDetector::test_release_resources
+tests/src/live_stream_tracker_test.py::TestLiveStreamDetector::test_run_detection
+tests/src/model_fetcher_test.py::TestModelFetcher::test_download_and_save_model
+tests/src/model_fetcher_test.py::TestModelFetcher::test_get_last_update_time_existing_file
+tests/src/model_fetcher_test.py::TestModelFetcher::test_get_last_update_time_nonexistent_file
+tests/src/model_fetcher_test.py::TestModelFetcher::test_request_new_model_no_update_needed
+tests/src/model_fetcher_test.py::TestModelFetcher::test_request_new_model_server_error
+tests/src/model_fetcher_test.py::TestModelFetcher::test_request_new_model_success
+tests/src/model_fetcher_test.py::TestModelFetcher::test_update_all_models
+tests/src/monitor_logger_test.py::TestLoggerConfig::test_get_console_handler
+tests/src/monitor_logger_test.py::TestLoggerConfig::test_get_file_handler
+tests/src/monitor_logger_test.py::TestLoggerConfig::test_logger_output
+tests/src/monitor_logger_test.py::TestLoggerConfig::test_main_function
+tests/src/monitor_logger_test.py::TestLoggerConfig::test_setup_logger
+tests/src/notifiers/broadcast_notifier_test.py::TestBroadcastNotifier::test_broadcast_message_exception
+tests/src/notifiers/broadcast_notifier_test.py::TestBroadcastNotifier::test_broadcast_message_failure
+tests/src/notifiers/broadcast_notifier_test.py::TestBroadcastNotifier::test_broadcast_message_success
+tests/src/notifiers/broadcast_notifier_test.py::TestBroadcastNotifier::test_main
+tests/src/notifiers/broadcast_notifier_test.py::TestBroadcastNotifier::test_main_as_script
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_delete_image_from_cloudinary_exception
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_delete_image_from_cloudinary_failure
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_delete_image_from_cloudinary_success
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_delete_old_images
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_delete_old_images_with_interval
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_delete_old_images_with_interval_no_last_checked
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_delete_old_images_with_invalid_last_checked
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_init_without_channel_access_token
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_main
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_push_message_api_error
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_push_message_image_upload_failure
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_push_message_with_image
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_push_message_without_image
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_save_image_records_failure
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_upload_image_to_cloudinary_failure
+tests/src/notifiers/line_notifier_message_api_test.py::TestLineMessenger::test_upload_image_to_cloudinary_success
+tests/src/notifiers/line_notifier_test.py::TestLineNotifier::test_init_with_env_token
+tests/src/notifiers/line_notifier_test.py::TestLineNotifier::test_init_without_token
+tests/src/notifiers/line_notifier_test.py::TestLineNotifier::test_main
+tests/src/notifiers/line_notifier_test.py::TestLineNotifier::test_main_as_script
+tests/src/notifiers/line_notifier_test.py::TestLineNotifier::test_send_notification_with_bytes_image
+tests/src/notifiers/line_notifier_test.py::TestLineNotifier::test_send_notification_with_image
+tests/src/notifiers/line_notifier_test.py::TestLineNotifier::test_send_notification_without_image
+tests/src/notifiers/messenger_notifier_test.py::TestMessengerNotifier::test_init
+tests/src/notifiers/messenger_notifier_test.py::TestMessengerNotifier::test_main
+tests/src/notifiers/messenger_notifier_test.py::TestMessengerNotifier::test_send_notification_no_image
+tests/src/notifiers/messenger_notifier_test.py::TestMessengerNotifier::test_send_notification_with_image
+tests/src/notifiers/telegram_notifier_test.py::TestTelegramNotifier::test_init
+tests/src/notifiers/telegram_notifier_test.py::TestTelegramNotifier::test_main
+tests/src/notifiers/telegram_notifier_test.py::TestTelegramNotifier::test_send_notification_no_image
+tests/src/notifiers/telegram_notifier_test.py::TestTelegramNotifier::test_send_notification_with_image
+tests/src/notifiers/wechat_notifier_test.py::TestWeChatNotifier::test_get_access_token
+tests/src/notifiers/wechat_notifier_test.py::TestWeChatNotifier::test_main
+tests/src/notifiers/wechat_notifier_test.py::TestWeChatNotifier::test_main_as_script
+tests/src/notifiers/wechat_notifier_test.py::TestWeChatNotifier::test_send_notification_no_image
+tests/src/notifiers/wechat_notifier_test.py::TestWeChatNotifier::test_send_notification_with_image
+tests/src/notifiers/wechat_notifier_test.py::TestWeChatNotifier::test_upload_media
+tests/src/stream_capture_test.py::TestStreamCapture::test_capture_generic_frames
+tests/src/stream_capture_test.py::TestStreamCapture::test_check_internet_speed
+tests/src/stream_capture_test.py::TestStreamCapture::test_execute_capture
+tests/src/stream_capture_test.py::TestStreamCapture::test_execute_capture_failures
+tests/src/stream_capture_test.py::TestStreamCapture::test_initialise_stream_retry
+tests/src/stream_capture_test.py::TestStreamCapture::test_initialise_stream_success
+tests/src/stream_capture_test.py::TestStreamCapture::test_main_function
+tests/src/stream_capture_test.py::TestStreamCapture::test_release_resources
+tests/src/stream_capture_test.py::TestStreamCapture::test_select_quality_based_on_speed_high_speed
+tests/src/stream_capture_test.py::TestStreamCapture::test_select_quality_based_on_speed_low_speed
+tests/src/stream_capture_test.py::TestStreamCapture::test_select_quality_based_on_speed_medium_speed
+tests/src/stream_capture_test.py::TestStreamCapture::test_select_quality_based_on_speed_no_quality
+tests/src/stream_capture_test.py::TestStreamCapture::test_update_capture_interval
+tests/src/stream_viewer_test.py::TestStreamViewer::test_display_stream
+tests/src/stream_viewer_test.py::TestStreamViewer::test_initialisation
+tests/src/stream_viewer_test.py::TestStreamViewer::test_main
+tests/src/stream_viewer_test.py::TestStreamViewer::test_release_resources
+tests/src/utils_test.py::TestUtils::test_encode
+tests/src/utils_test.py::TestUtils::test_is_expired_with_invalid_date
+tests/src/utils_test.py::TestUtils::test_is_expired_with_none
+tests/src/utils_test.py::TestUtils::test_is_expired_with_valid_date
+tests/src/utils_test.py::TestFileEventHandler::test_on_modified_different_file
+tests/src/utils_test.py::TestFileEventHandler::test_on_modified_triggers_callback
+tests/src/utils_test.py::TestRedisManager::test_add_to_stream
+tests/src/utils_test.py::TestRedisManager::test_add_to_stream_error
+tests/src/utils_test.py::TestRedisManager::test_close_connection
+tests/src/utils_test.py::TestRedisManager::test_close_connection_error
+tests/src/utils_test.py::TestRedisManager::test_delete_error
+tests/src/utils_test.py::TestRedisManager::test_delete_stream_error
+tests/src/utils_test.py::TestRedisManager::test_delete_stream_success
+tests/src/utils_test.py::TestRedisManager::test_delete_success
+tests/src/utils_test.py::TestRedisManager::test_get_error
+tests/src/utils_test.py::TestRedisManager::test_get_success
+tests/src/utils_test.py::TestRedisManager::test_read_from_stream
+tests/src/utils_test.py::TestRedisManager::test_read_from_stream_error
+tests/src/utils_test.py::TestRedisManager::test_set_error
+tests/src/utils_test.py::TestRedisManager::test_set_success
+
+304 tests collected in 13.63s
+Container 0d8e1e76d927 stopped and removed
+Spend totally 3872.5872490406036.

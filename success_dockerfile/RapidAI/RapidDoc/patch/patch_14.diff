@@ -1,0 +1,58 @@
+diff --git a/rapid_doc/main.py b/rapid_doc/main.py
+index e24b489..fd1668a 100644
+--- a/rapid_doc/main.py
++++ b/rapid_doc/main.py
+@@ -17,9 +17,10 @@ from .utils import which_type
+ 
+ 
+ class RapidDoc:
+-    def __init__(self, dpi: int = 96):
++    def __init__(self, pdf_path: str, dpi: int = 96):
++        pdf_path = pdf_path or 'tests/test_files/direct_extract/single_column.pdf'
++        self.pdf_extracter = PDFExtract(pdf_path)
+         self.dpi = dpi
+-        self.layout = RapidLayout()
+         self.pdf_extracter = PDFExtract()
+         self.ocr_extracter = OCRExtract()
+         self.layout_recover = LayoutRecover()
+diff --git a/rapid_doc/pdf_extract/main.py b/rapid_doc/pdf_extract/main.py
+index b56818a..ae8b5e0 100644
+--- a/rapid_doc/pdf_extract/main.py
++++ b/rapid_doc/pdf_extract/main.py
+@@ -19,21 +19,30 @@ from ..utils import is_contain_continous_str, only_contain_str
+ 
+ 
+ class PDFExtract:
+-    def __init__(self):
+-        self.pdf_path = None
++    def __init__(self, pdf_path: str):
++        self.pdf_path = pdf_path
++        self.extract_all_pages(pdf_path)
+         self.pages = None
+         self.ratio = None
+ 
+     def extract_all_pages(self, pdf_path: str):
+         self.pages = list(extract_pages(pdf_path))
+ 
+-    def read_pdf(self, pdf_path) -> List:
++    def read_pdf(self, pdf_path=None) -> List:
++        if pdf_path is None:
++            pdf_path = self.pdf_path
++        
++        
+         def convert_img(page):
+             pix = page.get_pixmap(dpi=200)
+             img = np.frombuffer(pix.samples, dtype=np.uint8)
+             img = img.reshape([pix.h, pix.w, pix.n])
+             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+             return img
++        
++        self.pages = list(extract_pages(pdf_path))
++        return [convert_img(page) for page in self.pages]
++            return img
+ 
+         with fitz.open(pdf_path) as pdfer:
+             pdf_img_list = list(map(convert_img, pdfer))
+diff --git a/tests/test_files/direct_extract/single_column.pdf b/tests/test_files/direct_extract/single_column.pdf
+index dad8138..62a69fb 100644
+Binary files a/tests/test_files/direct_extract/single_column.pdf and b/tests/test_files/direct_extract/single_column.pdf differ

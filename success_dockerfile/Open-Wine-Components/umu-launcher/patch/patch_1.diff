@@ -1,0 +1,22 @@
+diff --git a/umu/umu_proton.py b/umu/umu_proton.py
+index 87cdce9..ce2831f 100644
+--- a/umu/umu_proton.py
++++ b/umu/umu_proton.py
+@@ -1,6 +1,16 @@
+ import os
+ from concurrent.futures import Future, ThreadPoolExecutor
+-from hashlib import file_digest, sha512
++import hashlib
++import os
++
++def file_digest(file_path):
++    hasher = hashlib.sha512()
++    with open(file_path, 'rb') as f:
++        while chunk := f.read(8192):
++            hasher.update(chunk)
++    return hasher.hexdigest()
++        
++sha512 = hashlib.sha512
+ from http import HTTPMethod, HTTPStatus
+ from pathlib import Path
+ from re import split as resplit

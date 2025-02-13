@@ -1,0 +1,861 @@
+modern-python/that-depends
+Container kind_dewdney 9ea3d3ecd552 started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+0. **Read README**: First, read the README file. If the README file mentions a way to configure the environment, give priority to using the methods described in the README. Note that our goal here is to run the code, not to use the tool, so our standard is to be able to run the tests. If you think the README clearly specifies a method for configuring the environment for running tests, you can skip the subsequent steps and follow its instructions to configure the environment. Then use `runtest` or `poetryruntest` to check if the configuration is correct.
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version Or Other Base Image**: Decide if you need to switch the Python version or the base image in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you need to change the base image, use the `change_base_image base_image_name:tag` command (for example, `change_base_image pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime`). If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version or the base image.
+    *Note*: If you use `change_base_image` and no tag is provided, it defaults to "latest".
+    *Note*: Please prioritize ease of environment configuration. If an official ready-to-use base image is available, you can use it directly. However, be aware that doing so may discard all previous configurations.
+    *Note*: Avoid using images that do not directly support Python, such as Ubuntu or Node, because the environments we need to configure are primarily based on the Python language.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+change_base_image base_image # Switching the base image in the Docker container will forgo any installations made prior to the switch. The base image does not necessarily have to follow the format 'python:<Python version>'. Preferably, specify it in the form of 'base_image_name:tag', such as 'pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime'. If no tag is provided, it defaults to 'latest'. No any quotation marks are needed.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+
+---------------------------
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+Justfile  LICENSE  README.md  docs  pyproject.toml  tests  that_depends
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 69 turns left to complete the task.
+---------------------------
+### Thought: The structure of the root directory includes a `README.md` file. I will read the contents of the `README.md` to check if it contains any instructions for configuring the environment.
+### Action:
+```bash
+cat /repo/README.md
+```
+### Observation:
+Running `cat /repo/README.md`...
+"That Depends"
+==
+[![Test Coverage](https://codecov.io/gh/modern-python/that-depends/branch/main/graph/badge.svg)](https://codecov.io/gh/modern-python/that-depends)
+[![MyPy Strict](https://img.shields.io/badge/mypy-strict-blue)](https://mypy.readthedocs.io/en/stable/getting_started.html#strict-mode-and-configuration)
+[![Supported versions](https://img.shields.io/pypi/pyversions/that-depends.svg)](https://pypi.python.org/pypi/that-depends)
+[![downloads](https://img.shields.io/pypi/dm/that-depends.svg)](https://pypistats.org/packages/that-depends)
+[![GitHub stars](https://img.shields.io/github/stars/modern-python/that-depends)](https://github.com/modern-python/that-depends/stargazers)
+Dependency injection framework for Python inspired by `dependency-injector`.
+It is production-ready and gives you the following:
+- Simple async-first DI framework with IOC-container.
+- Python 3.10-3.12 support.
+- Full coverage by types annotations (mypy in strict mode).
+- FastAPI and LiteStar compatibility.
+- Overriding dependencies for tests.
+- Injecting dependencies in functions and coroutines without wiring.
+- Package with zero dependencies.
+📚 [Documentation](https://that-depends.readthedocs.io)
+# Quickstart
+## Install
+```bash
+pip install that-depends
+```
+## Describe resources and classes:
+```python
+import dataclasses
+import logging
+import typing
+logger = logging.getLogger(__name__)
+# singleton provider with finalization
+def create_sync_resource() -> typing.Iterator[str]:
+    logger.debug("Resource initiated")
+    try:
+        yield "sync resource"
+    finally:
+        logger.debug("Resource destructed")
+# same, but async
+async def create_async_resource() -> typing.AsyncIterator[str]:
+    logger.debug("Async resource initiated")
+    try:
+        yield "async resource"
+    finally:
+        logger.debug("Async resource destructed")
+@dataclasses.dataclass(kw_only=True, slots=True)
+class DependentFactory:
+    sync_resource: str
+    async_resource: str
+```
+## Describe IoC-container
+```python
+from that_depends import BaseContainer, providers
+class DIContainer(BaseContainer):
+    sync_resource = providers.Resource(create_sync_resource)
+    async_resource = providers.Resource(create_async_resource)
+    simple_factory = providers.Factory(SimpleFactory, dep1="text", dep2=123)
+    dependent_factory = providers.Factory(
+        sync_resource=sync_resource,
+        async_resource=async_resource,
+    )
+```
+## Resolve dependencies in your code
+```python
+# async resolving by default:
+await DIContainer.simple_factory()
+# sync resolving is also allowed if there is no uninitialized async resources in dependencies
+DIContainer.simple_factory.sync_resolve()
+# otherwise you can initialize resources beforehand one by one or in one call:
+await DIContainer.init_resources()
+```
+## Resolve dependencies not described in container
+```python
+@dataclasses.dataclass(kw_only=True, slots=True)
+class FreeFactory:
+    dependent_factory: DependentFactory
+    sync_resource: str
+# this way container will try to find providers by names and resolve them to build FreeFactory instance
+free_factory_instance = await DIContainer.resolve(FreeFactory)
+```
+## Inject providers in function arguments
+```python
+import datetime
+from that_depends import inject, Provide
+from tests import container
+@inject
+async def some_coroutine(
+    simple_factory: container.SimpleFactory = Provide[container.DIContainer.simple_factory],
+    dependent_factory: container.DependentFactory = Provide[container.DIContainer.dependent_factory],
+    default_zero: int = 0,
+) -> None:
+    assert simple_factory.dep1
+    assert isinstance(dependent_factory.async_resource, datetime.datetime)
+    assert default_zero == 0
+@inject
+def some_function(
+    simple_factory: container.SimpleFactory = Provide[container.DIContainer.simple_factory],
+    default_zero: int = 0,
+) -> None:
+    assert simple_factory.dep1
+    assert default_zero == 0
+```
+`cat /repo/README.md` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 68 turns left to complete the task.
+---------------------------
+### Thought: The `README.md` file provides insights into the purpose and usage of the project. However, it does not specify detailed information about the environment setup required for testing. I will now check the `pyproject.toml` file as it often contains information related to dependencies and the project's environment setup.
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+[project]
+name = "that-depends"
+description = "Simple Dependency Injection framework"
+authors = [
+    { name = "Artur Shiriev", email = "me@shiriev.ru" },
+]
+readme = "README.md"
+requires-python = ">=3.10,<4"
+license = "MIT"
+keywords = ["di", "dependency injector", "ioc-container", "mocks", "python"]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+    "Topic :: Software Development :: Libraries",
+]
+dynamic = ["version"]
+packages = [
+    { include = "that_depends" },
+]
+[project.urls]
+repository = "https://github.com/modern-python/that-depends"
+docs = "https://that-depends.readthedocs.io"
+[dependency-groups]
+dev = [
+    "fastapi",
+    "litestar",
+    "httpx",
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+    "pytest-repeat",
+    "ruff",
+    "mypy",
+    "typing-extensions",
+    "pre-commit"
+]
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+[tool.hatch.version]
+source = "vcs"
+[tool.mypy]
+python_version = "3.10"
+strict = true
+[tool.ruff]
+fix = true
+unsafe-fixes = true
+line-length = 120
+target-version = "py310"
+extend-exclude = [
+    "docs",
+]
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D1", # allow missing docstrings
+    "S101", # allow asserts
+    "TCH", # ignore flake8-type-checking
+    "FBT", # allow boolean args
+    "D203", # "one-blank-line-before-class" conflicting with D211
+    "D213", # "multi-line-summary-second-line" conflicting with D212
+    "COM812", # flake8-commas "Trailing comma missing"
+    "ISC001", # flake8-implicit-str-concat
+]
+isort.lines-after-imports = 2
+isort.no-lines-before = ["standard-library", "local-folder"]
+[tool.pytest.ini_options]
+addopts = "--cov=. --cov-report term-missing"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+[tool.coverage.report]
+exclude_also = ["if typing.TYPE_CHECKING:"]
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 67 turns left to complete the task.
+---------------------------
+### Thought: The `pyproject.toml` file specifies project details, dependencies, and tools configurations. Since the pyproject.toml file suggests using `pytest` for testing, I will attempt to run the tests directly to see if they run without additional configuration.
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+ImportError while loading conftest '/repo/tests/conftest.py'.
+tests/conftest.py:5: in <module>
+    from tests import container
+tests/container.py:6: in <module>
+    from that_depends import BaseContainer, providers
+that_depends/__init__.py:1: in <module>
+    from that_depends import providers
+that_depends/providers/__init__.py:1: in <module>
+    from that_depends.providers.base import AbstractProvider, AttrGetter
+that_depends/providers/base.py:8: in <module>
+    import typing_extensions
+E   ModuleNotFoundError: No module named 'typing_extensions'
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 4
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 66 turns left to complete the task.
+---------------------------
+### Thought: The error indicates that the `typing_extensions` module is missing. Since this module is listed as a development dependency in the `pyproject.toml` file, I should install the development dependencies using `poetry`.
+### Action:
+```bash
+cd /repo && poetry install
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install`...
+[31;1m[tool.poetry] section not found in /repo/pyproject.toml[39;22m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetry install` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 65 turns left to complete the task.
+---------------------------
+### Thought: The `pyproject.toml` file does not have a `[tool.poetry]` section, indicating that it is not a Poetry-managed project. Instead, I will proceed by installing dependencies listed in the `pyproject.toml` file using `pip`.
+### Action:
+```bash
+pip install fastapi litestar httpx pytest pytest-cov pytest-asyncio pytest-repeat ruff mypy typing-extensions pre-commit
+```
+### Observation:
+Running `pip install fastapi litestar httpx pytest pytest-cov pytest-asyncio pytest-repeat ruff mypy typing-extensions pre-commit`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `pip install fastapi litestar httpx pytest pytest-cov pytest-asyncio pytest-repeat ruff mypy typing-extensions pre-commit`...
+Collecting fastapi
+  Downloading fastapi-0.115.6-py3-none-any.whl.metadata (27 kB)
+Collecting litestar
+  Downloading litestar-2.13.0-py3-none-any.whl.metadata (107 kB)
+Collecting httpx
+  Downloading httpx-0.28.0-py3-none-any.whl.metadata (7.1 kB)
+Requirement already satisfied: pytest in /usr/local/lib/python3.10/site-packages (8.3.3)
+Collecting pytest-cov
+  Downloading pytest_cov-6.0.0-py3-none-any.whl.metadata (27 kB)
+Collecting pytest-asyncio
+  Downloading pytest_asyncio-0.24.0-py3-none-any.whl.metadata (3.9 kB)
+Collecting pytest-repeat
+  Downloading pytest_repeat-0.9.3-py3-none-any.whl.metadata (4.9 kB)
+Collecting ruff
+  Downloading ruff-0.8.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (25 kB)
+Collecting mypy
+  Downloading mypy-1.13.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl.metadata (2.1 kB)
+Collecting typing-extensions
+  Downloading typing_extensions-4.12.2-py3-none-any.whl.metadata (3.0 kB)
+Collecting pre-commit
+  Downloading pre_commit-4.0.1-py2.py3-none-any.whl.metadata (1.3 kB)
+Collecting starlette<0.42.0,>=0.40.0 (from fastapi)
+  Downloading starlette-0.41.3-py3-none-any.whl.metadata (6.0 kB)
+Collecting pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4 (from fastapi)
+  Downloading pydantic-2.10.3-py3-none-any.whl.metadata (172 kB)
+Collecting anyio>=3 (from litestar)
+  Downloading anyio-4.6.2.post1-py3-none-any.whl.metadata (4.7 kB)
+Collecting click (from litestar)
+  Downloading click-8.1.7-py3-none-any.whl.metadata (3.0 kB)
+Requirement already satisfied: exceptiongroup in /usr/local/lib/python3.10/site-packages (from litestar) (1.2.2)
+Collecting litestar-htmx>=0.3.0 (from litestar)
+  Downloading litestar_htmx-0.4.1-py3-none-any.whl.metadata (2.0 kB)
+Collecting msgspec>=0.18.2 (from litestar)
+  Downloading msgspec-0.18.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.9 kB)
+Collecting multidict>=6.0.2 (from litestar)
+  Downloading multidict-6.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.0 kB)
+Collecting polyfactory>=2.6.3 (from litestar)
+  Downloading polyfactory-2.18.1-py3-none-any.whl.metadata (27 kB)
+Collecting pyyaml (from litestar)
+  Downloading PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+Collecting rich-click (from litestar)
+  Downloading rich_click-1.8.5-py3-none-any.whl.metadata (7.9 kB)
+Collecting rich>=13.0.0 (from litestar)
+  Downloading rich-13.9.4-py3-none-any.whl.metadata (18 kB)
+Collecting certifi (from httpx)
+  Using cached certifi-2024.8.30-py3-none-any.whl.metadata (2.2 kB)
+Collecting httpcore==1.* (from httpx)
+  Downloading httpcore-1.0.7-py3-none-any.whl.metadata (21 kB)
+Collecting idna (from httpx)
+  Using cached idna-3.10-py3-none-any.whl.metadata (10 kB)
+Collecting h11<0.15,>=0.13 (from httpcore==1.*->httpx)
+  Downloading h11-0.14.0-py3-none-any.whl.metadata (8.2 kB)
+Requirement already satisfied: iniconfig in /usr/local/lib/python3.10/site-packages (from pytest) (2.0.0)
+Requirement already satisfied: packaging in /usr/local/lib/python3.10/site-packages (from pytest) (24.2)
+Requirement already satisfied: pluggy<2,>=1.5 in /usr/local/lib/python3.10/site-packages (from pytest) (1.5.0)
+Requirement already satisfied: tomli>=1 in /usr/local/lib/python3.10/site-packages (from pytest) (2.0.2)
+Collecting coverage>=7.5 (from coverage[toml]>=7.5->pytest-cov)
+  Downloading coverage-7.6.8-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (8.2 kB)
+Collecting mypy-extensions>=1.0.0 (from mypy)
+  Downloading mypy_extensions-1.0.0-py3-none-any.whl.metadata (1.1 kB)
+Collecting cfgv>=2.0.0 (from pre-commit)
+  Downloading cfgv-3.4.0-py2.py3-none-any.whl.metadata (8.5 kB)
+Collecting identify>=1.0.0 (from pre-commit)
+  Downloading identify-2.6.3-py2.py3-none-any.whl.metadata (4.4 kB)
+Collecting nodeenv>=0.11.1 (from pre-commit)
+  Downloading nodeenv-1.9.1-py2.py3-none-any.whl.metadata (21 kB)
+Collecting virtualenv>=20.10.0 (from pre-commit)
+  Downloading virtualenv-20.28.0-py3-none-any.whl.metadata (4.4 kB)
+Collecting sniffio>=1.1 (from anyio>=3->litestar)
+  Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+Collecting faker (from polyfactory>=2.6.3->litestar)
+  Downloading Faker-33.1.0-py3-none-any.whl.metadata (15 kB)
+Collecting annotated-types>=0.6.0 (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi)
+  Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.27.1 (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi)
+  Downloading pydantic_core-2.27.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+Collecting markdown-it-py>=2.2.0 (from rich>=13.0.0->litestar)
+  Downloading markdown_it_py-3.0.0-py3-none-any.whl.metadata (6.9 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.0.0->litestar)
+  Downloading pygments-2.18.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting distlib<1,>=0.3.7 (from virtualenv>=20.10.0->pre-commit)
+  Using cached distlib-0.3.9-py2.py3-none-any.whl.metadata (5.2 kB)
+Collecting filelock<4,>=3.12.2 (from virtualenv>=20.10.0->pre-commit)
+  Using cached filelock-3.16.1-py3-none-any.whl.metadata (2.9 kB)
+Collecting platformdirs<5,>=3.9.1 (from virtualenv>=20.10.0->pre-commit)
+  Using cached platformdirs-4.3.6-py3-none-any.whl.metadata (11 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.0.0->litestar)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Collecting python-dateutil>=2.4 (from faker->polyfactory>=2.6.3->litestar)
+  Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting six>=1.5 (from python-dateutil>=2.4->faker->polyfactory>=2.6.3->litestar)
+  Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+
+...[Truncation]...
+ypes-0.7.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.27.1 (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi)
+  Downloading pydantic_core-2.27.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+Collecting markdown-it-py>=2.2.0 (from rich>=13.0.0->litestar)
+  Downloading markdown_it_py-3.0.0-py3-none-any.whl.metadata (6.9 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.0.0->litestar)
+  Downloading pygments-2.18.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting distlib<1,>=0.3.7 (from virtualenv>=20.10.0->pre-commit)
+  Using cached distlib-0.3.9-py2.py3-none-any.whl.metadata (5.2 kB)
+Collecting filelock<4,>=3.12.2 (from virtualenv>=20.10.0->pre-commit)
+  Using cached filelock-3.16.1-py3-none-any.whl.metadata (2.9 kB)
+Collecting platformdirs<5,>=3.9.1 (from virtualenv>=20.10.0->pre-commit)
+  Using cached platformdirs-4.3.6-py3-none-any.whl.metadata (11 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.0.0->litestar)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Collecting python-dateutil>=2.4 (from faker->polyfactory>=2.6.3->litestar)
+  Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting six>=1.5 (from python-dateutil>=2.4->faker->polyfactory>=2.6.3->litestar)
+  Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Downloading fastapi-0.115.6-py3-none-any.whl (94 kB)
+Downloading litestar-2.13.0-py3-none-any.whl (555 kB)
+Downloading httpcore-1.0.7-py3-none-any.whl (78 kB)
+Downloading pytest_cov-6.0.0-py3-none-any.whl (22 kB)
+Downloading pytest_asyncio-0.24.0-py3-none-any.whl (18 kB)
+Downloading pytest_repeat-0.9.3-py3-none-any.whl (4.2 kB)
+Downloading ruff-0.8.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.2 MB)
+Downloading pre_commit-4.0.1-py2.py3-none-any.whl (218 kB)
+Downloading anyio-4.6.2.post1-py3-none-any.whl (90 kB)
+Downloading cfgv-3.4.0-py2.py3-none-any.whl (7.2 kB)
+Downloading coverage-7.6.8-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (234 kB)
+Downloading identify-2.6.3-py2.py3-none-any.whl (99 kB)
+Using cached idna-3.10-py3-none-any.whl (70 kB)
+Downloading litestar_htmx-0.4.1-py3-none-any.whl (10.0 kB)
+Downloading msgspec-0.18.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (210 kB)
+Downloading multidict-6.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (124 kB)
+Downloading mypy_extensions-1.0.0-py3-none-any.whl (4.7 kB)
+Downloading nodeenv-1.9.1-py2.py3-none-any.whl (22 kB)
+Downloading polyfactory-2.18.1-py3-none-any.whl (59 kB)
+Downloading pydantic-2.10.3-py3-none-any.whl (456 kB)
+Downloading pydantic_core-2.27.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+Downloading starlette-0.41.3-py3-none-any.whl (73 kB)
+Downloading virtualenv-20.28.0-py3-none-any.whl (4.3 MB)
+[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/4.3 MB[0m [31m?[0m eta [36m-:--:--[0m
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m4.3/4.3 MB[0m [31m48.5 MB/s[0m eta [36m0:00:00[0m
+[?25hUsing cached certifi-2024.8.30-py3-none-any.whl (167 kB)
+Downloading click-8.1.7-py3-none-any.whl (97 kB)
+Downloading rich_click-1.8.5-py3-none-any.whl (35 kB)
+Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Using cached distlib-0.3.9-py2.py3-none-any.whl (468 kB)
+Using cached filelock-3.16.1-py3-none-any.whl (16 kB)
+Downloading h11-0.14.0-py3-none-any.whl (58 kB)
+Downloading markdown_it_py-3.0.0-py3-none-any.whl (87 kB)
+Using cached platformdirs-4.3.6-py3-none-any.whl (18 kB)
+Downloading pygments-2.18.0-py3-none-any.whl (1.2 MB)
+[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/1.2 MB[0m [31m?[0m eta [36m-:--:--[0m
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.2/1.2 MB[0m [31m12.6 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+Downloading Faker-33.1.0-py3-none-any.whl (1.9 MB)
+[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/1.9 MB[0m [31m?[0m eta [36m-:--:--[0m
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.9/1.9 MB[0m [31m23.9 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+Installing collected packages: distlib, typing-extensions, sniffio, six, ruff, pyyaml, pygments, platformdirs, nodeenv, mypy-extensions, msgspec, mdurl, litestar-htmx, idna, identify, h11, filelock, coverage, click, cfgv, certifi, annotated-types, virtualenv, python-dateutil, pytest-repeat, pytest-asyncio, pydantic-core, mypy, multidict, markdown-it-py, httpcore, anyio, starlette, rich, pytest-cov, pydantic, pre-commit, httpx, faker, rich-click, polyfactory, fastapi, litestar
+Successfully installed annotated-types-0.7.0 anyio-4.6.2.post1 certifi-2024.8.30 cfgv-3.4.0 click-8.1.7 coverage-7.6.8 distlib-0.3.9 faker-33.1.0 fastapi-0.115.6 filelock-3.16.1 h11-0.14.0 httpcore-1.0.7 httpx-0.28.0 identify-2.6.3 idna-3.10 litestar-2.13.0 litestar-htmx-0.4.1 markdown-it-py-3.0.0 mdurl-0.1.2 msgspec-0.18.6 multidict-6.1.0 mypy-1.13.0 mypy-extensions-1.0.0 nodeenv-1.9.1 platformdirs-4.3.6 polyfactory-2.18.1 pre-commit-4.0.1 pydantic-2.10.3 pydantic-core-2.27.1 pygments-2.18.0 pytest-asyncio-0.24.0 pytest-cov-6.0.0 pytest-repeat-0.9.3 python-dateutil-2.9.0.post0 pyyaml-6.0.2 rich-13.9.4 rich-click-1.8.5 ruff-0.8.1 six-1.17.0 sniffio-1.3.1 starlette-0.41.3 typing-extensions-4.12.2 virtualenv-20.28.0
+[33mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.[0m[33m
+`pip install fastapi litestar httpx pytest pytest-cov pytest-asyncio pytest-repeat ruff mypy typing-extensions pre-commit` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 64 turns left to complete the task.
+---------------------------
+### Thought: The necessary dependencies have been installed successfully. I will now run the tests again to check if the environment setup is complete.
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+tests/integrations/test_fastapi_di.py::test_read_main
+tests/integrations/test_fastapi_di_pass_request.py::test_read_main
+tests/integrations/test_litestar_di.py::test_litestar_endpoint_with_mock_overriding
+tests/integrations/test_litestar_di.py::test_litestar_di
+tests/integrations/test_litestar_di.py::test_litestar_di_override_fail_on_provider_override
+tests/integrations/test_litestar_di.py::test_litestar_di_override_fail_on_override_providers
+tests/integrations/test_litestar_di_simple.py::test_litestar_di
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_sync[some_sync_settings_provider0]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_sync[some_sync_settings_provider1]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_sync[some_sync_settings_provider2]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_sync[some_sync_settings_provider3]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_sync[some_sync_settings_provider4]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_sync[some_sync_settings_provider5]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_async[some_async_settings_provider0]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_async[some_async_settings_provider1]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_async[some_async_settings_provider2]
+tests/providers/test_attr_getter.py::test_attr_getter_with_zero_attribute_depth_async[some_async_settings_provider3]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_sync[some_sync_settings_provider0]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_sync[some_sync_settings_provider1]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_sync[some_sync_settings_provider2]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_sync[some_sync_settings_provider3]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_sync[some_sync_settings_provider4]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_sync[some_sync_settings_provider5]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_async[some_async_settings_provider0]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_async[some_async_settings_provider1]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_async[some_async_settings_provider2]
+tests/providers/test_attr_getter.py::test_attr_getter_with_more_than_zero_attribute_depth_async[some_async_settings_provider3]
+tests/providers/test_attr_getter.py::test_nesting_levels[1-test_field-sdf6fF^SF(FF*4ffsf]
+tests/providers/test_attr_getter.py::test_nesting_levels[5-nested_field--252625]
+tests/providers/test_attr_getter.py::test_nesting_levels[50-50_lvl_field-909234235]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_sync[some_sync_settings_provider0]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_sync[some_sync_settings_provider1]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_sync[some_sync_settings_provider2]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_sync[some_sync_settings_provider3]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_sync[some_sync_settings_provider4]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_sync[some_sync_settings_provider5]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_async[some_async_settings_provider0]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_async[some_async_settings_provider1]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_async[some_async_settings_provider2]
+tests/providers/test_attr_getter.py::test_attr_getter_with_invalid_attribute_async[some_async_settings_provider3]
+tests/providers/test_collections.py::test_list_provider
+tests/providers/test_collections.py::test_list_failed_sync_resolve
+tests/providers/test_collections.py::test_list_sync_resolve_after_init
+tests/providers/test_collections.py::test_dict_provider
+tests/providers/test_collections.py::test_attr_getter_in_collections_providers[provider0]
+tests/providers/test_collections.py::test_attr_getter_in_collections_providers[provider1]
+tests/providers/test_context_resources.py::test_context_resource_without_context_init[context_resource0]
+tests/providers/test_context_resources.py::test_context_resource_without_context_init[context_resource1]
+tests/providers/test_context_resources.py::test_context_resource[context_resource0]
+tests/providers/test_context_resources.py::test_context_resource[context_resource1]
+tests/providers/test_context_resources.py::test_sync_context_resource
+tests/providers/test_context_resources.py::test_async_context_resource_in_sync_context
+tests/providers/test_context_resources.py::test_context_resource_different_context[context_resource0]
+tests/providers/test_context_resources.py::test_context_resource_different_context[context_resource1]
+tests/providers/test_context_resources.py::test_context_resource_included_context[context_resource0]
+tests/providers/test_context_resources.py::test_context_resource_included_context[context_resource1]
+tests/providers/test_context_resources.py::test_context_resources_overriding[context_resource0]
+tests/providers/test_context_resources.py::test_context_resources_overriding[context_resource1]
+tests/providers/test_context_resources.py::test_context_resources_init_and_tear_down
+tests/providers/test_context_resources.py::test_context_resources_wrong_providers_init
+tests/providers/test_context_resources.py::test_context_resource_with_dynamic_resource
+tests/providers/test_context_resources.py::test_early_exit_of_container_context
+tests/providers/test_context_resources.py::test_resource_context_early_teardown
+tests/providers/test_context_resources.py::test_teardown_sync_container_context_with_async_resource
+tests/providers/test_context_resources.py::test_sync_container_context_with_different_stack
+tests/providers/test_context_resources.py::test_async_container_context_with_different_stack
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[1-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[2-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[3-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[4-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[5-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[6-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[7-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[8-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[9-10]
+tests/providers/test_context_resources.py::test_async_context_resource_asyncio_concurrency[10-10]
+tests/providers/test_inject_factories.py::test_async_provider
+tests/providers/test_inject_factories.py::test_sync_provider
+tests/providers/test_main_providers.py::test_factory_providers
+tests/providers/test_main_providers.py::test_async_resource_provider
+tests/providers/test_main_providers.py::test_failed_sync_resolve
+tests/providers/test_main_providers.py::test_wrong_providers_init
+tests/providers/test_main_providers.py::test_container_init_error
+tests/providers/test_main_providers.py::test_free_dependency
+tests/providers/test_object.py::test_object_provider
+tests/providers/test_providers_overriding.py::test_batch_providers_overriding
+tests/providers/test_providers_overriding.py::test_batch_providers_overriding_sync_resolve
+tests/providers/test_providers_overriding.py::test_providers_overriding_with_context_manager
+tests/providers/test_providers_overriding.py::test_providers_overriding_fail_with_unknown_provider
+tests/providers/test_providers_overriding.py::test_providers_overriding
+tests/providers/test_providers_overriding.py::test_providers_overriding_sync_resolve
+tests/providers/test_resources.py::test_async_resource
+tests/providers/test_resources.py::test_async_resource_from_class
+tests/providers/test_resources.py::test_sync_resource
+tests/providers/test_resources.py::test_sync_resource_from_class
+tests/providers/test_resources.py::test_async_resource_overridden
+tests/providers/test_resources.py::test_sync_resource_overridden
+tests/providers/test_resources.py::test_resource_with_empty_list
+tests/providers/test_resources.py::test_resource_unsupported_creator
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[1-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[2-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[3-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[4-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[5-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[6-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[7-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[8-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[9-10]
+tests/providers/test_resources.py::test_async_resource_asyncio_concurrency[10-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[1-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[2-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[3-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[4-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[5-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[6-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[7-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[8-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[9-10]
+tests/providers/test_resources.py::test_resource_threading_concurrency[10-10]
+tests/providers/test_selector.py::test_selector_provider_async
+tests/providers/test_selector.py::test_selector_provider_async_missing
+tests/providers/test_selector.py::test_selector_provider_sync
+tests/providers/test_selector.py::test_selector_provider_sync_missing
+tests/providers/test_selector.py::test_selector_provider_overriding
+tests/providers/test_singleton.py::test_singleton_provider
+tests/providers/test_singleton.py::test_singleton_attr_getter
+tests/providers/test_singleton.py::test_singleton_with_empty_list
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[1-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[2-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[3-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[4-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[5-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[6-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[7-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[8-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[9-10]
+tests/providers/test_singleton.py::test_singleton_asyncio_concurrency[10-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[1-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[2-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[3-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[4-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[5-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[6-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[7-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[8-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[9-10]
+tests/providers/test_singleton.py::test_singleton_threading_concurrency[10-10]
+tests/providers/test_singleton.py::test_async_singleton
+tests/providers/test_singleton.py::test_async_singleton_override
+tests/providers/test_singleton.py::test_async_singleton_asyncio_concurrency
+tests/providers/test_singleton.py::test_async_singleton_sync_resolve_failure
+tests/test_deprecated.py::test_init_async_resources
+tests/test_deprecated.py::test_wrong_deprecated_providers_init
+tests/test_dynamic_container.py::test_dynamic_container
+tests/test_injection.py::test_injection
+tests/test_injection.py::test_injection_with_overriding
+tests/test_injection.py::test_empty_injection
+tests/test_injection.py::test_sync_injection
+tests/test_injection.py::test_overriden_sync_injection
+tests/test_injection.py::test_sync_empty_injection
+tests/test_injection.py::test_type_check
+tests/test_multiple_containers.py::test_included_container
+tests/test_resolver.py::test_dependency_resolver
+tests/test_resolver.py::test_dependency_resolver_failed
+
+
+---------- coverage: platform linux, python 3.10.15-final-0 ----------
+Name                                                 Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------------
+tests/__init__.py                                        0      0   100%
+tests/conftest.py                                        9      4    56%   10-14
+tests/container.py                                      42      9    79%   13-17, 21-25, 35
+tests/creators.py                                       27     14    48%   11-15, 19-23, 28-29, 37, 42-43, 51
+tests/integrations/__init__.py                           0      0   100%
+tests/integrations/test_fastapi_di.py                   21      8    62%   32-36, 43-45
+tests/integrations/test_fastapi_di_pass_request.py      19      5    74%   12-13, 33, 40-41
+tests/integrations/test_litestar_di.py                  61     25    59%   16, 20, 24, 28, 63, 74, 88-93, 97-100, 109-114, 123-131
+tests/integrations/test_litestar_di_simple.py           15      5    67%   13, 20-23
+tests/providers/__init__.py                              0      0   100%
+tests/providers/test_attr_getter.py                     78     37    53%   30, 34, 38, 56, 68, 75-76, 83-84, 91-92, 99-100, 108-123, 130-135, 142-147
+tests/providers/test_collections.py                     36     18    50%   19-22, 26-30, 34-35, 39-40, 44-49, 54-55
+tests/providers/test_context_resources.py              133     89    33%   19-21, 25-27, 42-45, 50, 55, 60, 66-70, 75-77, 82-84, 88-89, 95-101, 107-115, 119-128, 132-133, 137-138, 142-149, 153-156, 160-163, 167-170, 174-181, 185-192, 197-213
+tests/providers/test_inject_factories.py                34     17    50%   35-43, 47-59
+tests/providers/test_main_providers.py                  36     25    31%   11-21, 25-27, 31-35, 39-40, 44-45, 49-53
+tests/providers/test_object.py                           8      3    62%   12-15
+tests/providers/test_providers_overriding.py           106     97     8%   9-40, 44-72, 76-81, 85-89, 94-122, 126-151
+tests/providers/test_resources.py                      103     74    28%   31-34, 38-40, 44-46, 50-52, 56-58, 62-75, 79-92, 96-118, 122-123, 128-140, 145-167
+tests/providers/test_selector.py                        47     25    47%   20, 37-41, 45-47, 51-55, 59-61, 65-75
+tests/providers/test_singleton.py                       91     60    34%   25-26, 36-45, 49-53, 57-61, 66-86, 91-113, 117-126, 130-134, 138-148, 152-153
+tests/test_deprecated.py                                13      5    62%   16, 20-24
+tests/test_dynamic_container.py                         14      5    64%   17-23
+tests/test_injection.py                                 54     37    31%   13, 23-26, 30-42, 46-53, 62-64, 68-77, 81-88, 92-96
+tests/test_multiple_containers.py                       23     13    43%   20-34
+tests/test_resolver.py                                  20      9    55%   17-23, 27-29
+that_depends/__init__.py                                 6      0   100%
+that_depends/container.py                               86     49    43%   22-23, 39-42, 46-49, 53-58, 62-63, 67-72, 76-77, 82, 88-101, 106-124
+that_depends/entities/__init__.py                        0      0   100%
+that_depends/entities/resource_context.py               38     19    50%   30, 36, 39-47, 50-59
+that_depends/injection.py                               51     26    49%   29-46, 58-74
+that_depends/providers/__init__.py                       9      0   100%
+that_depends/providers/base.py                         123     53    57%   49, 52, 56-60, 63, 106-107, 116-152, 155-178, 182-183, 200-201, 204-206, 209-211
+that_depends/providers/collections.py                   29      5    83%   21, 24, 27, 42, 45
+that_depends/providers/context_resources.py            102     46    55%   48-49, 52-53, 56-57, 62-73, 78-92, 99-100, 106-107, 114, 118, 122-126, 135, 139, 162-168, 178-179
+that_depends/providers/factories.py                     41     11    73%   31-34, 44-47, 67-70, 80-81
+that_depends/providers/object.py                        15      4    73%   18, 21-23
+that_depends/providers/resources.py                     19      4    79%   32, 35, 45-46
+that_depends/providers/selector.py                      25     14    44%   18-25, 28-35
+that_depends/providers/singleton.py                     64     33    48%   25-45, 48-67, 70-71, 86-104, 107-108, 111-112
+----------------------------------------------------------------------------------
+TOTAL                                                 1598    848    47%
+
+164 tests collected in 2.99s
+Container 75b95d184804 stopped and removed
+Spend totally 597.1034545898438.

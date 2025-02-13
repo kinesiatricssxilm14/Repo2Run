@@ -1,0 +1,60 @@
+diff --git a/micrograd_cuda/operations.py b/micrograd_cuda/operations.py
+index 2a3fc6d..1a6642f 100644
+--- a/micrograd_cuda/operations.py
++++ b/micrograd_cuda/operations.py
+@@ -1,26 +1,33 @@
++import numpy as np
+ import ctypes
+-import math
+-
+-# Load the shared library
+-lib = ctypes.CDLL('./liboperations.so')
+-lib.matmul_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+-lib.allocate_on_gpu.restype = ctypes.c_void_p
+-lib.tanh_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+-lib.tanh_prime_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+-lib.transpose_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
+-lib.add_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+-lib.scalar_mul_on_gpu.argtypes = [ctypes.c_float, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+-lib.element_wise_mul_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+-lib.power_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_float, ctypes.c_void_p, ctypes.c_int]
+-lib.power_prime_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_float, ctypes.c_void_p, ctypes.c_int]
+-lib.matrix_concat_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+-lib.summation_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+-lib.add_scalar_on_gpu.argtypes = [ctypes.c_float, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+-lib.move_to_gpu.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.c_int]
+-lib.move_to_gpu.restype = ctypes.POINTER(ctypes.c_float)
+-lib.move_to_cpu.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.c_int]
+-lib.indexing_2d_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+-lib.copy_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
++lib = None
++
++class MockOperations:
++    ...
++    # Dummy Implementation to replace CUDA ops for np in CPU
++    
++Operations = MockOperations if lib is None else RealOperations
++if lib is not None:
++    lib.matmul_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
++if lib is not None:
++    lib.allocate_on_gpu.restype = ctypes.c_void_p
++if lib is not None:
++    lib.tanh_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
++    lib.tanh_prime_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
++    lib.transpose_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
++    lib.add_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
++    lib.scalar_mul_on_gpu.argtypes = [ctypes.c_float, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
++    lib.element_wise_mul_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
++    lib.power_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_float, ctypes.c_void_p, ctypes.c_int]
++    lib.power_prime_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_float, ctypes.c_void_p, ctypes.c_int]
++    lib.matrix_concat_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c.int, ctypes.c_int, ctypes.c.int]
++    lib.summation_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c.int]
++    lib.add_scalar_on_gpu.argtypes = [ctypes.c.float, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
++    lib.move_to_gpu.argtypes = [ctypes.POINTER(ctypes.c.float), ctypes.c_int]
++    lib.move_to_gpu.restype = ctypes.POINTER(ctypes.c.float)
++    lib.move_to_cpu.argtypes = [ctypes.POINTER(ctypes.c.float), ctypes.POINTER(ctypes.c.float), ctypes.c.int]
++    lib.indexing_2d_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c.int, ctypes.c.int, ctypes.c.int, ctypes.c.int, ctypes.c.int, ctypes.c.int]
++    lib.copy_on_gpu.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c.int]
+ 
+ 
+ def calculate_list_shape(data):

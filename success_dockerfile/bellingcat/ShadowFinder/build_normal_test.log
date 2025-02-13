@@ -1,0 +1,60 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.07kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/5] FROM docker.io/library/python:3.10
+#4 DONE 0.0s
+
+#5 [2/5] RUN mkdir -p ~/.pip && touch ~/.pip/pip.conf &&     echo "[global]" >> ~/.pip/pip.conf && echo "index-url=http://simple/" >> ~/.pip/pip.conf && echo "[install]" >> ~/.pip/pip.conf && echo "trusted-host=pypi..org" >> ~/.pip/pip.conf &&     apt-get update && apt-get install -y curl &&     curl -sSL https://install.python-poetry.org | python -
+#5 CACHED
+
+#6 [3/5] RUN pip install pytest pytest-xdist &&     pip install pipdeptree &&     git clone https://github.com/bellingcat/ShadowFinder.git &&     mkdir /repo &&     git config --global --add safe.directory /repo &&     cp -r /ShadowFinder/. /repo && rm -rf /ShadowFinder/ &&     rm -rf /ShadowFinder &&     cd /repo && git checkout 578d5ac6d14341d04be35fc3c3665dc9b5e7e665 &&     cd /repo && poetry install
+#6 CACHED
+
+#7 [4/5] RUN cd /repo && pytest --collect-only -q
+#7 1.047 tests/test_executable.py::test_executable_without_args
+#7 1.047 
+#7 1.047 ==================================== ERRORS ====================================
+#7 1.047 _________________ ERROR collecting tests/test_shadowfinder.py __________________
+#7 1.047 ImportError while importing test module '/repo/tests/test_shadowfinder.py'.
+#7 1.047 Hint: make sure your test modules/packages have valid Python names.
+#7 1.047 Traceback:
+#7 1.047 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+#7 1.047     return _bootstrap._gcd_import(name[level:], package, level)
+#7 1.047 tests/test_shadowfinder.py:3: in <module>
+#7 1.047     from shadowfinder import ShadowFinder
+#7 1.047 E   ModuleNotFoundError: No module named 'shadowfinder'
+#7 1.047 =========================== short test summary info ============================
+#7 1.047 ERROR tests/test_shadowfinder.py
+#7 1.047 !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+#7 1.047 1 test collected, 1 error in 0.21s
+#7 ERROR: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2
+------
+ > [4/5] RUN cd /repo && pytest --collect-only -q:
+1.047 Traceback:
+1.047 /usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+1.047     return _bootstrap._gcd_import(name[level:], package, level)
+1.047 tests/test_shadowfinder.py:3: in <module>
+1.047     from shadowfinder import ShadowFinder
+1.047 E   ModuleNotFoundError: No module named 'shadowfinder'
+1.047 =========================== short test summary info ============================
+1.047 ERROR tests/test_shadowfinder.py
+1.047 !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1.047 1 test collected, 1 error in 0.21s
+------
+Dockerfile:20
+--------------------
+  18 |         cd /repo && git checkout 578d5ac6d14341d04be35fc3c3665dc9b5e7e665 && \
+  19 |         cd /repo && poetry install
+  20 | >>> RUN cd /repo && pytest --collect-only -q
+--------------------
+ERROR: failed to solve: process "/bin/sh -c cd /repo && pytest --collect-only -q" did not complete successfully: exit code: 2

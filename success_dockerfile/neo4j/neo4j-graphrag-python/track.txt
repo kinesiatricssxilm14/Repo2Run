@@ -1,0 +1,2256 @@
+neo4j/neo4j-graphrag-python
+Container interesting_agnesi d3db5beea6fd started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+0. **Read README**: First, read the README file. If the README file mentions a way to configure the environment, give priority to using the methods described in the README. Note that our goal here is to run the code, not to use the tool, so our standard is to be able to run the tests. If you think the README clearly specifies a method for configuring the environment for running tests, you can skip the subsequent steps and follow its instructions to configure the environment. Then use `runtest` or `poetryruntest` to check if the configuration is correct.
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version Or Other Base Image**: Decide if you need to switch the Python version or the base image in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you need to change the base image, use the `change_base_image base_image_name:tag` command (for example, `change_base_image pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime`). If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version or the base image.
+    *Note*: If you use `change_base_image` and no tag is provided, it defaults to "latest".
+    *Note*: Please prioritize ease of environment configuration. If an official ready-to-use base image is available, you can use it directly. However, be aware that doing so may discard all previous configurations.
+    *Note*: Avoid using images that do not directly support Python, such as Ubuntu or Node, because the environments we need to configure are primarily based on the Python language.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+change_base_image base_image # Switching the base image in the Docker container will forgo any installations made prior to the switch. The base image does not necessarily have to follow the format 'python:<Python version>'. Preferably, specify it in the form of 'base_image_name:tag', such as 'pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime'. If no tag is provided, it defaults to 'latest'. No any quotation marks are needed.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+
+---------------------------
+### Thought:
+First, I need to understand the structure of the root directory to identify the necessary configuration files and folder structure.
+
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+CHANGELOG.md	     LICENSE.txt  examples	 pyproject.toml
+CONTRIBUTING.md      NOTICE.txt   images	 src
+LICENSE.APACHE2.txt  README.md	  poetry.lock	 tests
+LICENSE.PYTHON.txt   docs	  pr_agent.toml  tox.ini
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 69 turns left to complete the task.
+---------------------------
+### Thought:
+I will read the `README.md` file next to check if it contains any specific environment configuration instructions.
+
+### Action:
+```bash
+cat /repo/README.md
+```
+### Observation:
+Running `cat /repo/README.md`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /repo/README.md`...
+# Neo4j GraphRAG Package for Python
+The official Neo4j GraphRAG package for Python enables developers to build [graph retrieval augmented generation (GraphRAG)](https://neo4j.com/blog/graphrag-manifesto/) applications using the power of Neo4j and Python.
+As a first-party library, it offers a robust, feature-rich, and high-performance solution, with the added assurance of long-term support and maintenance directly from Neo4j.
+## 📄 Documentation
+Documentation can be found [here](https://neo4j.com/docs/neo4j-graphrag-python/)
+## 🐍 Python Version Support
+| Version | Supported? |
+| ------- | ---------: |
+| 3.12    | &check;    |
+| 3.11    | &check;    |
+| 3.10    | &check;    |
+| 3.9     | &check;    |
+| 3.8     | &cross;    |
+## 📦 Installation
+To install the latest stable version, run:
+```shell
+pip install neo4j-graphrag
+```
+### Optional Dependencies
+#### pygraphviz
+`pygraphviz` is used for visualizing pipelines.
+Installation instructions can be found [here](https://pygraphviz.github.io/documentation/stable/install.html).
+## 💻 Example Usage
+The scripts below demonstrate how to get started with the package and make use of its key features.
+To run these examples, ensure that you have a Neo4j instance up and running and update the `NEO4J_URI`, `NEO4J_USERNAME`, and `NEO4J_PASSWORD` variables in each script with the details of your Neo4j instance.
+For the examples, make sure to export your OpenAI key as an environment variable named `OPENAI_API_KEY`.
+Additional examples are available in the `examples` folder.
+### Knowledge Graph Construction
+**NOTE: The [APOC core library](https://neo4j.com/labs/apoc/) must be installed in your Neo4j instance in order to use this feature**
+This package offers two methods for constructing a knowledge graph.
+The `Pipeline` class provides extensive customization options, making it ideal for advanced use cases.
+See the `examples/pipeline` folder for examples of how to use this class.
+For a more streamlined approach, the `SimpleKGPipeline` class offers a simplified abstraction layer over the `Pipeline`, making it easier to build knowledge graphs.
+Both classes support working directly with text and PDFs.
+```python
+import asyncio
+from neo4j import GraphDatabase
+from neo4j_graphrag.embeddings import OpenAIEmbeddings
+from neo4j_graphrag.experimental.pipeline.kg_builder import SimpleKGPipeline
+from neo4j_graphrag.llm.openai_llm import OpenAILLM
+NEO4J_URI = "neo4j://localhost:7687"
+NEO4J_USERNAME = "neo4j"
+NEO4J_PASSWORD = "password"
+# Connect to the Neo4j database
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+# List the entities and relations the LLM should look for in the text
+entities = ["Person", "House", "Planet"]
+relations = ["PARENT_OF", "HEIR_OF", "RULES"]
+potential_schema = [
+    ("Person", "PARENT_OF", "Person"),
+    ("Person", "HEIR_OF", "House"),
+    ("House", "RULES", "Planet"),
+]
+# Create an Embedder object
+embedder = OpenAIEmbeddings(model="text-embedding-3-large")
+# Instantiate the LLM
+llm = OpenAILLM(
+    model_name="gpt-4o",
+    model_params={
+        "max_tokens": 2000,
+        "response_format": {"type": "json_object"},
+        "temperature": 0,
+    },
+)
+# Instantiate the SimpleKGPipeline
+kg_builder = SimpleKGPipeline(
+    llm=llm,
+    driver=driver,
+    embedder=embedder,
+    entities=entities,
+    relations=relations,
+    on_error="IGNORE",
+    from_pdf=False,
+)
+# Run the pipeline on a piece of text
+text = (
+    "The son of Duke Leto Atreides and the Lady Jessica, Paul is the heir of House "
+    "Atreides, an aristocratic family that rules the planet Caladan."
+)
+asyncio.run(kg_builder.run_async(text=text))
+driver.close()
+```
+Example knowledge graph created using the above script:
+![Example knowledge graph](https://raw.githubusercontent.com/neo4j/neo4j-graphrag-python/fd276af0069e4dd1769255d358793cc96e299bf3/images/kg_construction.svg)
+### Creating a Vector Index
+When creating a vector index, make sure you match the number of dimensions in the index with the number of dimensions your embeddings have.
+```python
+from neo4j import GraphDatabase
+from neo4j_graphrag.indexes import create_vector_index
+NEO4J_URI = "neo4j://localhost:7687"
+NEO4J_USERNAME = "neo4j"
+NEO4J_PASSWORD = "password"
+INDEX_NAME = "vector-index-name"
+# Connect to the Neo4j database
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+# Create the index
+create_vector_index(
+    driver,
+    INDEX_NAME,
+    label="Chunk",
+    embedding_property="embedding",
+    dimensions=3072,
+    similarity_fn="euclidean",
+)
+driver.close()
+```
+### Populating a Vector Index
+This example demonstrates one method for upserting data in your Neo4j database.
+It's important to note that there are alternative approaches, such as using the [Neo4j Python driver](https://github.com/neo4j/neo4j-python-driver).
+Ensure that your vector index is created prior to executing this example.
+```python
+from neo4j import GraphDatabase
+from neo4j_graphrag.embeddings import OpenAIEmbeddings
+from neo4j_graphrag.indexes import upsert_vector
+NEO4J_URI = "neo4j://localhost:7687"
+NEO4J_USERNAME = "neo4j"
+NEO4J_PASSWORD = "password"
+# Connect to the Neo4j database
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+# Create an Embedder object
+embedder = OpenAIEmbeddings(model="text-embedding-3-large")
+# Generate an embedding for some text
+text = (
+    "The son of Duke Leto Atreides and the Lady Jessica, Paul is the heir of House "
+    "Atreides, an aristocratic family that rules the planet Caladan."
+)
+vector = embedder.embed_query(text)
+# Upsert the vector
+upsert_vector(
+    driver,
+    node_id=0,
+    embedding_property="embedding",
+    vector=vector,
+)
+driver.close()
+```
+### Performing a Similarity Search
+Please note that when querying a Neo4j vector index _approximate_ nearest neighbor search is used, which may not always deliver exact results.
+For more information, refer to the Neo4j documentation on [limitations
+...[Truncation]...
+eline
+rag = GraphRAG(retriever=retriever, llm=llm)
+# Query the graph
+query_text = "Who is Paul Atreides?"
+response = rag.search(query_text=query_text, retriever_config={"top_k": 5})
+print(response.answer)
+driver.close()
+```
+## 🤝 Contributing
+You must sign the [contributors license agreement](https://neo4j.com/developer/contributing-code/#sign-cla) in order to make contributions to this project.
+### Install Dependencies
+Our Python dependencies are managed using Poetry.
+If Poetry is not yet installed on your system, you can follow the instructions [here](https://python-poetry.org/) to set it up.
+To begin development on this project, start by cloning the repository and then install all necessary dependencies, including the development dependencies, with the following command:
+```bash
+poetry install --with dev
+```
+### Reporting Issues
+If you have a bug to report or feature to request, first
+[search to see if an issue already exists](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments).
+If a related issue doesn't exist, please raise a new issue using the [issue form](https://github.com/neo4j/neo4j-graphrag-python/issues/new/choose).
+If you're a Neo4j Enterprise customer, you can also reach out to [Customer Support](http://support.neo4j.com/).
+If you don't have a bug to report or feature request, but you need a hand with
+the library; community support is available via [Neo4j Online Community](https://community.neo4j.com/)
+and/or [Discord](https://discord.gg/neo4j).
+### Workflow for Contributions
+1. Fork the repository.
+2. Install Python and Poetry.
+3. Create a working branch from `main` and start with your changes!
+### Code Formatting and Linting
+Our codebase follows strict formatting and linting standards using [Ruff](https://docs.astral.sh/ruff/) for code quality checks and [Mypy](https://github.com/python/mypy) for type checking.
+Before contributing, ensure that all code is properly formatted, free of linting issues, and includes accurate type annotations.
+- To install Ruff, follow the instructions [here](https://docs.astral.sh/ruff/installation/).
+- To set up Mypy, follow the steps outlined [here](https://mypy.readthedocs.io/en/stable/getting_started.html#installing-and-running-mypy).
+Adherence to these standards is required for contributions to be accepted.
+#### Using Pre-commit
+We recommend setting up [pre-commit](https://pre-commit.com/) to automate code quality checks.
+This ensures your changes meet our guidelines before committing.
+1. Install pre-commit by following the [installation guide](https://pre-commit.com/#install).
+2. Set up the pre-commit hooks by running:
+   ```bash
+   pre-commit install
+   ```
+3. To manually check if a file meets the quality requirements, run:
+   ```bash
+   pre-commit run --file path/to/file
+   ```
+### Pull Requests
+When you're finished with your changes, create a pull request (PR) using the following workflow.
+- Ensure you have formatted and linted your code.
+- Ensure that you have [signed the CLA](https://neo4j.com/developer/contributing-code/#sign-cla).
+- Ensure that the base of your PR is set to `main`.
+- Don't forget to [link your PR to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)
+    if you are solving one.
+- Check the checkbox to [allow maintainer edits](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)
+    so that maintainers can make any necessary tweaks and update your branch for merge.
+- Reviewers may ask for changes to be made before a PR can be merged, either using
+    [suggested changes](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/incorporating-feedback-in-your-pull-request)
+    or normal pull request comments. You can apply suggested changes directly through
+    the UI. Any other changes can be made in your fork and committed to the PR branch.
+- As you update your PR and apply changes, mark each conversation as [resolved](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/commenting-on-a-pull-request#resolving-conversations).
+- Update the `CHANGELOG.md` if you have made significant changes to the project, these include:
+  - Major changes:
+    - New features
+    - Bug fixes with high impact
+    - Breaking changes
+  - Minor changes:
+    - Documentation improvements
+    - Code refactoring without functional impact
+    - Minor bug fixes
+- Keep `CHANGELOG.md` changes brief and focus on the most important changes.
+### Updating the `CHANGELOG.md`
+1. You can automatically generate a changelog suggestion for your PR by commenting on it [using CodiumAI](https://github.com/CodiumAI-Agent):
+```
+@CodiumAI-Agent /update_changelog
+```
+2. Edit the suggestion if necessary and update the appropriate subsection in the `CHANGELOG.md` file under 'Next'.
+3. Commit the changes.
+## 🧪 Tests
+### Unit Tests
+Install the project dependencies then run the following command to run the unit tests locally:
+```bash
+poetry run pytest tests/unit
+```
+### E2E tests
+To execute end-to-end (e2e) tests, you need the following services to be running locally:
+- neo4j
+- weaviate
+- weaviate-text2vec-transformers
+The simplest way to set these up is by using Docker Compose:
+```bash
+docker compose -f tests/e2e/docker-compose.yml up
+```
+_(tip: If you encounter any caching issues within the databases, you can completely remove them by running `docker compose -f tests/e2e/docker-compose.yml down`)_
+Once all the services are running, execute the following command to run the e2e tests:
+```bash
+poetry run pytest tests/e2e
+```
+## ℹ️ Additional Information
+- [The official Neo4j Python driver](https://github.com/neo4j/neo4j-python-driver)
+- [Neo4j GenAI integrations](https://neo4j.com/docs/cypher-manual/current/genai-integrations/)
+`cat /repo/README.md` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 68 turns left to complete the task.
+---------------------------
+### Thought:
+The README.md file mentions that the project dependencies are managed using Poetry. To install all necessary dependencies including the development dependencies, I need to run:
+```bash
+poetry install --with dev
+```
+
+Next, I will install the project dependencies using Poetry.
+
+### Action:
+```bash
+cd /repo && poetry install --with dev
+```
+### Observation:
+Running `poetry install --with dev`...
+[31;1mPoetry could not find a pyproject.toml file in / or its parents[39;22m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetry install --with dev` executes with returncode: 1
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install --with dev`...
+  [32;1m-[39;22m [39mInstalling [39m[36mpytest-asyncio[39m[39m ([39m[32m0.23.8[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mruff[39m[39m ([39m[32m0.3.7[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36msphinx[39m[39m ([39m[32m7.4.7[39m[39m)[39m
+[5A[0J  [32;1m-[39;22m [39mInstalling [39m[36mmypy[39m[39m ([39m[32m1.13.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mneo4j[39m[39m ([39m[32m5.25.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpre-commit[39m[39m ([39m[32m3.8.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mpytest-asyncio[39m[39m ([39m[32m0.23.8[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mruff[39m[39m ([39m[32m0.3.7[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36msphinx[39m[39m ([39m[32m7.4.7[39m[39m)[39m
+[39;1mInstalling[39;22m the current project: [36mneo4j-graphrag[39m ([39;1m1.2.1[39;22m)[1G[2K[39;1mInstalling[39;22m the current project: [36mneo4j-graphrag[39m ([32m1.2.1[39m)
+`poetry install --with dev` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 67 turns left to complete the task.
+---------------------------
+### Thought:
+The dependencies have been successfully installed using Poetry. Next, I will run the `runtest` command to verify if the configuration is correct and to see if any additional steps are necessary to configure the environment.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+==================================== ERRORS ====================================
+__________________________ ERROR collecting tests/e2e __________________________
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+tests/e2e/conftest.py:24: in <module>
+    from neo4j import Driver, GraphDatabase
+E   ModuleNotFoundError: No module named 'neo4j'
+_________________________ ERROR collecting tests/unit __________________________
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+tests/unit/conftest.py:19: in <module>
+    import neo4j
+E   ModuleNotFoundError: No module named 'neo4j'
+=========================== short test summary info ============================
+ERROR tests/e2e - ModuleNotFoundError: No module named 'neo4j'
+ERROR tests/unit - ModuleNotFoundError: No module named 'neo4j'
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+no tests collected, 2 errors in 0.16s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 66 turns left to complete the task.
+---------------------------
+### Thought:
+It seems that the `neo4j` module is not found even though the installation was successfully completed using Poetry. This could be due to an isolated environment managed by Poetry. Let's use the Poetry environment to run the tests by using `poetryruntest` and check if that resolves the issue.
+
+### Action:
+```bash
+cd /repo && poetryruntest
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `python /home/tools/poetryruntest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/poetryruntest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/unit/embeddings/test_cohere_embedder.py::test_cohere_embedder_missing_cohere_dependency
+tests/unit/embeddings/test_cohere_embedder.py::test_cohere_embedder_happy_path
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_missing_dependency
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_happy_path
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_api_key_via_kwargs
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_api_key_from_env
+tests/unit/embeddings/test_vertexai_embedder.py::test_vertexai_embedder_missing_dependency
+tests/unit/embeddings/test_vertexai_embedder.py::test_vertexai_embedder_happy_path
+tests/unit/experimental/components/test_embedder.py::test_text_chunk_embedder_run
+tests/unit/experimental/components/test_kg_writer.py::test_batched
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_nodes
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_nodes_with_embedding
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_relationship
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_relationship_with_embedding
+tests/unit/experimental/components/test_kg_writer.py::test_run
+tests/unit/experimental/components/test_kg_writer.py::test_run_is_version_below_5_23
+tests/unit/experimental/components/test_kg_writer.py::test_run_is_version_5_23_or_above
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader_custom_lg_config
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader_fetch_embedding
+tests/unit/experimental/components/test_resolver.py::test_simple_resolver
+tests/unit/experimental/components/test_resolver.py::test_simple_resolver_custom_filter
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_valid_data
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_description
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_empty_lists
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_data_types
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_properties_types
+tests/unit/experimental/components/test_schema.py::test_run_method
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_entity
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_relation
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_properties
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_no_potential_schema
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_no_relations_or_potential_schema
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_relations
+tests/unit/experimental/components/test_types.py::test_neo4j_node_invalid_property
+tests/unit/experimental/components/test_types.py::test_neo4j_node_invalid_embedding_property
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_no_overlap
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_with_overlap
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_empty_string
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_invalid_chunk_overlap
+tests/unit/experimental/pipeline/test_component.py::test_component_inputs
+tests/unit/experimental/pipeline/test_component.py::test_component_outputs
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_input_config_for_task_pipeline_not_validated
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_user_only
+tests/unit/experimental/pipeline/test_orchestrator.py::test_pipeline_get_component_inputs_from_parent_specific
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_parent_all
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_parent_and_input
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_ignore_user_input_if_input_def_provided
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_branch
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_aggregation
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_aggregation_waiting
+tests/unit/experimental/pipeline/test_pipeline.py::test_simple_pipeline_two_components
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_propagation
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_no_expected_params
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_one_component_all_good
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_invalidate
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_called_twice
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_one_component_input_param_missing
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_param_mapped_twice
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_unexpected_input
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_connected_components_input
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_connected_components_result
+tests/unit/experime
+...[Truncation]...
+b/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/experimental/pipeline/test_kg_builder.py:21: in <module>
+    from neo4j_graphrag.experimental.components.entity_relation_extractor import OnError
+src/neo4j_graphrag/experimental/components/entity_relation_extractor.py:29: in <module>
+    from neo4j_graphrag.experimental.components.lexical_graph import LexicalGraphBuilder
+src/neo4j_graphrag/experimental/components/lexical_graph.py:21: in <module>
+    from neo4j_graphrag.experimental.components.pdf_loader import DocumentInfo
+src/neo4j_graphrag/experimental/components/pdf_loader.py:22: in <module>
+    import fsspec
+E   ModuleNotFoundError: No module named 'fsspec'
+____________ ERROR collecting tests/unit/llm/test_anthropic_llm.py _____________
+ImportError while importing test module '/repo/tests/unit/llm/test_anthropic_llm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_anthropic_llm.py:20: in <module>
+    import anthropic
+E   ModuleNotFoundError: No module named 'anthropic'
+______________ ERROR collecting tests/unit/llm/test_cohere_llm.py ______________
+ImportError while importing test module '/repo/tests/unit/llm/test_cohere_llm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_cohere_llm.py:19: in <module>
+    import cohere.core
+E   ModuleNotFoundError: No module named 'cohere'
+_____________ ERROR collecting tests/unit/llm/test_mistralaillm.py _____________
+ImportError while importing test module '/repo/tests/unit/llm/test_mistralaillm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_mistralaillm.py:19: in <module>
+    from mistralai.models.sdkerror import SDKError
+E   ModuleNotFoundError: No module named 'mistralai'
+______________ ERROR collecting tests/unit/llm/test_openai_llm.py ______________
+ImportError while importing test module '/repo/tests/unit/llm/test_openai_llm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_openai_llm.py:17: in <module>
+    import openai
+E   ModuleNotFoundError: No module named 'openai'
+_______ ERROR collecting tests/unit/retrievers/external/test_pinecone.py _______
+ImportError while importing test module '/repo/tests/unit/retrievers/external/test_pinecone.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/retrievers/external/test_pinecone.py:21: in <module>
+    from neo4j_graphrag.retrievers import PineconeNeo4jRetriever
+E   ImportError: cannot import name 'PineconeNeo4jRetriever' from 'neo4j_graphrag.retrievers' (/repo/src/neo4j_graphrag/retrievers/__init__.py)
+________ ERROR collecting tests/unit/retrievers/external/test_qdrant.py ________
+ImportError while importing test module '/repo/tests/unit/retrievers/external/test_qdrant.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/retrievers/external/test_qdrant.py:21: in <module>
+    from neo4j_graphrag.retrievers import QdrantNeo4jRetriever
+E   ImportError: cannot import name 'QdrantNeo4jRetriever' from 'neo4j_graphrag.retrievers' (/repo/src/neo4j_graphrag/retrievers/__init__.py)
+_______ ERROR collecting tests/unit/retrievers/external/test_weaviate.py _______
+ImportError while importing test module '/repo/tests/unit/retrievers/external/test_weaviate.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/retrievers/external/test_weaviate.py:23: in <module>
+    from neo4j_graphrag.retrievers import WeaviateNeo4jRetriever
+E   ImportError: cannot import name 'WeaviateNeo4jRetriever' from 'neo4j_graphrag.retrievers' (/repo/src/neo4j_graphrag/retrievers/__init__.py)
+=========================== short test summary info ============================
+ERROR tests/e2e - ModuleNotFoundError: No module named 'weaviate'
+ERROR tests/unit/embeddings/test_openai_embedder.py
+ERROR tests/unit/embeddings/test_sentence_transformers.py
+ERROR tests/unit/experimental/components/test_entity_relation_extractor.py
+ERROR tests/unit/experimental/components/test_lexical_graph_builder.py
+ERROR tests/unit/experimental/components/test_pdf_loader.py
+ERROR tests/unit/experimental/components/text_splitters/test_langchain.py
+ERROR tests/unit/experimental/components/text_splitters/test_llamaindex.py
+ERROR tests/unit/experimental/pipeline/test_kg_builder.py
+ERROR tests/unit/llm/test_anthropic_llm.py
+ERROR tests/unit/llm/test_cohere_llm.py
+ERROR tests/unit/llm/test_mistralaillm.py
+ERROR tests/unit/llm/test_openai_llm.py
+ERROR tests/unit/retrievers/external/test_pinecone.py
+ERROR tests/unit/retrievers/external/test_qdrant.py
+ERROR tests/unit/retrievers/external/test_weaviate.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 16 errors during collection !!!!!!!!!!!!!!!!!!!
+258 tests collected, 16 errors in 1.21s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetryruntest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 65 turns left to complete the task.
+---------------------------
+### Thought:
+The tests are showing missing module errors for several dependencies such as `fsspec`, `anthropic`, `cohere`, `mistralai`, `openai`, `weaviate`, `pinecone`, and `qdrant`. These dependencies need to be added for the tests to run successfully.
+
+I will add these missing modules to the waiting list and then proceed to download them.
+
+### Action:
+```bash
+waitinglist add -p fsspec && waitinglist add -p anthropic && waitinglist add -p cohere && waitinglist add -p mistralai && waitinglist add -p openai && waitinglist add -p weaviate && waitinglist add -p pinecone-client && waitinglist add -p qdrant-client
+```
+### Observation:
+Running `waitinglist add -p fsspec`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p fsspec` executes with returncode: 127
+Running `waitinglist add -p anthropic`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p anthropic` executes with returncode: 127
+Running `waitinglist add -p cohere`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p cohere` executes with returncode: 127
+Running `waitinglist add -p mistralai`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p mistralai` executes with returncode: 127
+Running `waitinglist add -p openai`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p openai` executes with returncode: 127
+Running `waitinglist add -p weaviate`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p weaviate` executes with returncode: 127
+Running `waitinglist add -p pinecone-client`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p pinecone-client` executes with returncode: 127
+Running `waitinglist add -p qdrant-client`...
+waitinglist command usage error, the following command formats are leagal:
+1. `waitinglist add -p package_name1 -v >=1.0.0 -t pip`
+Explanation: Add package_name1>=1.0.0 into waiting list(using pip), and version constraints string cannot contain spaces.
+2. `waitinglist add -p package_name1 -t pip`
+Explanation: Add package_name1 into waiting list, no `-v` means download the latest version by default.
+3. `waitinglist addfile /path/to/file`
+Explanation: Add all the items in the /path/to/file into waiting list. Note that you must make sure each line's item meet the formats like [package_name][version_constraints].
+4. `waitinglist clear`
+Explanation: Clear all the items in the waiting list.
+
+`waitinglist add -p qdrant-client` executes with returncode: 127
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 64 turns left to complete the task.
+---------------------------
+### Thought:
+It seems I made an error in my command. I forgot to specify the tool (`pip`) with the `-t` flag while adding packages to the waiting list. I will add these packages with the correct flag now.
+
+### Action:
+```bash
+waitinglist add -p fsspec -t pip && waitinglist add -p anthropic -t pip && waitinglist add -p cohere -t pip && waitinglist add -p mistralai -t pip && waitinglist add -p openai -t pip && waitinglist add -p weaviate -t pip && waitinglist add -p pinecone-client -t pip && waitinglist add -p qdrant-client -t pip
+```
+### Observation:
+Running `waitinglist add -p fsspec -t pip`...
+'fsspec' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p anthropic -t pip`...
+'anthropic' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p cohere -t pip`...
+'cohere' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p mistralai -t pip`...
+'mistralai' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p openai -t pip`...
+'openai' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p weaviate -t pip`...
+'weaviate' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p pinecone-client -t pip`...
+'pinecone-client' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p qdrant-client -t pip`...
+'qdrant-client' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 63 turns left to complete the task.
+---------------------------
+### Thought:
+Now that the missing modules have been added to the waiting list, the next step is to download all the packages in the waiting list to ensure that all the dependencies are installed correctly.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'fsspec' has been removed from the waiting list.
+"fsspec" installed successfully.
+'anthropic' has been removed from the waiting list.
+"anthropic" installed successfully.
+'cohere' has been removed from the waiting list.
+"cohere" installed successfully.
+'mistralai' has been removed from the waiting list.
+"mistralai" installed successfully.
+'openai' has been removed from the waiting list.
+"openai" installed successfully.
+'weaviate' has been removed from the waiting list.
+"weaviate" installed successfully.
+'pinecone-client' has been removed from the waiting list.
+"pinecone-client" installed successfully.
+'qdrant-client' has been removed from the waiting list.
+"qdrant-client" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+fsspec (using tool pip)
+anthropic (using tool pip)
+cohere (using tool pip)
+mistralai (using tool pip)
+openai (using tool pip)
+weaviate (using tool pip)
+pinecone-client (using tool pip)
+qdrant-client (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 62 turns left to complete the task.
+---------------------------
+### Thought:
+The dependencies have been successfully installed. Next, I will run the `poetryruntest` command again to verify if the configuration is now correct and see if any additional steps are necessary.
+
+### Action:
+```bash
+cd /repo && poetryruntest
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `python /home/tools/poetryruntest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/poetryruntest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/unit/embeddings/test_cohere_embedder.py::test_cohere_embedder_missing_cohere_dependency
+tests/unit/embeddings/test_cohere_embedder.py::test_cohere_embedder_happy_path
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_missing_dependency
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_happy_path
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_api_key_via_kwargs
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_api_key_from_env
+tests/unit/embeddings/test_vertexai_embedder.py::test_vertexai_embedder_missing_dependency
+tests/unit/embeddings/test_vertexai_embedder.py::test_vertexai_embedder_happy_path
+tests/unit/experimental/components/test_embedder.py::test_text_chunk_embedder_run
+tests/unit/experimental/components/test_kg_writer.py::test_batched
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_nodes
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_nodes_with_embedding
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_relationship
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_relationship_with_embedding
+tests/unit/experimental/components/test_kg_writer.py::test_run
+tests/unit/experimental/components/test_kg_writer.py::test_run_is_version_below_5_23
+tests/unit/experimental/components/test_kg_writer.py::test_run_is_version_5_23_or_above
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader_custom_lg_config
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader_fetch_embedding
+tests/unit/experimental/components/test_resolver.py::test_simple_resolver
+tests/unit/experimental/components/test_resolver.py::test_simple_resolver_custom_filter
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_valid_data
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_description
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_empty_lists
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_data_types
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_properties_types
+tests/unit/experimental/components/test_schema.py::test_run_method
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_entity
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_relation
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_properties
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_no_potential_schema
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_no_relations_or_potential_schema
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_relations
+tests/unit/experimental/components/test_types.py::test_neo4j_node_invalid_property
+tests/unit/experimental/components/test_types.py::test_neo4j_node_invalid_embedding_property
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_no_overlap
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_with_overlap
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_empty_string
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_invalid_chunk_overlap
+tests/unit/experimental/pipeline/test_component.py::test_component_inputs
+tests/unit/experimental/pipeline/test_component.py::test_component_outputs
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_input_config_for_task_pipeline_not_validated
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_user_only
+tests/unit/experimental/pipeline/test_orchestrator.py::test_pipeline_get_component_inputs_from_parent_specific
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_parent_all
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_parent_and_input
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_ignore_user_input_if_input_def_provided
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_branch
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_aggregation
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_aggregation_waiting
+tests/unit/experimental/pipeline/test_pipeline.py::test_simple_pipeline_two_components
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_propagation
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_no_expected_params
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_one_component_all_good
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_invalidate
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_called_twice
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_one_component_input_param_missing
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_param_mapped_twice
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_unexpected_input
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_connected_components_input
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_connected_components_result
+tests/unit/experime
+...[Truncation]...
+b/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/experimental/pipeline/test_kg_builder.py:21: in <module>
+    from neo4j_graphrag.experimental.components.entity_relation_extractor import OnError
+src/neo4j_graphrag/experimental/components/entity_relation_extractor.py:29: in <module>
+    from neo4j_graphrag.experimental.components.lexical_graph import LexicalGraphBuilder
+src/neo4j_graphrag/experimental/components/lexical_graph.py:21: in <module>
+    from neo4j_graphrag.experimental.components.pdf_loader import DocumentInfo
+src/neo4j_graphrag/experimental/components/pdf_loader.py:22: in <module>
+    import fsspec
+E   ModuleNotFoundError: No module named 'fsspec'
+____________ ERROR collecting tests/unit/llm/test_anthropic_llm.py _____________
+ImportError while importing test module '/repo/tests/unit/llm/test_anthropic_llm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_anthropic_llm.py:20: in <module>
+    import anthropic
+E   ModuleNotFoundError: No module named 'anthropic'
+______________ ERROR collecting tests/unit/llm/test_cohere_llm.py ______________
+ImportError while importing test module '/repo/tests/unit/llm/test_cohere_llm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_cohere_llm.py:19: in <module>
+    import cohere.core
+E   ModuleNotFoundError: No module named 'cohere'
+_____________ ERROR collecting tests/unit/llm/test_mistralaillm.py _____________
+ImportError while importing test module '/repo/tests/unit/llm/test_mistralaillm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_mistralaillm.py:19: in <module>
+    from mistralai.models.sdkerror import SDKError
+E   ModuleNotFoundError: No module named 'mistralai'
+______________ ERROR collecting tests/unit/llm/test_openai_llm.py ______________
+ImportError while importing test module '/repo/tests/unit/llm/test_openai_llm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/llm/test_openai_llm.py:17: in <module>
+    import openai
+E   ModuleNotFoundError: No module named 'openai'
+_______ ERROR collecting tests/unit/retrievers/external/test_pinecone.py _______
+ImportError while importing test module '/repo/tests/unit/retrievers/external/test_pinecone.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/retrievers/external/test_pinecone.py:21: in <module>
+    from neo4j_graphrag.retrievers import PineconeNeo4jRetriever
+E   ImportError: cannot import name 'PineconeNeo4jRetriever' from 'neo4j_graphrag.retrievers' (/repo/src/neo4j_graphrag/retrievers/__init__.py)
+________ ERROR collecting tests/unit/retrievers/external/test_qdrant.py ________
+ImportError while importing test module '/repo/tests/unit/retrievers/external/test_qdrant.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/retrievers/external/test_qdrant.py:21: in <module>
+    from neo4j_graphrag.retrievers import QdrantNeo4jRetriever
+E   ImportError: cannot import name 'QdrantNeo4jRetriever' from 'neo4j_graphrag.retrievers' (/repo/src/neo4j_graphrag/retrievers/__init__.py)
+_______ ERROR collecting tests/unit/retrievers/external/test_weaviate.py _______
+ImportError while importing test module '/repo/tests/unit/retrievers/external/test_weaviate.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/retrievers/external/test_weaviate.py:23: in <module>
+    from neo4j_graphrag.retrievers import WeaviateNeo4jRetriever
+E   ImportError: cannot import name 'WeaviateNeo4jRetriever' from 'neo4j_graphrag.retrievers' (/repo/src/neo4j_graphrag/retrievers/__init__.py)
+=========================== short test summary info ============================
+ERROR tests/e2e - ModuleNotFoundError: No module named 'weaviate'
+ERROR tests/unit/embeddings/test_openai_embedder.py
+ERROR tests/unit/embeddings/test_sentence_transformers.py
+ERROR tests/unit/experimental/components/test_entity_relation_extractor.py
+ERROR tests/unit/experimental/components/test_lexical_graph_builder.py
+ERROR tests/unit/experimental/components/test_pdf_loader.py
+ERROR tests/unit/experimental/components/text_splitters/test_langchain.py
+ERROR tests/unit/experimental/components/text_splitters/test_llamaindex.py
+ERROR tests/unit/experimental/pipeline/test_kg_builder.py
+ERROR tests/unit/llm/test_anthropic_llm.py
+ERROR tests/unit/llm/test_cohere_llm.py
+ERROR tests/unit/llm/test_mistralaillm.py
+ERROR tests/unit/llm/test_openai_llm.py
+ERROR tests/unit/retrievers/external/test_pinecone.py
+ERROR tests/unit/retrievers/external/test_qdrant.py
+ERROR tests/unit/retrievers/external/test_weaviate.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 16 errors during collection !!!!!!!!!!!!!!!!!!!
+258 tests collected, 16 errors in 1.29s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetryruntest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 61 turns left to complete the task.
+---------------------------
+### Thought:
+The errors indicate that some packages like `fsspec`, `anthropic`, `cohere`, `mistralai`, `openai`, `weaviate`, and others are still not found. It seems these were not properly included in the Poetry environment.
+
+I will check the contents of `pyproject.toml` to ensure these dependencies are listed there and added to the Poetry project. If not, I'll add them and then reinstall the dependencies using Poetry.
+
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+# Copyright (c) "Neo4j"
+# Neo4j Sweden AB [https://neo4j.com]
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+[tool.poetry]
+name = "neo4j-graphrag"
+version = "1.2.1"
+description = "Python package to allow easy integration to Neo4j's GraphRAG features"
+authors = ["Neo4j, Inc <team-gen-ai@neo4j.com>"]
+license = "Apache License, Version 2.0"
+readme = "README.md"
+homepage = "https://neo4j.com/"
+repository = "https://github.com/neo4j/neo4j-graphrag-python"
+[[tool.poetry.packages]]
+include = "neo4j_graphrag"
+from = "src"
+[tool.poetry.dependencies]
+python = "^3.9.0"
+neo4j = "^5.17.0"
+pydantic = "^2.6.3"
+fsspec = {version = "^2024.9.0", optional = true}
+langchain-text-splitters = {version = "^0.3.0", optional = true }
+pypdf = {version = "^4.3.1", optional = true}
+pygraphviz = [
+    {version = "^1.13.0", python = ">=3.10,<4.0.0", optional = true},
+    {version = "^1.0.0", python = "<3.10", optional = true}
+]
+weaviate-client = {version = "^4.6.1", optional = true }
+pinecone-client = {version = "^4.1.0", optional = true }
+google-cloud-aiplatform = {version = "^1.66.0", optional = true }
+cohere = {version = "^5.9.0", optional = true}
+mistralai = {version = "^1.0.3", optional = true}
+qdrant-client = {version = "^1.11.3", optional = true}
+llama-index = {version = "^0.10.55", optional = true }
+openai = {version = "^1.51.1", optional = true }
+anthropic = { version = "^0.36.0", optional = true}
+sentence-transformers = {version = "^3.0.0", optional = true }
+[tool.poetry.group.dev.dependencies]
+urllib3 = "<2"
+ruff = "^0.3.0"
+mypy = "^1.10.0"
+pytest = "^8.0.2"
+coverage = "^7.4.3"
+pytest-asyncio = "^0.23.8"
+pre-commit = { version = "^3.6.2", python = "^3.9" }
+sphinx = { version = "^7.2.6", python = "^3.9" }
+langchain-openai = {version = "^0.2.2", optional = true }
+langchain-huggingface = {version = "^0.1.0", optional = true }
+[tool.poetry.extras]
+weaviate = ["weaviate-client"]
+pinecone = ["pinecone-client"]
+google = ["google-cloud-aiplatform"]
+cohere = ["cohere"]
+anthropic = ["anthropic"]
+openai = ["openai"]
+mistralai = ["mistralai"]
+qdrant = ["qdrant-client"]
+kg_creation_tools = ["pygraphviz"]
+sentence-transformers = ["sentence-transformers"]
+experimental = ["pypdf", "fsspec", "langchain-text-splitters", "pygraphviz", "llama-index"]
+examples = ["langchain-openai", "langchain-huggingface"]
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "",
+]
+[tool.coverage.paths]
+source = ["src"]
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+allow_subclassing_any = true
+disallow_untyped_calls = false
+exclude = ["docs"]
+[[tool.mypy.overrides]]
+module = [
+    "weaviate.*",
+    "sentence_transformers.*",
+    "conftest",
+]
+ignore_missing_imports = true
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 60 turns left to complete the task.
+---------------------------
+### Thought:
+The `pyproject.toml` file already lists the required dependencies as optional. To ensure all dependencies are installed, including the optional ones, I will run the following command:
+```bash
+poetry install --all-extras
+```
+
+### Action:
+```bash
+cd /repo && poetry install --all-extras
+```
+### Observation:
+Running `poetry install --all-extras`...
+[31;1mPoetry could not find a pyproject.toml file in / or its parents[39;22m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetry install --all-extras` executes with returncode: 1
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install --all-extras`...
+  running bdist_wheel
+  running build
+  running build_py
+  creating build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/scraper.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/testing.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/__init__.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/agraph.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/graphviz.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  creating build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_string.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_scraper.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_readwrite.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_layout.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/__init__.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_html.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_drawing.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_node_attributes.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_repr_mimebundle.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_close.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_edge_attributes.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_clear.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_graph.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_unicode.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_subgraph.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_attribute_defaults.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  running egg_info
+  writing pygraphviz.egg-info/PKG-INFO
+  writing dependency_links to pygraphviz.egg-info/dependency_links.txt
+  writing top-level names to pygraphviz.egg-info/top_level.txt
+  reading manifest file 'pygraphviz.egg-info/SOURCES.txt'
+  reading manifest template 'MANIFEST.in'
+  warning: no files found matching '*.swg'
+  warning: no files found matching '*.png' under directory 'doc'
+  warning: no files found matching '*.html' under directory 'doc'
+  warning: no files found matching '*.txt' under directory 'doc'
+  warning: no files found matching '*.css' under directory 'doc'
+  warning: no previously-included files matching '*~' found anywhere in distribution
+  warning: no previously-included files matching '*.pyc' found anywhere in distribution
+  warning: no previously-included files matching '.svn' found anywhere in distribution
+  no previously-included directories found matching 'doc/build'
+  adding license file 'LICENSE'
+  writing manifest file 'pygraphviz.egg-info/SOURCES.txt'
+  copying pygraphviz/graphviz.i -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/graphviz_wrap.c -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  running build_ext
+  building 'pygraphviz._graphviz' extension
+  creating build/temp.linux-x86_64-cpython-310/pygraphviz
+  gcc -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -fPIC -DSWIG_PYTHON_STRICT_BYTE_CHAR -I/tmp/tmpc1n70evv/.venv/include -I/usr/local/include/python3.10 -c pygraphviz/graphviz_wrap.c -o build/temp.linux-x86_64-cpython-310/pygraphviz/graphviz_wrap.o
+  pygraphviz/graphviz_wrap.c:9: warning: "SWIG_PYTHON_STRICT_BYTE_CHAR" redefined
+      9 | #define SWIG_PYTHON_STRICT_BYTE_CHAR
+        | 
+  pygraphviz/graphviz_wrap.c:3023:10: fatal error: graphviz/cgraph.h: No such file or directory
+   3023 | #include "graphviz/cgraph.h"
+        |          ^~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  error: command '/usr/bin/gcc' failed with exit code 1
+[2A[0J
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[2A[0J[34mNote: This error originates from the build backend, and is likely not a problem with poetry but with pygraphviz (1.14) not supporting PEP 517 builds. You can verify this by running 'pip wheel --no-cache-dir --use-pep517 "pygraphviz (==1.14)"'.[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[2A[0J
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[33mWarning: The file chosen for install of transformers 4.46.0 (transformers-4.46.0-py3-none-any.whl) is yanked. Reason for being yanked: This version unfortunately does not work with 3.8 but we did not drop the support yet [39m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetry install --all-extras` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 59 turns left to complete the task.
+---------------------------
+### Thought:
+The installation of optional dependencies failed due to `pygraphviz` not supporting PEP 517 builds and missing necessary files. I will now install `graphviz` system package to aid in the installation of `pygraphviz`.
+
+### Action:
+```bash
+apt-get update -qq && apt-get install graphviz -y -qq
+```
+### Observation:
+Running `apt-get update -qq`...
+`apt-get update -qq` executes with returncode: 0
+Running `apt-get install graphviz -y -qq`...
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package fonts-liberation2.
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 23969 files and directories currently installed.)
+Preparing to unpack .../00-fonts-liberation2_2.1.5-1_all.deb ...
+Unpacking fonts-liberation2 (2.1.5-1) ...
+Selecting previously unselected package libann0.
+Preparing to unpack .../01-libann0_1.1.2+doc-9+b1_amd64.deb ...
+Unpacking libann0 (1.1.2+doc-9+b1) ...
+Selecting previously unselected package libcdt5:amd64.
+Preparing to unpack .../02-libcdt5_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libcdt5:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libcgraph6:amd64.
+Preparing to unpack .../03-libcgraph6_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libcgraph6:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libabsl20220623:amd64.
+Preparing to unpack .../04-libabsl20220623_20220623.1-1_amd64.deb ...
+Unpacking libabsl20220623:amd64 (20220623.1-1) ...
+Selecting previously unselected package libgav1-1:amd64.
+Preparing to unpack .../05-libgav1-1_0.18.0-1+b1_amd64.deb ...
+Unpacking libgav1-1:amd64 (0.18.0-1+b1) ...
+Selecting previously unselected package librav1e0:amd64.
+Preparing to unpack .../06-librav1e0_0.5.1-6_amd64.deb ...
+Unpacking librav1e0:amd64 (0.5.1-6) ...
+Selecting previously unselected package libsvtav1enc1:amd64.
+Preparing to unpack .../07-libsvtav1enc1_1.4.1+dfsg-1_amd64.deb ...
+Unpacking libsvtav1enc1:amd64 (1.4.1+dfsg-1) ...
+Selecting previously unselected package libyuv0:amd64.
+Preparing to unpack .../08-libyuv0_0.0~git20230123.b2528b0-1_amd64.deb ...
+Unpacking libyuv0:amd64 (0.0~git20230123.b2528b0-1) ...
+Selecting previously unselected package libavif15:amd64.
+Preparing to unpack .../09-libavif15_0.11.1-1_amd64.deb ...
+Unpacking libavif15:amd64 (0.11.1-1) ...
+Selecting previously unselected package libxpm4:amd64.
+Preparing to unpack .../10-libxpm4_1%3a3.5.12-1.1+deb12u1_amd64.deb ...
+Unpacking libxpm4:amd64 (1:3.5.12-1.1+deb12u1) ...
+Selecting previously unselected package libgd3:amd64.
+Preparing to unpack .../11-libgd3_2.3.3-9_amd64.deb ...
+Unpacking libgd3:amd64 (2.3.3-9) ...
+Selecting previously unselected package libgts-0.7-5:amd64.
+Preparing to unpack .../12-libgts-0.7-5_0.7.6+darcs121130-5+b1_amd64.deb ...
+Unpacking libgts-0.7-5:amd64 (0.7.6+darcs121130-5+b1) ...
+Selecting previously unselected package libpathplan4:amd64.
+Preparing to unpack .../13-libpathplan4_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libpathplan4:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgvc6.
+Preparing to unpack .../14-libgvc6_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libgvc6 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgvpr2:amd64.
+Preparing to unpack .../15-libgvpr2_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libgvpr2:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package liblab-gamut1:amd64.
+Preparing to unpack .../16-liblab-gamut1_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking liblab-gamut1:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libxmu6:amd64.
+Preparing to unpack .../17-libxmu6_2%3a1.1.3-3_amd64.deb ...
+Unpacking libxmu6:amd64 (2:1.1.3-3) ...
+Selecting previously unselected package libxaw7:amd64.
+Preparing to unpack .../18-libxaw7_2%3a1.0.14-1_amd64.deb ...
+Unpacking libxaw7:amd64 (2:1.0.14-1) ...
+Selecting previously unselected package graphviz.
+Preparing to unpack .../19-graphviz_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking graphviz (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgts-bin.
+Preparing to unpack .../20-libgts-bin_0.7.6+darcs121130-5+b1_amd64.deb ...
+Unpacking libgts-bin (0.7.6+darcs121130-5+b1) ...
+Setting up libabsl20220623:amd64 (20220623.1-1) ...
+Setting up libxmu6:amd64 (2:1.1.3-3) ...
+Setting up libxpm4:amd64 (1:3.5.12-1.1+deb12u1) ...
+Setting up liblab-gamut1:amd64 (2.42.2-7+deb12u1) ...
+Setting up libxaw7:amd64 (2:1.0.14-1) ...
+Setting up libsvtav1enc1:amd64 (1.4.1+dfsg-1) ...
+Setting up librav1e0:amd64 (0.5.1-6) ...
+Setting up libgts-0.7-5:amd64 (0.7.6+darcs121130-5+b1) ...
+Setting up fonts-liberation2 (2.1.5-1) ...
+Setting up libpathplan4:amd64 (2.42.2-7+deb12u1) ...
+Setting up libann0 (1.1.2+doc-9+b1) ...
+Setting up libgav1-1:amd64 (0.18.0-1+b1) ...
+Setting up libcdt5:amd64 (2.42.2-7+deb12u1) ...
+Setting up libcgraph6:amd64 (2.42.2-7+deb12u1) ...
+Setting up libyuv0:amd64 (0.0~git20230123.b2528b0-1) ...
+Setting up libgts-bin (0.7.6+darcs121130-5+b1) ...
+Setting up libavif15:amd64 (0.11.1-1) ...
+Setting up libgd3:amd64 (2.3.3-9) ...
+Setting up libgvc6 (2.42.2-7+deb12u1) ...
+Setting up libgvpr2:amd64 (2.42.2-7+deb12u1) ...
+Setting up graphviz (2.42.2-7+deb12u1) ...
+Processing triggers for libc-bin (2.36-9+deb12u8) ...
+Processing triggers for fontconfig (2.14.1-4) ...
+`apt-get install graphviz -y -qq` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 58 turns left to complete the task.
+---------------------------
+### Thought:
+The `graphviz` system package has been successfully installed. Now, I will attempt to install the Poetry dependencies, including the optional ones, again.
+
+### Action:
+```bash
+cd /repo && poetry install --all-extras
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install --all-extras`...
+  running bdist_wheel
+  running build
+  running build_py
+  creating build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/scraper.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/testing.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/__init__.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/agraph.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/graphviz.py -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  creating build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_string.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_scraper.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_readwrite.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_layout.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/__init__.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_html.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_drawing.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_node_attributes.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_repr_mimebundle.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_close.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_edge_attributes.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_clear.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_graph.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_unicode.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_subgraph.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  copying pygraphviz/tests/test_attribute_defaults.py -> build/lib.linux-x86_64-cpython-310/pygraphviz/tests
+  running egg_info
+  writing pygraphviz.egg-info/PKG-INFO
+  writing dependency_links to pygraphviz.egg-info/dependency_links.txt
+  writing top-level names to pygraphviz.egg-info/top_level.txt
+  reading manifest file 'pygraphviz.egg-info/SOURCES.txt'
+  reading manifest template 'MANIFEST.in'
+  warning: no files found matching '*.swg'
+  warning: no files found matching '*.png' under directory 'doc'
+  warning: no files found matching '*.html' under directory 'doc'
+  warning: no files found matching '*.txt' under directory 'doc'
+  warning: no files found matching '*.css' under directory 'doc'
+  warning: no previously-included files matching '*~' found anywhere in distribution
+  warning: no previously-included files matching '*.pyc' found anywhere in distribution
+  warning: no previously-included files matching '.svn' found anywhere in distribution
+  no previously-included directories found matching 'doc/build'
+  adding license file 'LICENSE'
+  writing manifest file 'pygraphviz.egg-info/SOURCES.txt'
+  copying pygraphviz/graphviz.i -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  copying pygraphviz/graphviz_wrap.c -> build/lib.linux-x86_64-cpython-310/pygraphviz
+  running build_ext
+  building 'pygraphviz._graphviz' extension
+  creating build/temp.linux-x86_64-cpython-310/pygraphviz
+  gcc -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -fPIC -DSWIG_PYTHON_STRICT_BYTE_CHAR -I/tmp/tmpzkflx4kz/.venv/include -I/usr/local/include/python3.10 -c pygraphviz/graphviz_wrap.c -o build/temp.linux-x86_64-cpython-310/pygraphviz/graphviz_wrap.o
+  pygraphviz/graphviz_wrap.c:9: warning: "SWIG_PYTHON_STRICT_BYTE_CHAR" redefined
+      9 | #define SWIG_PYTHON_STRICT_BYTE_CHAR
+        | 
+  pygraphviz/graphviz_wrap.c:3023:10: fatal error: graphviz/cgraph.h: No such file or directory
+   3023 | #include "graphviz/cgraph.h"
+        |          ^~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  error: command '/usr/bin/gcc' failed with exit code 1
+[2A[0J
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[2A[0J[34mNote: This error originates from the build backend, and is likely not a problem with poetry but with pygraphviz (1.14) not supporting PEP 517 builds. You can verify this by running 'pip wheel --no-cache-dir --use-pep517 "pygraphviz (==1.14)"'.[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[2A[0J
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[33mWarning: The file chosen for install of transformers 4.46.0 (transformers-4.46.0-py3-none-any.whl) is yanked. Reason for being yanked: This version unfortunately does not work with 3.8 but we did not drop the support yet [39m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`poetry install --all-extras` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 57 turns left to complete the task.
+---------------------------
+### Thought:
+The error persists with the installation of `pygraphviz` due to missing files. I will investigate if there are alternative installation options for `pygraphviz`. Firstly, I will install `pygraphviz` directly using pip to see if it resolves the issue.
+
+### Action:
+```bash
+pip install -q pygraphviz
+```
+### Observation:
+Running `pip install -q pygraphviz`...
+  [31m   [0m <command-line>: note: this is the location of the previous definition
+  [31m   [0m pygraphviz/graphviz_wrap.c:3023:10: fatal error: graphviz/cgraph.h: No such file or directory
+  [31m   [0m  3023 | #include "graphviz/cgraph.h"
+  [31m   [0m       |          ^~~~~~~~~~~~~~~~~~~
+  [31m   [0m compilation terminated.
+  [31m   [0m error: command '/usr/bin/gcc' failed with exit code 1
+  [31m   [0m [31m[end of output][0m
+  [1;35mnote[0m: This error originates from a subprocess, and is likely not a problem with pip.
+[31m  ERROR: Failed building wheel for pygraphviz[0m[31m
+[0m[31mERROR: ERROR: Failed to build installable wheels for some pyproject.toml based projects (pygraphviz)[0m[31m
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`pip install -q pygraphviz` executes with returncode: 1
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 56 turns left to complete the task.
+---------------------------
+### Thought:
+The error persists because `graphviz/cgraph.h` is not found. This indicates that additional Graphviz development files might be needed. I will install the `graphviz-dev` package to get the development files and try the installation again.
+
+### Action:
+```bash
+apt-get update -qq && apt-get install graphviz-dev -y -qq
+```
+### Observation:
+Running `apt-get update -qq`...
+`apt-get update -qq` executes with returncode: 0
+Running `apt-get install graphviz-dev -y -qq`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `apt-get install graphviz-dev -y -qq`...
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package libdbus-1-3:amd64.
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 24378 files and directories currently installed.)
+Preparing to unpack .../00-libdbus-1-3_1.14.10-1~deb12u1_amd64.deb ...
+Unpacking libdbus-1-3:amd64 (1.14.10-1~deb12u1) ...
+Selecting previously unselected package dbus-bin.
+Preparing to unpack .../01-dbus-bin_1.14.10-1~deb12u1_amd64.deb ...
+Unpacking dbus-bin (1.14.10-1~deb12u1) ...
+Selecting previously unselected package dbus-session-bus-common.
+Preparing to unpack .../02-dbus-session-bus-common_1.14.10-1~deb12u1_all.deb ...
+Unpacking dbus-session-bus-common (1.14.10-1~deb12u1) ...
+Selecting previously unselected package libapparmor1:amd64.
+Preparing to unpack .../03-libapparmor1_3.0.8-3_amd64.deb ...
+Unpacking libapparmor1:amd64 (3.0.8-3) ...
+Selecting previously unselected package dbus-daemon.
+Preparing to unpack .../04-dbus-daemon_1.14.10-1~deb12u1_amd64.deb ...
+Unpacking dbus-daemon (1.14.10-1~deb12u1) ...
+Selecting previously unselected package dbus-system-bus-common.
+Preparing to unpack .../05-dbus-system-bus-common_1.14.10-1~deb12u1_all.deb ...
+Unpacking dbus-system-bus-common (1.14.10-1~deb12u1) ...
+Selecting previously unselected package dbus.
+Preparing to unpack .../06-dbus_1.14.10-1~deb12u1_amd64.deb ...
+Unpacking dbus (1.14.10-1~deb12u1) ...
+Selecting previously unselected package gtk-update-icon-cache.
+Preparing to unpack .../07-gtk-update-icon-cache_3.24.38-2~deb12u3_amd64.deb ...
+Unpacking gtk-update-icon-cache (3.24.38-2~deb12u3) ...
+Selecting previously unselected package adwaita-icon-theme.
+Preparing to unpack .../08-adwaita-icon-theme_43-1_all.deb ...
+Unpacking adwaita-icon-theme (43-1) ...
+Selecting previously unselected package at-spi2-common.
+Preparing to unpack .../09-at-spi2-common_2.46.0-5_all.deb ...
+Unpacking at-spi2-common (2.46.0-5) ...
+Selecting previously unselected package libatk1.0-0:amd64.
+Preparing to unpack .../10-libatk1.0-0_2.46.0-5_amd64.deb ...
+Unpacking libatk1.0-0:amd64 (2.46.0-5) ...
+Selecting previously unselected package libavahi-common-data:amd64.
+Preparing to unpack .../11-libavahi-common-data_0.8-10_amd64.deb ...
+Unpacking libavahi-common-data:amd64 (0.8-10) ...
+Selecting previously unselected package libavahi-common3:amd64.
+Preparing to unpack .../12-libavahi-common3_0.8-10_amd64.deb ...
+Unpacking libavahi-common3:amd64 (0.8-10) ...
+Selecting previously unselected package libavahi-client3:amd64.
+Preparing to unpack .../13-libavahi-client3_0.8-10_amd64.deb ...
+Unpacking libavahi-client3:amd64 (0.8-10) ...
+Selecting previously unselected package libcups2:amd64.
+Preparing to unpack .../14-libcups2_2.4.2-3+deb12u8_amd64.deb ...
+Unpacking libcups2:amd64 (2.4.2-3+deb12u8) ...
+Selecting previously unselected package libgtk2.0-common.
+Preparing to unpack .../15-libgtk2.0-common_2.24.33-2+deb12u1_all.deb ...
+Unpacking libgtk2.0-common (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libxcomposite1:amd64.
+Preparing to unpack .../16-libxcomposite1_1%3a0.4.5-1_amd64.deb ...
+Unpacking libxcomposite1:amd64 (1:0.4.5-1) ...
+Selecting previously unselected package libxfixes3:amd64.
+Preparing to unpack .../17-libxfixes3_1%3a6.0.0-2_amd64.deb ...
+Unpacking libxfixes3:amd64 (1:6.0.0-2) ...
+Selecting previously unselected package libxcursor1:amd64.
+Preparing to unpack .../18-libxcursor1_1%3a1.2.1-1_amd64.deb ...
+Unpacking libxcursor1:amd64 (1:1.2.1-1) ...
+Selecting previously unselected package libxdamage1:amd64.
+Preparing to unpack .../19-libxdamage1_1%3a1.1.6-1_amd64.deb ...
+Unpacking libxdamage1:amd64 (1:1.1.6-1) ...
+Selecting previously unselected package libxi6:amd64.
+Preparing to unpack .../20-libxi6_2%3a1.8-1+b1_amd64.deb ...
+Unpacking libxi6:amd64 (2:1.8-1+b1) ...
+Selecting previously unselected package libxinerama1:amd64.
+Preparing to unpack .../21-libxinerama1_2%3a1.1.4-3_amd64.deb ...
+Unpacking libxinerama1:amd64 (2:1.1.4-3) ...
+Selecting previously unselected package libxrandr2:amd64.
+Preparing to unpack .../22-libxrandr2_2%3a1.5.2-2+b1_amd64.deb ...
+Unpacking libxrandr2:amd64 (2:1.5.2-2+b1) ...
+Selecting previously unselected package libgtk2.0-0:amd64.
+Preparing to unpack .../23-libgtk2.0-0_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgtk2.0-0:amd64 (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libgail18:amd64.
+Preparing to unpack .../24-libgail18_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgail18:amd64 (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libgail-common:amd64.
+Preparing to unpack .../25-libgail-common_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgail-common:amd64 (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libxdot4:amd64.
+Preparing to unpack .../26-libxdot4_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libxdot4:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgvc6-plugins-gtk.
+Preparing to unpack .../27-libgvc6-plugins-gtk_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libgvc6-plugins-gtk (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgraphviz-dev:amd64.
+Preparing to unpack .../28-libgraphviz-dev_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libgraphviz-dev:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgtk2.0-bin.
+Preparing to unpack .../29-libgtk2.0-bin_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgtk2.0-bin (2.24.33-2+deb12u1) ...
+
+...[Truncation]...
+.deb ...
+Unpacking dbus-system-bus-common (1.14.10-1~deb12u1) ...
+Selecting previously unselected package dbus.
+Preparing to unpack .../06-dbus_1.14.10-1~deb12u1_amd64.deb ...
+Unpacking dbus (1.14.10-1~deb12u1) ...
+Selecting previously unselected package gtk-update-icon-cache.
+Preparing to unpack .../07-gtk-update-icon-cache_3.24.38-2~deb12u3_amd64.deb ...
+Unpacking gtk-update-icon-cache (3.24.38-2~deb12u3) ...
+Selecting previously unselected package adwaita-icon-theme.
+Preparing to unpack .../08-adwaita-icon-theme_43-1_all.deb ...
+Unpacking adwaita-icon-theme (43-1) ...
+Selecting previously unselected package at-spi2-common.
+Preparing to unpack .../09-at-spi2-common_2.46.0-5_all.deb ...
+Unpacking at-spi2-common (2.46.0-5) ...
+Selecting previously unselected package libatk1.0-0:amd64.
+Preparing to unpack .../10-libatk1.0-0_2.46.0-5_amd64.deb ...
+Unpacking libatk1.0-0:amd64 (2.46.0-5) ...
+Selecting previously unselected package libavahi-common-data:amd64.
+Preparing to unpack .../11-libavahi-common-data_0.8-10_amd64.deb ...
+Unpacking libavahi-common-data:amd64 (0.8-10) ...
+Selecting previously unselected package libavahi-common3:amd64.
+Preparing to unpack .../12-libavahi-common3_0.8-10_amd64.deb ...
+Unpacking libavahi-common3:amd64 (0.8-10) ...
+Selecting previously unselected package libavahi-client3:amd64.
+Preparing to unpack .../13-libavahi-client3_0.8-10_amd64.deb ...
+Unpacking libavahi-client3:amd64 (0.8-10) ...
+Selecting previously unselected package libcups2:amd64.
+Preparing to unpack .../14-libcups2_2.4.2-3+deb12u8_amd64.deb ...
+Unpacking libcups2:amd64 (2.4.2-3+deb12u8) ...
+Selecting previously unselected package libgtk2.0-common.
+Preparing to unpack .../15-libgtk2.0-common_2.24.33-2+deb12u1_all.deb ...
+Unpacking libgtk2.0-common (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libxcomposite1:amd64.
+Preparing to unpack .../16-libxcomposite1_1%3a0.4.5-1_amd64.deb ...
+Unpacking libxcomposite1:amd64 (1:0.4.5-1) ...
+Selecting previously unselected package libxfixes3:amd64.
+Preparing to unpack .../17-libxfixes3_1%3a6.0.0-2_amd64.deb ...
+Unpacking libxfixes3:amd64 (1:6.0.0-2) ...
+Selecting previously unselected package libxcursor1:amd64.
+Preparing to unpack .../18-libxcursor1_1%3a1.2.1-1_amd64.deb ...
+Unpacking libxcursor1:amd64 (1:1.2.1-1) ...
+Selecting previously unselected package libxdamage1:amd64.
+Preparing to unpack .../19-libxdamage1_1%3a1.1.6-1_amd64.deb ...
+Unpacking libxdamage1:amd64 (1:1.1.6-1) ...
+Selecting previously unselected package libxi6:amd64.
+Preparing to unpack .../20-libxi6_2%3a1.8-1+b1_amd64.deb ...
+Unpacking libxi6:amd64 (2:1.8-1+b1) ...
+Selecting previously unselected package libxinerama1:amd64.
+Preparing to unpack .../21-libxinerama1_2%3a1.1.4-3_amd64.deb ...
+Unpacking libxinerama1:amd64 (2:1.1.4-3) ...
+Selecting previously unselected package libxrandr2:amd64.
+Preparing to unpack .../22-libxrandr2_2%3a1.5.2-2+b1_amd64.deb ...
+Unpacking libxrandr2:amd64 (2:1.5.2-2+b1) ...
+Selecting previously unselected package libgtk2.0-0:amd64.
+Preparing to unpack .../23-libgtk2.0-0_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgtk2.0-0:amd64 (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libgail18:amd64.
+Preparing to unpack .../24-libgail18_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgail18:amd64 (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libgail-common:amd64.
+Preparing to unpack .../25-libgail-common_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgail-common:amd64 (2.24.33-2+deb12u1) ...
+Selecting previously unselected package libxdot4:amd64.
+Preparing to unpack .../26-libxdot4_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libxdot4:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgvc6-plugins-gtk.
+Preparing to unpack .../27-libgvc6-plugins-gtk_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libgvc6-plugins-gtk (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgraphviz-dev:amd64.
+Preparing to unpack .../28-libgraphviz-dev_2.42.2-7+deb12u1_amd64.deb ...
+Unpacking libgraphviz-dev:amd64 (2.42.2-7+deb12u1) ...
+Selecting previously unselected package libgtk2.0-bin.
+Preparing to unpack .../29-libgtk2.0-bin_2.24.33-2+deb12u1_amd64.deb ...
+Unpacking libgtk2.0-bin (2.24.33-2+deb12u1) ...
+Setting up libxdot4:amd64 (2.42.2-7+deb12u1) ...
+Setting up gtk-update-icon-cache (3.24.38-2~deb12u3) ...
+Setting up libapparmor1:amd64 (3.0.8-3) ...
+Setting up libxdamage1:amd64 (1:1.1.6-1) ...
+Setting up libxi6:amd64 (2:1.8-1+b1) ...
+Setting up adwaita-icon-theme (43-1) ...
+update-alternatives: using /usr/share/icons/Adwaita/cursor.theme to provide /usr/share/icons/default/index.theme (x-cursor-theme) in auto mode
+Setting up libxfixes3:amd64 (1:6.0.0-2) ...
+Setting up libavahi-common-data:amd64 (0.8-10) ...
+Setting up libdbus-1-3:amd64 (1.14.10-1~deb12u1) ...
+Setting up libxinerama1:amd64 (2:1.1.4-3) ...
+Setting up libxrandr2:amd64 (2:1.5.2-2+b1) ...
+Setting up at-spi2-common (2.46.0-5) ...
+Setting up dbus-session-bus-common (1.14.10-1~deb12u1) ...
+Setting up libgtk2.0-common (2.24.33-2+deb12u1) ...
+Setting up libatk1.0-0:amd64 (2.46.0-5) ...
+Setting up dbus-system-bus-common (1.14.10-1~deb12u1) ...
+Setting up libxcomposite1:amd64 (1:0.4.5-1) ...
+Setting up dbus-bin (1.14.10-1~deb12u1) ...
+Setting up libxcursor1:amd64 (1:1.2.1-1) ...
+Setting up libavahi-common3:amd64 (0.8-10) ...
+Setting up dbus-daemon (1.14.10-1~deb12u1) ...
+Setting up dbus (1.14.10-1~deb12u1) ...
+invoke-rc.d: could not determine current runlevel
+invoke-rc.d: policy-rc.d denied execution of start.
+Setting up libavahi-client3:amd64 (0.8-10) ...
+Setting up libcups2:amd64 (2.4.2-3+deb12u8) ...
+Setting up libgtk2.0-0:amd64 (2.24.33-2+deb12u1) ...
+Setting up libgvc6-plugins-gtk (2.42.2-7+deb12u1) ...
+Setting up libgail18:amd64 (2.24.33-2+deb12u1) ...
+Setting up libgtk2.0-bin (2.24.33-2+deb12u1) ...
+Setting up libgail-common:amd64 (2.24.33-2+deb12u1) ...
+Setting up libgraphviz-dev:amd64 (2.42.2-7+deb12u1) ...
+Processing triggers for libc-bin (2.36-9+deb12u8) ...
+`apt-get install graphviz-dev -y -qq` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 55 turns left to complete the task.
+---------------------------
+### Thought:
+The `graphviz-dev` package has been installed, which should provide the necessary development files for `pygraphviz`. Now, I will try to install the Poetry dependencies, including the optional ones, again.
+
+### Action:
+```bash
+cd /repo && poetry install --all-extras
+```
+### Observation:
+Running `cd /repo`...
+`cd /repo` executes with returncode: 0
+Running `poetry install --all-extras`...
+[2A[0J  [34;1m-[39;22m [39mInstalling [39m[36mpygraphviz[39m[39m ([39m[39;1m1.14[39;22m[39m)[39m: [34mInstalling...[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[3A[0J  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[2A[0J  [32;1m-[39;22m [39mInstalling [39m[36mpygraphviz[39m[39m ([39m[32m1.14[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mqdrant-client[39m[39m ([39m[32m1.12.0[39m[39m)[39m
+  [32;1m-[39;22m [39mInstalling [39m[36mweaviate-client[39m[39m ([39m[32m4.9.0[39m[39m)[39m
+[33mWarning: The file chosen for install of transformers 4.46.0 (transformers-4.46.0-py3-none-any.whl) is yanked. Reason for being yanked: This version unfortunately does not work with 3.8 but we did not drop the support yet [39m
+[39;1mInstalling[39;22m the current project: [36mneo4j-graphrag[39m ([39;1m1.2.1[39;22m)[1G[2K[39;1mInstalling[39;22m the current project: [36mneo4j-graphrag[39m ([32m1.2.1[39m)
+`poetry install --all-extras` executes with returncode: 0
+
+[Current directory]:
+/repo
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 54 turns left to complete the task.
+---------------------------
+### Thought:
+The dependencies, including the optional ones, have been successfully installed. Now, I will run the `poetryruntest` command to verify if the configuration is correct and to check if there are any remaining issues.
+
+### Action:
+```bash
+poetryruntest
+```
+Congratulations, you have successfully configured the environment!
+tests/e2e/pinecone_e2e/test_pinecone_e2e.py::test_pinecone_neo4j_vector_input
+tests/e2e/pinecone_e2e/test_pinecone_e2e.py::test_pinecone_neo4j_text_input
+tests/e2e/qdrant_e2e/test_qdrant_e2e.py::test_qdrant_neo4j_vector_input
+tests/e2e/qdrant_e2e/test_qdrant_e2e.py::test_qdrant_neo4j_text_input_local_embedder
+tests/e2e/test_entity_resolver_component_e2e.py::test_resolver_single_node
+tests/e2e/test_entity_resolver_component_e2e.py::test_resolver_two_nodes_and_relationships
+tests/e2e/test_entity_resolver_component_e2e.py::test_resolver_same_name_different_labels
+tests/e2e/test_entity_resolver_component_e2e.py::test_resolver_custom_property
+tests/e2e/test_entity_resolver_component_e2e.py::test_resolver_custom_filter
+tests/e2e/test_graphrag_e2e.py::test_graphrag_happy_path
+tests/e2e/test_graphrag_e2e.py::test_graphrag_happy_path_return_context
+tests/e2e/test_graphrag_e2e.py::test_graphrag_happy_path_examples
+tests/e2e/test_graphrag_e2e.py::test_graphrag_llm_error
+tests/e2e/test_graphrag_e2e.py::test_graphrag_retrieval_error
+tests/e2e/test_hybrid_e2e.py::test_hybrid_retriever_search_text
+tests/e2e/test_hybrid_e2e.py::test_hybrid_retriever_no_neo4j_deprecation_warning
+tests/e2e/test_hybrid_e2e.py::test_hybrid_cypher_retriever_search_text
+tests/e2e/test_hybrid_e2e.py::test_hybrid_retriever_search_vector
+tests/e2e/test_hybrid_e2e.py::test_hybrid_cypher_retriever_search_vector
+tests/e2e/test_hybrid_e2e.py::test_hybrid_retriever_return_properties
+tests/e2e/test_kg_builder_pipeline_e2e.py::test_pipeline_builder_happy_path
+tests/e2e/test_kg_builder_pipeline_e2e.py::test_pipeline_builder_failing_chunk_raise
+tests/e2e/test_kg_builder_pipeline_e2e.py::test_pipeline_builder_failing_chunk_do_not_raise
+tests/e2e/test_kg_builder_pipeline_e2e.py::test_pipeline_builder_two_documents
+tests/e2e/test_kg_writer_component_e2e.py::test_kg_writer
+tests/e2e/test_kg_writer_component_e2e.py::test_kg_writer_no_neo4j_deprecation_warning
+tests/e2e/test_lexical_graph_builder_component_e2e.py::test_lexical_graph_component_alone_default_config
+tests/e2e/test_lexical_graph_builder_component_e2e.py::test_lexical_graph_before_extractor_custom_prefix
+tests/e2e/test_neo4j_reader_component_e2e.py::test_neo4j_reader
+tests/e2e/test_neo4j_reader_component_e2e.py::test_neo4j_reader_in_pipeline
+tests/e2e/test_neo4j_reader_component_e2e.py::test_neo4j_reader_in_pipeline_with_lexical_graph_config
+tests/e2e/test_schema_e2e.py::test_cypher_returns_correct_node_properties
+tests/e2e/test_schema_e2e.py::test_cypher_returns_correct_relationship_properties
+tests/e2e/test_schema_e2e.py::test_cypher_returns_correct_relationships
+tests/e2e/test_schema_e2e.py::test_get_structured_schema_returns_correct_node_properties
+tests/e2e/test_schema_e2e.py::test_get_structured_schema_returns_correct_relationship_properties
+tests/e2e/test_schema_e2e.py::test_get_structured_schema_returns_correct_relationships
+tests/e2e/test_schema_e2e.py::test_get_structured_schema_returns_correct_constraints
+tests/e2e/test_schema_e2e.py::test_get_structured_schema_returns_correct_indexes
+tests/e2e/test_schema_filters_e2e.py::test_filtering_labels_node_properties
+tests/e2e/test_schema_filters_e2e.py::test_filtering_labels_relationship_properties
+tests/e2e/test_schema_filters_e2e.py::test_filtering_labels_relationships
+tests/e2e/test_simplekgpipeline_e2e.py::test_pipeline_builder_happy_path
+tests/e2e/test_text2cypher_e2e.py::test_t2c_retriever_search
+tests/e2e/test_vector_e2e.py::test_vector_retriever_search_text
+tests/e2e/test_vector_e2e.py::test_vector_cypher_retriever_search_text
+tests/e2e/test_vector_e2e.py::test_vector_retriever_search_vector
+tests/e2e/test_vector_e2e.py::test_vector_cypher_retriever_search_vector
+tests/e2e/test_vector_e2e.py::test_vector_retriever_return_properties
+tests/e2e/test_vector_e2e.py::test_vector_retriever_filters
+tests/e2e/weaviate_e2e/test_weaviate_e2e.py::test_weaviate_neo4j_vector_input
+tests/e2e/weaviate_e2e/test_weaviate_e2e.py::test_weaviate_neo4j_text_input_local_embedder
+tests/e2e/weaviate_e2e/test_weaviate_e2e.py::test_weaviate_neo4j_text_input_remote_embedder
+tests/unit/embeddings/test_cohere_embedder.py::test_cohere_embedder_missing_cohere_dependency
+tests/unit/embeddings/test_cohere_embedder.py::test_cohere_embedder_happy_path
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_missing_dependency
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_happy_path
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_api_key_via_kwargs
+tests/unit/embeddings/test_mistralai_embedder.py::test_mistralai_embedder_api_key_from_env
+tests/unit/embeddings/test_openai_embedder.py::test_openai_embedder_missing_dependency
+tests/unit/embeddings/test_openai_embedder.py::test_openai_embedder_happy_path
+tests/unit/embeddings/test_openai_embedder.py::test_azure_openai_embedder_missing_dependency
+tests/unit/embeddings/test_openai_embedder.py::test_azure_openai_embedder_happy_path
+tests/unit/embeddings/test_openai_embedder.py::test_azure_openai_embedder_does_not_call_openai_client
+tests/unit/embeddings/test_sentence_transformers.py::test_initialization
+tests/unit/embeddings/test_sentence_transformers.py::test_initialization_with_custom_model
+tests/unit/embeddings/test_sentence_transformers.py::test_embed_query
+tests/unit/embeddings/test_sentence_transformers.py::test_import_error
+tests/unit/embeddings/test_vertexai_embedder.py::test_vertexai_embedder_missing_dependency
+tests/unit/embeddings/test_vertexai_embedder.py::test_vertexai_embedder_happy_path
+tests/unit/experimental/components/test_embedder.py::test_text_chunk_embedder_run
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_happy_path_no_entities_no_document
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_happy_path_no_entities
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_happy_path_no_entities_no_lexical_graph
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_happy_path_non_empty_result
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_missing_entity_id
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_llm_ainvoke_failed
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_llm_badly_formatted_json
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_llm_invalid_json
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_llm_badly_formatted_json_do_not_raise
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_extractor_custom_prompt
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_fix_unquoted_keys
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_fix_unquoted_string_values
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_remove_trailing_commas
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_fix_excessive_braces
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_fix_multiple_issues
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_fix_null_values
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_fix_numeric_values
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_missing_closing
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_extra_closing
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_balanced_input
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_nested_structure
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_unbalanced_nested
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_unmatched_openings
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_unmatched_closings
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_complex_structure
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_incorrect_nested_closings
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_braces_inside_string
+tests/unit/experimental/components/test_entity_relation_extractor.py::test_balance_curly_braces_unbalanced_with_string
+tests/unit/experimental/components/test_kg_writer.py::test_batched
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_nodes
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_nodes_with_embedding
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_relationship
+tests/unit/experimental/components/test_kg_writer.py::test_upsert_relationship_with_embedding
+tests/unit/experimental/components/test_kg_writer.py::test_run
+tests/unit/experimental/components/test_kg_writer.py::test_run_is_version_below_5_23
+tests/unit/experimental/components/test_kg_writer.py::test_run_is_version_5_23_or_above
+tests/unit/experimental/components/test_lexical_graph_builder.py::test_lexical_graph_builder_create_chunk_node_no_metadata
+tests/unit/experimental/components/test_lexical_graph_builder.py::test_lexical_graph_builder_create_chunk_node_metadata_no_embedding
+tests/unit/experimental/components/test_lexical_graph_builder.py::test_lexical_graph_builder_create_chunk_node_metadata_embedding
+tests/unit/experimental/components/test_lexical_graph_builder.py::test_lexical_graph_builder_run_with_document
+tests/unit/experimental/components/test_lexical_graph_builder.py::test_lexical_graph_builder_run_no_document
+tests/unit/experimental/components/test_lexical_graph_builder.py::test_lexical_graph_builder_run_custom_labels
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader_custom_lg_config
+tests/unit/experimental/components/test_neo4j_reader.py::test_neo4j_chunk_reader_fetch_embedding
+tests/unit/experimental/components/test_pdf_loader.py::test_pdf_loading
+tests/unit/experimental/components/test_pdf_loader.py::test_pdf_processing_error
+tests/unit/experimental/components/test_resolver.py::test_simple_resolver
+tests/unit/experimental/components/test_resolver.py::test_simple_resolver_custom_filter
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_valid_data
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_description
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_empty_lists
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_data_types
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_properties_types
+tests/unit/experimental/components/test_schema.py::test_run_method
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_entity
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_invalid_relation
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_properties
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_no_potential_schema
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_no_relations_or_potential_schema
+tests/unit/experimental/components/test_schema.py::test_create_schema_model_missing_relations
+tests/unit/experimental/components/test_types.py::test_neo4j_node_invalid_property
+tests/unit/experimental/components/test_types.py::test_neo4j_node_invalid_embedding_property
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_no_overlap
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_with_overlap
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_split_text_empty_string
+tests/unit/experimental/components/text_splitters/test_fixed_size_splitter.py::test_invalid_chunk_overlap
+tests/unit/experimental/components/text_splitters/test_langchain.py::test_langchain_adapter
+tests/unit/experimental/components/text_splitters/test_llamaindex.py::test_llamaindex_adapter
+tests/unit/experimental/pipeline/test_component.py::test_component_inputs
+tests/unit/experimental/pipeline/test_component.py::test_component_outputs
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_init_with_text
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_init_with_file_path
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_run_with_both_inputs
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_run_with_no_inputs
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_document_info_with_file
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_document_info_with_text
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_with_entities_and_file
+tests/unit/experimental/pipeline/test_kg_builder.py::test_simple_kg_pipeline_on_error_conversion
+tests/unit/experimental/pipeline/test_kg_builder.py::test_simple_kg_pipeline_on_error_invalid_value
+tests/unit/experimental/pipeline/test_kg_builder.py::test_simple_kg_pipeline_no_entity_resolution
+tests/unit/experimental/pipeline/test_kg_builder.py::test_simple_kg_pipeline_lexical_graph_config_attribute
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_with_lexical_graph_config
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_to_schema_entity_method
+tests/unit/experimental/pipeline/test_kg_builder.py::test_knowledge_graph_builder_to_schema_relation_method
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_input_config_for_task_pipeline_not_validated
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_user_only
+tests/unit/experimental/pipeline/test_orchestrator.py::test_pipeline_get_component_inputs_from_parent_specific
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_parent_all
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_from_parent_and_input
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_get_component_inputs_ignore_user_input_if_input_def_provided
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_branch
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_aggregation
+tests/unit/experimental/pipeline/test_orchestrator.py::test_orchestrator_aggregation_waiting
+tests/unit/experimental/pipeline/test_pipeline.py::test_simple_pipeline_two_components
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_propagation
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_no_expected_params
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_one_component_all_good
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_invalidate
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_called_twice
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_one_component_input_param_missing
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_param_mapped_twice
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_unexpected_input
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_connected_components_input
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_connected_components_result
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_connected_components_missing_input
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_full_missing_inputs_in_user_data
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_full_missing_inputs_in_component_name
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_parameter_validation_full_missing_inputs
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_branches
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_aggregation
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_missing_param_on_init
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_missing_param_on_connect
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_with_default_params
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_cycle
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_wrong_component_name
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_async
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_to_pgv
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_draw
+tests/unit/experimental/pipeline/test_pipeline.py::test_pipeline_draw_missing_pygraphviz_dep
+tests/unit/experimental/pipeline/test_pipeline.py::test_run_result_no_warning
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_node_alone
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_node_not_root
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_node_not_leaf
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_add_nodes
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_roots
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_next_edge
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_prev_edge
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_contains
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_is_cyclic
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_set_node
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_validate_edge_bad_node_name
+tests/unit/experimental/pipeline/test_pipeline_graph.py::test_graph_validate_edge_no_parallel_edges
+tests/unit/experimental/pipeline/test_store.py::test_memory_store
+tests/unit/llm/test_anthropic_llm.py::test_anthropic_llm_missing_dependency
+tests/unit/llm/test_anthropic_llm.py::test_anthropic_invoke_happy_path
+tests/unit/llm/test_anthropic_llm.py::test_anthropic_ainvoke_happy_path
+tests/unit/llm/test_cohere_llm.py::test_cohere_llm_missing_dependency
+tests/unit/llm/test_cohere_llm.py::test_cohere_llm_happy_path
+tests/unit/llm/test_cohere_llm.py::test_cohere_llm_happy_path_async
+tests/unit/llm/test_cohere_llm.py::test_cohere_llm_failed
+tests/unit/llm/test_cohere_llm.py::test_cohere_llm_failed_async
+tests/unit/llm/test_mistralaillm.py::test_mistral_ai_llm_missing_dependency
+tests/unit/llm/test_mistralaillm.py::test_mistral_ai_llm_invoke
+tests/unit/llm/test_mistralaillm.py::test_mistral_ai_llm_ainvoke
+tests/unit/llm/test_mistralaillm.py::test_mistral_ai_llm_invoke_sdkerror
+tests/unit/llm/test_mistralaillm.py::test_mistral_ai_llm_ainvoke_sdkerror
+tests/unit/llm/test_openai_llm.py::test_openai_llm_missing_dependency
+tests/unit/llm/test_openai_llm.py::test_openai_llm_happy_path
+tests/unit/llm/test_openai_llm.py::test_azure_openai_llm_missing_dependency
+tests/unit/llm/test_openai_llm.py::test_azure_openai_llm_happy_path
+tests/unit/llm/test_vertexai_llm.py::test_vertexai_llm_missing_dependency
+tests/unit/llm/test_vertexai_llm.py::test_vertexai_invoke_happy_path
+tests/unit/llm/test_vertexai_llm.py::test_vertexai_ainvoke_happy_path
+tests/unit/retrievers/external/test_pinecone.py::test_pinecone_retriever_invalid_return_properties
+tests/unit/retrievers/external/test_pinecone.py::test_pinecone_retriever_invalid_retrieval_query
+tests/unit/retrievers/external/test_pinecone.py::test_pinecone_retriever_search_happy_path
+tests/unit/retrievers/external/test_pinecone.py::test_invalid_neo4j_database_name
+tests/unit/retrievers/external/test_pinecone.py::test_pinecone_retriever_search_return_properties
+tests/unit/retrievers/external/test_pinecone.py::test_pinecone_retriever_search_retrieval_query
+tests/unit/retrievers/external/test_pinecone.py::test_pinecone_retriever_with_result_format_function
+tests/unit/retrievers/external/test_qdrant.py::test_qdrant_retriever_search_happy_path
+tests/unit/retrievers/external/test_qdrant.py::test_invalid_neo4j_database_name
+tests/unit/retrievers/external/test_qdrant.py::test_qdrant_retriever_search_return_properties
+tests/unit/retrievers/external/test_qdrant.py::test_qdrant_retriever_search_retrieval_query
+tests/unit/retrievers/external/test_qdrant.py::test_qdrant_retriever_invalid_return_properties
+tests/unit/retrievers/external/test_qdrant.py::test_qdrant_retriever_invalid_retrieval_query
+tests/unit/retrievers/external/test_weaviate.py::test_text_search_remote_vector_store_happy_path
+tests/unit/retrievers/external/test_weaviate.py::test_invalid_neo4j_database_name
+tests/unit/retrievers/external/test_weaviate.py::test_text_search_remote_vector_store_return_properties
+tests/unit/retrievers/external/test_weaviate.py::test_text_search_remote_vector_store_retrieval_query
+tests/unit/retrievers/external/test_weaviate.py::test_match_query
+tests/unit/retrievers/external/test_weaviate.py::test_match_query_with_return_properties
+tests/unit/retrievers/external/test_weaviate.py::test_match_query_with_retrieval_query
+tests/unit/retrievers/external/test_weaviate.py::test_match_query_with_both_return_properties_and_retrieval_query
+tests/unit/retrievers/external/test_weaviate.py::test_weaviate_retriever_with_result_format_function
+tests/unit/retrievers/test_base.py::test_retriever_get_version[db_version0-expected_version0]
+tests/unit/retrievers/test_base.py::test_retriever_get_version[db_version1-expected_version1]
+tests/unit/retrievers/test_base.py::test_retriever_get_version[db_version2-expected_version2]
+tests/unit/retrievers/test_base.py::test_retriever_get_version[db_version3-expected_version3]
+tests/unit/retrievers/test_base.py::test_retriever_get_version[db_version4-expected_version4]
+tests/unit/retrievers/test_base.py::test_retriever_version_support[db_version0-None]
+tests/unit/retrievers/test_base.py::test_retriever_version_support[db_version1-Neo4jVersionError]
+tests/unit/retrievers/test_base.py::test_retriever_version_support[db_version2-None]
+tests/unit/retrievers/test_base.py::test_retriever_version_support[db_version3-Neo4jVersionError]
+tests/unit/retrievers/test_base.py::test_retriever_version_support[db_version4-None]
+tests/unit/retrievers/test_base.py::test_retriever_search_docstring_copied
+tests/unit/retrievers/test_base.py::test_retriever_search_docstring_unchanged
+tests/unit/retrievers/test_hybrid.py::test_vector_retriever_initialization
+tests/unit/retrievers/test_hybrid.py::test_vector_cypher_retriever_initialization
+tests/unit/retrievers/test_hybrid.py::test_hybrid_retriever_invalid_fulltext_index_name
+tests/unit/retrievers/test_hybrid.py::test_hybrid_retriever_with_result_format_function
+tests/unit/retrievers/test_hybrid.py::test_hybrid_retriever_invalid_database_name
+tests/unit/retrievers/test_hybrid.py::test_hybrid_cypher_retriever_invalid_retrieval_query
+tests/unit/retrievers/test_hybrid.py::test_hybrid_cypher_retriever_invalid_database_name
+tests/unit/retrievers/test_hybrid.py::test_hybrid_search_text_happy_path
+tests/unit/retrievers/test_hybrid.py::test_hybrid_search_favors_query_vector_over_embedding_vector
+tests/unit/retrievers/test_hybrid.py::test_error_when_hybrid_search_only_text_no_embedder
+tests/unit/retrievers/test_hybrid.py::test_hybrid_search_retriever_search_missing_embedder_for_text
+tests/unit/retrievers/test_hybrid.py::test_hybrid_retriever_return_properties
+tests/unit/retrievers/test_hybrid.py::test_hybrid_cypher_retrieval_query_with_params
+tests/unit/retrievers/test_hybrid.py::test_hybrid_cypher_retriever_with_result_format_function
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_initialization
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_schema_retrieval
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_schema_retrieval_failure
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_invalid_neo4j_schema
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_invalid_search_query
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_invalid_search_examples
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_happy_path
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_cypher_error
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_with_result_format_function
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_initialization_with_custom_prompt
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_initialization_with_custom_prompt_and_schema_and_examples
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_invalid_custom_prompt_type
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_with_custom_prompt_prompt_params
+tests/unit/retrievers/test_text2cypher.py::test_t2c_retriever_with_custom_prompt_bad_prompt_params
+tests/unit/retrievers/test_vector.py::test_vector_retriever_initialization
+tests/unit/retrievers/test_vector.py::test_vector_retriever_invalid_index_name
+tests/unit/retrievers/test_vector.py::test_vector_retriever_invalid_database_name
+tests/unit/retrievers/test_vector.py::test_vector_cypher_retriever_invalid_retrieval_query
+tests/unit/retrievers/test_vector.py::test_vector_cypher_retriever_invalid_database_name
+tests/unit/retrievers/test_vector.py::test_vector_cypher_retriever_initialization
+tests/unit/retrievers/test_vector.py::test_similarity_search_vector_happy_path
+tests/unit/retrievers/test_vector.py::test_similarity_search_text_happy_path
+tests/unit/retrievers/test_vector.py::test_similarity_search_text_return_properties
+tests/unit/retrievers/test_vector.py::test_vector_retriever_search_missing_embedder_for_text
+tests/unit/retrievers/test_vector.py::test_vector_retriever_search_both_text_and_vector
+tests/unit/retrievers/test_vector.py::test_vector_retriever_with_result_format_function
+tests/unit/retrievers/test_vector.py::test_vector_cypher_retriever_search_missing_embedder_for_text
+tests/unit/retrievers/test_vector.py::test_vector_cypher_retriever_search_both_text_and_vector
+tests/unit/retrievers/test_vector.py::test_retrieval_query_happy_path
+tests/unit/retrievers/test_vector.py::test_retrieval_query_with_result_format_function
+tests/unit/retrievers/test_vector.py::test_retrieval_query_with_params
+tests/unit/retrievers/test_vector.py::test_retrieval_query_cypher_error
+tests/unit/test_filters.py::test_param_store
+tests/unit/test_filters.py::test_operator_field_escape
+tests/unit/test_filters.py::test_single_condition_cypher_eq
+tests/unit/test_filters.py::test_single_condition_cypher_eq_node_alias
+tests/unit/test_filters.py::test_single_condition_cypher_neq
+tests/unit/test_filters.py::test_single_condition_cypher_lt
+tests/unit/test_filters.py::test_single_condition_cypher_gt
+tests/unit/test_filters.py::test_single_condition_cypher_lte
+tests/unit/test_filters.py::test_single_condition_cypher_gte
+tests/unit/test_filters.py::test_single_condition_cypher_in_int
+tests/unit/test_filters.py::test_single_condition_cypher_in_str
+tests/unit/test_filters.py::test_single_condition_cypher_in_invalid_type
+tests/unit/test_filters.py::test_single_condition_cypher_nin
+tests/unit/test_filters.py::test_single_condition_cypher_like
+tests/unit/test_filters.py::test_single_condition_cypher_ilike
+tests/unit/test_filters.py::test_single_condition_cypher_like_not_a_string
+tests/unit/test_filters.py::test_single_condition_cypher_escaped_field_name
+tests/unit/test_filters.py::test_handle_field_filter_not_a_string
+tests/unit/test_filters.py::test_handle_field_filter_field_start_with_dollar_sign
+tests/unit/test_filters.py::test_handle_field_filter_bad_value
+tests/unit/test_filters.py::test_handle_field_filter_bad_operator_name
+tests/unit/test_filters.py::test_handle_field_filter_operator_between
+tests/unit/test_filters.py::test_handle_field_filter_operator_between_not_enough_parameters
+tests/unit/test_filters.py::test_handle_field_filter_implicit_eq
+tests/unit/test_filters.py::test_handle_field_filter_eq
+tests/unit/test_filters.py::test_handle_field_filter_neq
+tests/unit/test_filters.py::test_handle_field_filter_lt
+tests/unit/test_filters.py::test_handle_field_filter_gt
+tests/unit/test_filters.py::test_handle_field_filter_lte
+tests/unit/test_filters.py::test_handle_field_filter_gte
+tests/unit/test_filters.py::test_handle_field_filter_in
+tests/unit/test_filters.py::test_handle_field_filter_nin
+tests/unit/test_filters.py::test_handle_field_filter_like
+tests/unit/test_filters.py::test_handle_field_filter_ilike
+tests/unit/test_filters.py::test_construct_metadata_filter_filter_is_not_a_dict
+tests/unit/test_filters.py::test_construct_metadata_filter_no_operator
+tests/unit/test_filters.py::test_construct_metadata_filter_implicit_and
+tests/unit/test_filters.py::test_construct_metadata_filter_explicit_and
+tests/unit/test_filters.py::test_construct_metadata_filter_or
+tests/unit/test_filters.py::test_construct_metadata_filter_invalid_operator
+tests/unit/test_filters.py::test_get_metadata_filter_single_field_string
+tests/unit/test_filters.py::test_get_metadata_filter_single_field_int
+tests/unit/test_filters.py::test_get_metadata_filter_single_field_bool
+tests/unit/test_filters.py::test_get_metadata_filter_explicit_eq_operator
+tests/unit/test_filters.py::test_get_metadata_filter_neq_operator
+tests/unit/test_filters.py::test_get_metadata_filter_lt_operator
+tests/unit/test_filters.py::test_get_metadata_filter_gt_operator
+tests/unit/test_filters.py::test_get_metadata_filter_lte_operator
+tests/unit/test_filters.py::test_get_metadata_filter_gte_operator
+tests/unit/test_filters.py::test_get_metadata_filter_in_operator
+tests/unit/test_filters.py::test_get_metadata_filter_not_in_operator
+tests/unit/test_filters.py::test_get_metadata_filter_like_operator
+tests/unit/test_filters.py::test_get_metadata_filter_ilike_operator
+tests/unit/test_filters.py::test_get_metadata_filter_between_operator
+tests/unit/test_filters.py::test_get_metadata_filter_implicit_and_condition
+tests/unit/test_filters.py::test_get_metadata_filter_explicit_and_condition
+tests/unit/test_filters.py::test_get_metadata_filter_explicit_and_condition_with_operator
+tests/unit/test_filters.py::test_get_metadata_filter_or_condition
+tests/unit/test_filters.py::test_get_metadata_filter_and_or_combined
+tests/unit/test_filters.py::test_get_metadata_filter_field_name_with_dollar_sign
+tests/unit/test_filters.py::test_get_metadata_filter_and_no_list
+tests/unit/test_filters.py::test_get_metadata_filter_unsupported_operator
+tests/unit/test_graphrag.py::test_graphrag_prompt_template
+tests/unit/test_graphrag.py::test_graphrag_happy_path
+tests/unit/test_graphrag.py::test_graphrag_initialization_error
+tests/unit/test_graphrag.py::test_graphrag_search_error
+tests/unit/test_indexes.py::test_create_vector_index_happy_path
+tests/unit/test_indexes.py::test_create_vector_index_fail_if_exists
+tests/unit/test_indexes.py::test_create_vector_index_ensure_escaping
+tests/unit/test_indexes.py::test_create_vector_index_negative_dimension
+tests/unit/test_indexes.py::test_create_vector_index_validation_error_dimensions
+tests/unit/test_indexes.py::test_create_vector_index_raises_error_with_neo4j_client_error
+tests/unit/test_indexes.py::test_create_vector_index_validation_error_similarity_fn
+tests/unit/test_indexes.py::test_drop_index_if_exists
+tests/unit/test_indexes.py::test_drop_index_if_exists_raises_error_with_neo4j_client_error
+tests/unit/test_indexes.py::test_create_fulltext_index_happy_path
+tests/unit/test_indexes.py::test_create_fulltext_index_fail_if_exists
+tests/unit/test_indexes.py::test_create_fulltext_index_raises_error_with_neo4j_client_error
+tests/unit/test_indexes.py::test_create_fulltext_index_empty_node_properties
+tests/unit/test_indexes.py::test_create_fulltext_index_ensure_escaping
+tests/unit/test_indexes.py::test_upsert_vector_happy_path
+tests/unit/test_indexes.py::test_upsert_vector_on_relationship_happy_path
+tests/unit/test_indexes.py::test_upsert_vector_on_relationship_raises_neo4j_insertion_error
+tests/unit/test_indexes.py::test_upsert_vector_raises_neo4j_insertion_error
+tests/unit/test_neo4j_queries.py::test_vector_search_basic
+tests/unit/test_neo4j_queries.py::test_hybrid_search_basic
+tests/unit/test_neo4j_queries.py::test_vector_search_with_properties
+tests/unit/test_neo4j_queries.py::test_vector_search_with_retrieval_query
+tests/unit/test_neo4j_queries.py::test_vector_search_with_filters
+tests/unit/test_neo4j_queries.py::test_vector_search_with_params_from_filters
+tests/unit/test_neo4j_queries.py::test_hybrid_search_with_retrieval_query
+tests/unit/test_neo4j_queries.py::test_hybrid_search_with_properties
+tests/unit/test_neo4j_queries.py::test_get_query_tail_with_retrieval_query
+tests/unit/test_neo4j_queries.py::test_get_query_tail_with_properties
+tests/unit/test_neo4j_queries.py::test_get_query_tail_with_fallback
+tests/unit/test_neo4j_queries.py::test_get_query_tail_ordering_all
+tests/unit/test_neo4j_queries.py::test_get_query_tail_ordering_no_retrieval_query
+tests/unit/test_prompt_template.py::test_prompt_template_all_default
+tests/unit/test_prompt_template.py::test_prompt_template_overwrite_defaults
+tests/unit/test_prompt_template.py::test_prompt_template_format_missing_value
+tests/unit/test_prompt_template.py::test_prompt_template_format_extra_values
+tests/unit/test_prompt_template.py::test_prompt_template_missing_placeholders
+tests/unit/test_prompt_template.py::test_prompt_template_format_given_unused_kwargs
+tests/unit/test_schema.py::test_get_schema_ensure_formatted_response
+tests/unit/test_schema.py::test_get_structured_schema_happy_path
+tests/unit/test_schema.py::test_get_schema_ensure_structured_response
+
+411 tests collected in 41.41s
+Container 296cef6509e5 stopped and removed
+Spend totally 1665.3219742774963.

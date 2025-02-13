@@ -1,0 +1,74 @@
+
+/repo/accelerated_scan/warp.py
+<<<<<<< SEARCH
+module = load_inline(
+    name='warpscan',
+    cpp_sources=[cpp_source],
+    cuda_sources=[cuda_source],
+    functions=['warpscan_forward', 'warpscan_backward'],
+    verbose=True,
+    extra_cuda_cflags=[
+        "-O3",
+        "-std=c++17",
+        "--ptxas-options=-v",
+        "-lineinfo",
+        "--fmad", "false",
+        "-U__CUDA_NO_HALF_OPERATORS__", "-U__CUDA_NO_HALF_CONVERSIONS__",
+        "-U__CUDA_NO_BFLOAT16_OPERATORS__", "-U__CUDA_NO_BFLOAT16_CONVERSIONS__",
+    ]
+)
+=======
+try:
+    module = load_inline(
+        name='warpscan',
+        cpp_sources=[cpp_source],
+        cuda_sources=[cuda_source],
+        functions=['warpscan_forward', 'warpscan_backward'],
+        verbose=True,
+        extra_cuda_cflags=[
+            "-O3",
+            "-std=c++17",
+            "--ptxas-options=-v",
+            "-lineinfo",
+            "--fmad", "false",
+            "-U__CUDA_NO_HALF_OPERATORS__", "-U__CUDA_NO_HALF_CONVERSIONS__",
+            "-U__CUDA_NO_BFLOAT16_OPERATORS__", "-U__CUDA_NO_BFLOAT16_CONVERSIONS__",
+        ]
+    )
+    warpscan_forward = module.warpscan_forward
+    warpscan_backward = module.warpscan_backward
+
+    def scan_forward(gates, tokens, reverse=False):
+        output = torch.zeros_like(tokens)
+        warpscan_forward(gates, tokens, output, reverse)
+        return output
+
+    class Scan(torch.autograd.Function):
+        @staticmethod
+        def forward(ctx, gates, tokens):
+            B, C, T = gates.shape
+            assert tokens.shape == (B, C, T)
+            assert gates.is_contiguous()
+            assert tokens.is_contiguous()
+            states = scan_forward(gates, tokens)
+            ctx.save_for_backward(states, gates)
+            return states
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            states, gates = ctx.saved_tensors
+            B, C, T = gates.shape
+            grad_output = grad_output.contiguous()
+            assert states.is_contiguous()
+            assert gates.is_contiguous()
+            d_gates = torch.empty_like(gates)
+            d_tokens = torch.empty_like(gates)
+            warpscan_backward(gates, states, grad_output, d_gates, d_tokens)
+            return d_gates, d_tokens
+
+    def scan(gates, tokens):
+        return Scan.apply(gates, tokens)
+
+except:
+    from .ref import scan
+>>>>>>> REPLACE

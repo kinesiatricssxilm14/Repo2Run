@@ -1,0 +1,2457 @@
+reagento/dishka
+Container boring_davinci d086ff097163 started with image build_env_python:3.10
+************** configuration **************
+You are an expert skilled in environment configuration. You can refer to various files and structures in the repository such as `requirements.txt`, `setup.py`, etc., and use dependency prediction tools like pipreqs to install and download the corresponding third-party libraries in a given Docker image. This ensures that the repository can be successfully configured and able to correctly execute the specified tests.
+* Note that this repository originally did not have a Dockerfile, or the existing Dockerfile has been deleted, and do not attempt to use the information from the original Dockerfile of the repository.*
+
+* We have already configured poetry, pipdeptree, and pytest for you; no additional configuration is needed. However, you cannot directly invoke pytest; you need to run tests using `runtest` or `poetryruntest`.
+
+WORK PROCESS:
+0. **Read README**: First, read the README file. If the README file mentions a way to configure the environment, give priority to using the methods described in the README. Note that our goal here is to run the code, not to use the tool, so our standard is to be able to run the tests. If you think the README clearly specifies a method for configuring the environment for running tests, you can skip the subsequent steps and follow its instructions to configure the environment. Then use `runtest` or `poetryruntest` to check if the configuration is correct.
+1. **Read Directory Structure**: Check the folder structure in the root directory, focusing on the configuration files related to setting up the environment.
+2. **Determine Python Version Or Other Base Image**: Decide if you need to switch the Python version or the base image in the Docker container. The current version is python:3.10. If you want to switch the Python version, please run the `change_python_version python_version` command, where python_version is the Python version number (for example, `change_python_version 3.9`), and you do not need to add quotation marks. If you need to change the base image, use the `change_base_image base_image_name:tag` command (for example, `change_base_image pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime`). If you do not need to make any changes, please ignore this step. You can also run these commands at any point later during the environment configuration to switch the Python version or the base image.
+    *Note*: If you use `change_base_image` and no tag is provided, it defaults to "latest".
+    *Note*: Please prioritize ease of environment configuration. If an official ready-to-use base image is available, you can use it directly. However, be aware that doing so may discard all previous configurations.
+    *Note*: Avoid using images that do not directly support Python, such as Ubuntu or Node, because the environments we need to configure are primarily based on the Python language.
+3. **Check the configuration files in the root directory**: Read configuration files related to setting up the environment, such as: Information in the `.github` folder, `setup.py`, `setup.cfg`, `Pipfile` and `Pipfile.lock`, `environment.yml`, `poetry.lock` and `pyproject.toml`, etc.
+3.5 **Try testing (optional)**: Using `runtest` command to check if it is possible to pass the tests directly without any additional configuration.
+4. **Review Additional Files**: Consider other potential files and structures for environment configuration.
+5. **Automatically install according to the installation script**: Based on the observed structure in the root directory, determine the necessary installation commands:
+    a. Poetry Detected: If a poetry.lock file is present in the root directory, Install Poetry using the relevant method for your system. Execute the command `poetry install` to install the dependencies specified in the lock file.
+    b. Setup.py Detected: If a setup.py file exists in the root directory, run the command `pip install -e .` to install the package in editable mode along with its dependencies.
+    c. Other Descriptor Files: For other specific files that indicate dependency management, assess and determine the appropriate method to install the required dependencies.
+    *Note*: We only consider automatically installation script in the repository. Do not consider `requirements.txt` directly in this step!
+6. **Collecting Third-Party Library Download List**: In this step, you need to locate all files in the root directory that list dependencies line by line, such as `requirements.txt`, `requirements_dev.txt`, etc. Use a command like `queue_file /repo/requirements.txt` to submit them to the download list. I will handle the unified downloading later.
+    If you have determined the path to the requirements file, please enter `waitinglist addfile` followed by the path to the requirements file. For example, `waitinglist addfile /repo/requirements.txt`.
+    *Note*: The files you collect must follow the standard requirements.txt format. Do not collect files in any other formats. For instance, if you are unsure about the format of `/repo/requirements_test.txt`, you can use the command `cat /repo/requirements_test.txt` to read the file contents and ensure the file fully meets the requirements before submitting it. If no such dependency-listing files are found, you may skip this step.
+    *Note*: In a standard requirements.txt file, each valid entry on a line consists of package_name followed by version_constraints (if there are no version_constraints, the latest version is implied). For example: "numpy==2.1", "numpy>2.0,<3.0", "numpy" (implies the latest version).
+    *Note*: We will not collect items that are improperly formatted.
+7. **Using pipreqs to Obtain Additional Lists**: In this step, you should use `runpipreqs` to analyze the third-party libraries that need to be installed based on the findings of the previous step. Simply use the command `get pipreqs`, and it will generate a `requirements_pipreqs.txt` file in the project root directory (/repo) and show you the warnings and errors.
+    *Note*: If you have already collected some requirements.txt files in Step 5, you do not need to execute `runpipreqs` in this step. Avoid collecting too many dependencies repeatedly. You can directly execute `download` after handling conflicts and formatting errors. If errors occur in subsequent tests, you can then run `runpipreqs`.
+8. **Handling pipreqs Warnings**: For warnings that appear in pipreqs, such as not being able to find a module on PyPI, it may be due to a discrepancy between the download name and the import name of a third-party library. For example, `import cv2` requires downloading not `cv2` but `opencv-python`. For each warning, you need to address the discrepancy by ensuring the correct package names are used for the downloads.
+    You should review "pipreqs_output.txt" (used to store output during the pipreqs dependency generation process) and "requirements_pipreqs.txt" (the final generated dependency results) to check for any inconsistencies. Use ```diff and ``` to make adjustments to "requirements_pipreqs.txt" as needed.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+9. **Update lists**: Add the "requirements_pipreqs.txt" file generated by pipreqs and corrected by you (or maybe not) to the waiting list using the command `waitinglist addfile /repo/requirements_pipreqs.txt`.
+    *Note*: If you did not execute runpipreqs, then you do not need to perform this step.
+10. **Resolve version_constraint conflicts**: Process the elements in conflict_list. Based on the information in conflict_list, resolve any existing version_constraints conflicts. Only after these have been resolved can you proceed with the download.
+11. **Unified download execution**: After analyzing the original requirements.txt of the repository and the "requirements.txt" generated by pipreqs, and resolving any conflict issues, you need to enter download to execute the unified `download`. This will download each element currently in the waiting_list one by one, and eventually, the download status will be returned.
+12. **Error Handling**: After the download is complete, you need to handle the error messages based on the information provided. We will return the list of third-party libraries and their dependencies in your current environment. When resolving these errors, you need to ensure that these dependencies are properly managed. For example, you cannot directly uninstall a package that is required by another package, nor can you install a version that does not meet the constraints.
+    For instance, if package A depends on package B with a requirement of "B>=1.0", you cannot simply run pip uninstall B as this would cause package A to lack its dependency. Similarly, you cannot run `pip install B==0.5` because this would not satisfy the requirement of "B>=1.0".
+    You can make use of the following tools:
+    a.(Strongly recommend) `pipdeptree`: Use pipdeptree to see the structure of the python third-party library downloaded.
+    b.(Strongly recommend) `pipdeptree -p <package_name>`: Use pipdeptree -p followed by package_name can display the dependency information of a specific third-party library.
+    c.(Strongly recommend) `pip index versions <package_name> --python-version <python_version>`: This command is used to query the versions of a specific package for a particular Python version, including pre-release versions. For example, `pip index versions requests --python-version 3.10` can be used to find the versions of requests that are available for Python 3.10.
+    d. `pip install -q`: Use this command to install a specific version of a package with minimal output. This greatly reduces the verbosity, showing only crucial information and final status. It is recommended to specify the version with == to avoid conflicts with the existing environment. For example, use pip install -q requests==2.25.1 to ensure a quiet and specific version installation.
+    e. `pip install -e`: Use this command to install a package in "editable" mode. This is particularly useful during development when you want to make changes to the source code and have them immediately reflected in the installed package without needing to reinstall it. For example, pip install -e . will install the package located in the current directory in editable mode. Another common use case is to install a package from a local path or a VCS repository while keeping it editable. For example, pip install -e git+https://github.com/username/repo.git#egg=package_name.
+    f. `pip uninstall`: Use this command to uninstall a third-party library. This should be used cautiously as it may cause dependency issues. If you need to change the version of a package, it is better to use `pip install [package_name]==[version]` instead.
+    g. `apt-get update -qq && apt-get install [package]=[version] -y -qq`: Use this command to install system packages if needed, remember to use `-y`. Use `-qq` to minimize the output if there is nothing wrong.
+    h. `export <variable>=<value>`: Use this command to set system environment variables.
+    i. You can use the `--help` parameter to view detailed usage instructions for various tools, such as `pipdeptree --help` and `pip install --help`, etc.
+    j. You may also use other commands that are not listed here, including built-in Bash commands and other system commands.
+    *Note*: Always consider the potential impact of each command on the system. Aim to achieve the best results with minimal changes.
+    *Note*: For modules not found in the error message, first check if the corresponding module is available in the project folder before proceeding with external downloads. For example, if you encounter an error stating ModuleNotFoundError: No module named 'my_module', check if there is a file named my_module.py in your project directory. If it is not present, then you can look for the module externally and download it if necessary.
+    *Note*: Do not use external download tools like `git clone` or `wget` to download a large number of files directly in the /repo folder (or its subdirectories) to avoid causing significant changes to the original repository.
+    *Note*: Flexibility: You do not need to complete all configurations in one go. If you are unsure whether the configuration is approximately complete, you can use the `runtest` or `poetryruntest`(When you configured in poetry environment) command. I will check the configured environment and return any error messages. Based on the error messages, you can make further adjustments.
+    *Note*: In special cases, if you feel that the Docker environment has become too messy to achieve your goal, you can use `clear_configuration` command to restore it to the initial Python 3.10 environment or `change_python_version` or `change_base_image` and start over.
+**Most Important!** You can execute `runtest` or `poetryruntest` anywhere when you decide to test the environment. You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+Please note that when manually using pip, apt-get, poetry, or other tools to download third-party libraries, try to use the `-q` (quiet) mode if available to reduce intermediate progress bar outputs. Additionally, we will help remove more obvious progress bar information to minimize interference with the analysis.
+If you need to install packages using pip, please consider adding them to the waiting list first, and then use the `download` command to proceed with the installation.
+If you need to run two or more commands, please strictly follow the order by enclosing each command in ONE ```bash and ``` blocks connected by "&&" with ONE line! It is not recommended to use backslashes (\) for line continuation. If you need to execute commands that span multiple lines, it is advisable to write them into a .sh file and then run the executable file. For example, if you want to enter the /repo directory and execute `poetry install`, you should input:
+```bash
+cd /repo && poetry install
+```
+
+It is not recommended to directly input:
+```bash
+cd /repo
+```
+```bash
+poetry install
+```
+
+Nor is it recommended to input:
+```bash
+cd /repo \
+poetry install
+```
+
+We also strongly request that you try to write the instructions on the same line as much as possible, and do not break them into multiple lines, as this may cause parsing errors. Even if the line of instructions contains a lot of && connections, do not arbitrarily break it into multiple lines.
+
+We will automatically maintain two lists in the background to facilitate the installation and download of third-party libraries. These are:
+1. waiting list: Used to store third-party libraries waiting to be downloaded, including both pip and apt libraries. You can use `waitinglist show` to show all items in it.
+2. conflict list: Used to store elements with the same name as those in the waiting list but with inconsistent version constraints. You can use `conflictlist show` to show all items in it.
+*Note*: you only need to follow the prompts to complete operations on these lists during the running process and can only manipulate them using the provided commands.
+*Note*: Before operating waiting list, conflict list, or download commands, you can use waitinglist show or conflictlist show to observe their structure each time.
+
+
+IN GOOD FORMAT: 
+All your answer must contain Thought and Action. 
+Calling CLI tools Action using bash block like ```bash  ```. 
+Editing and Writing code Action using diff block like ```diff ```.
+The command line you generate will be run in the bash sandbox environment, and the running results will be returned to you through the system messages.
+
+IMPORTANT TIPS: 
+        * Each round of reply can only contain one ```bash ``` block, which means Each round of your answers contain only *ONE* action!
+        * Please submit the first command first, then after receiving the response, you can issue the second command. You are free to use any other bash communication.
+
+You are now in the Docker environment of python:3.10. Please perform all operations within this environment.
+CLI TOOLS: You can call CLI tools in  ```bash ... ``` block as Action with a Thought. like:
+### Thought: I need to understand the structure of the root directory.
+### Action:
+```bash
+ls /repo
+```
+
+For another example:
+### Thought: I need to read the README.md file.
+### Action:
+```bash
+cat README.md
+```
+
+
+CODE EDITING AND WRITING: All changes to files must use the ```diff  ```  block format, with symbols <<<<<<< SEARCH, ======= and >>>>>>> REPLACE 
+
+You need to provide code patch. The patch should according to the original code, indent correctly, and do not include line numbers. The format is as follows: 
+### Thought: Modify explanation...
+### Action: 
+```diff 
+/absolute/path/of/target.py
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+    exact copy of old line(s) you would like to change
+=======
+    new line(s) to replace
+>>>>>>> REPLACE
+``` 
+Every *SEARCH/REPLACE block must use this format:
+1. The opening fence ```diff 
+2. The file path alone on a line, verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ``` 
+Once you want to modify the code you MUST: 
+        * Include *ALL* the code being searched and replaced!
+        * Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+        * '<<<<<<< SEARCH', '=======' and  '>>>>>>> REPLACE' symbols must be on a line by themselves and cannot be indented.
+        * All code modifications must be expressed in the REPLACE format above (including delete an insert). We will find the source code with the highest matching degree in the original file and replace it. Please provide sufficient and unique old line(s) from snippet to facilitate matching.
+        * If the code patch you provide is successfully applied, the differences before and after the code modification will be returned.
+        * The paths of modified files must be completely absolute paths.
+        * Make sure the patch you provide is indented correctly especially in python programs: The indentation of old lines is exactly the same as the original code, and the indentation of new lines is correct.
+        * All patches must be based on the original code viewed by the tools, and fabricated code patch(es) is prohibited.
+        * Previously successfully applied patches will modify the code, and new patches must be applied based on the current code. Please review the relevant code again then provide new patches.
+        * If the old line(s) is empty, it is considered to be inserted at the beginning of the file. If the file does not exist, a new file will be created and the new line will be written. like:
+### Thought: Create a.py
+### Action:
+```diff
+/project_path/.../a.py
+<<<<<<< SEARCH
+=======
+    [new line(s) to add]
+>>>>>>> REPLACE
+```
+
+*Note*: Do not make extensive changes to the existing files in the /repo folder. You may only make appropriate and necessary changes to the original repository files (e.g., when there are actual errors or tests that cannot be run).
+*Very Important Note*: Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+In addition to typical bash commands, we also provide the following commands that can be used, you can use them flexibly if needed:
+waitinglist add -p package_name [-v version_constraints] -t tool # Add item into waiting list. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+waitinglist addfile file_path # Add all entries from a file similar to requirements.txt format to the waiting list.
+waitinglist clear # Used to clear all the items in the waiting list.
+conflictlist solve -v "[version_cosntraints]" # Resolve the conflict for the first element in the conflict list, and update the version constraints for the corresponding package_name and tool to version_constraints. If no 'version_constraints' are specified, the latest version will be downloaded by default.
+conflictlist solve -u # Keep the original version constraint that exists in the waiting list, and discard the other version constraints with the same name and tool in the conflict list.
+conflictlist clear # Used to clear all the items in the conflict list.
+conflictlist show # Used to show all the items in the conflict list.
+waitinglist show # Used to show all the items in the waiting list.
+download # Download all pending elements in the waiting list at once.
+runtest # Check if the configured environment is correct.
+poetryruntest # Check if the configured environment is correct in poetry environment! If you want to run tests in poetry environment, run it.
+runpipreqs # Generate 'requirements_pipreqs.txt' and 'pipreqs_output.txt' and 'pipreqs_error.txt'.
+change_python_version python_version # Switching the Python version in the Docker container will forgo any installations made prior to the switch. The Python version number should be represented directly with numbers and dots, without any quotation marks.
+change_base_image base_image # Switching the base image in the Docker container will forgo any installations made prior to the switch. The base image does not necessarily have to follow the format 'python:<Python version>'. Preferably, specify it in the form of 'base_image_name:tag', such as 'pytorch/pytorch:1.10.0-cuda11.1-cudnn8-runtime'. If no tag is provided, it defaults to 'latest'. No any quotation marks are needed.
+clear_configuration # Reset all the configuration to the initial setting of python:3.10.
+
+
+VERY IMPORTANT TIPS: 
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You should not answer the user's question, your task is to configure the environment within the given setup. You need to follow the steps mentioned above and flexibly use various commands. After entering test, ensure that the environment passes the test.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * You do not need to complete all the previous steps; you can directly run runtest or poetryruntest to check if the configuration is complete and get feedback from the error messages. Be flexible. Our goal is to pass the runtest or poetryruntest checks.
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Passing tests by modifying testing functions is not allowed, and you should figure out how to make the current test functions run successfully!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * Try to write all commands on a single line as much as possible, regardless of the number of "&&" connections or the length of the instructions; do not arbitrarily break them into multiple lines!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+    * When other configuration methods can be used, try to avoid modifying or deleting the original files, especially do not delete the testing files!!!
+
+---------------------------
+### Thought: First, I need to understand the structure of the root directory in order to identify configuration files and other important project components.
+### Action:
+```bash
+ls /repo
+```
+### Observation:
+Running `ls /repo`...
+CONTRIBUTING.md  README.md  make.bat	    requirements_dev.txt  tests
+LICENSE		 docs	    pyproject.toml  requirements_doc.txt  tox.ini
+Makefile	 examples   requirements    src
+`ls /repo` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 199 turns left to complete the task.
+---------------------------
+### Thought: The root directory contains important files such as `README.md`, `pyproject.toml`, and various requirements files (`requirements_dev.txt`, `requirements_doc.txt`, etc.). First, I'll read the `README.md` file to gather information about configuring the environment.
+### Action:
+```bash
+cat /repo/README.md
+```
+### Observation:
+Running `cat /repo/README.md`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `cat /repo/README.md`...
+## Dishka (stands for "cute DI" in Russian)
+[![PyPI version](https://badge.fury.io/py/dishka.svg)](https://pypi.python.org/pypi/dishka)
+[![Supported versions](https://img.shields.io/pypi/pyversions/dishka.svg)](https://pypi.python.org/pypi/dishka)
+[![Downloads](https://img.shields.io/pypi/dm/dishka.svg)](https://pypistats.org/packages/dishka)
+[![License](https://img.shields.io/github/license/reagento/dishka)](https://github.com/reagento/dishka/blob/master/LICENSE)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/reagento/dishka/setup.yml)](https://github.com/reagento/dishka/actions)
+[![Doc](https://readthedocs.org/projects/dishka/badge/?version=latest&style=flat)](https://dishka.readthedocs.io)
+[![Telegram](https://img.shields.io/badge/💬-Telegram-blue)](https://t.me/reagento_ru)
+Cute DI framework with scopes and agreeable API.
+📚 [Documentation](https://dishka.readthedocs.io)
+### Purpose
+This library provides **IoC container** that's genuinely useful.
+If you're exhausted from endlessly passing objects just to create other objects, only to have those objects create even
+more — you're not alone, and we have a solution.
+Not every project requires IoC container, but take a look at what we offer.
+Unlike other tools, Dishka focuses **only**
+on [dependency injection](https://dishka.readthedocs.io/en/latest/di_intro.html) without trying to solve unrelated
+tasks.
+It keeps DI in place without cluttering your code with global variables and scattered specifiers.
+To see how Dishka **stands out** among other dependency injection tools, check out
+the [detailed comparison](https://dishka.readthedocs.io/en/latest/alternatives.html).
+#### Key features:
+* **Scopes**. Any object can have a lifespan for the entire app, a single request, or even more fractionally. Many
+  frameworks either lack scopes completely or offer only two. Here, you can define as many scopes as needed.
+* **Finalization**. Some dependencies, like database connections, need not only to be created but also carefully
+  released. Many frameworks lack this essential feature.
+* **Modular providers**. Instead of creating many separate functions or one large class, you can split factories
+  into smaller classes for easier reuse.
+* **Clean dependencies**. You don't need to add custom markers to dependency code just to make it visible to the
+  library. Customization is managed by library providers, so only scope boundaries interact with the library API.
+* **Simple API**. Only a few objects are needed to start using the library. Integration with your framework is
+  straightforward, with examples provided.
+* **Speed**. The library is fast enough that performance is not a concern. In fact, it outperforms many
+  alternatives.
+See more in [technical requirements.](https://dishka.readthedocs.io/en/latest/requirements/technical.html)
+### Quickstart
+1. **Install Dishka.**
+```shell
+pip install dishka
+```
+2. **Define your classes with type hints.** Imagine you have two classes: `Service` (business logic) and
+   `DAO` (data access), along with an external API client:
+```python
+class DAO(Protocol):
+    ...
+class Service:
+    def __init__(self, dao: DAO):
+        ...
+class DAOImpl(DAO):
+    def __init__(self, connection: Connection):
+        ...
+class SomeClient:
+    ...
+```
+3. **Create `Provider`** instance and specify how to provide dependencies.
+Providers are used only to set up factories providing your objects.
+Use `scope=Scope.APP` for dependencies created once for the entire application lifetime,
+and `scope=Scope.REQUEST` for those that need to be recreated for each request, event, etc.
+To learn more about scopes, see [documentation.](https://dishka.readthedocs.io/en/latest/advanced/scopes.html)
+```python
+from dishka import Provider, Scope
+service_provider = Provider(scope=Scope.REQUEST)
+service_provider.provide(Service)
+service_provider.provide(DAOImpl, provides=DAO)
+service_provider.provide(SomeClient, scope=Scope.APP)  # override provider scope
+```
+To provide a connection, you might need some custom code:
+```python
+from dishka import Provider, provide, Scope
+class ConnectionProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def new_connection(self) -> Iterable[Connection]:
+        conn = sqlite3.connect(":memory:")
+        yield conn
+        conn.close()
+```
+4. **Create main `Container`** instance, passing providers, and enter `APP` scope.
+```python
+from dishka import make_container
+container = make_container(service_provider, ConnectionProvider())
+```
+5. **Access dependencies using container.** Container holds a cache of dependencies and is used to retrieve them.
+   You can use `.get` method to access `APP`-scoped dependencies:
+```python
+client = container.get(SomeClient)  # `SomeClient` has Scope.APP, so it is accessible here
+client = container.get(SomeClient)  # same instance of `SomeClient`
+```
+6. **Enter and exit `REQUEST` scope repeatedly using a context manager**:
+```python
+# subcontainer to access shorter-living objects
+with container() as request_container:
+    service = request_container.get(Service)
+    service = request_container.get(Service)  # same service instance
+# since we exited the context manager, the connection is now closed
+# new subcontainer to have a new lifespan for request processing
+with container() as request_container:
+    service = request_container.get(Service)  # new service instance
+```
+7. **Close container** when done:
+```python
+container.close()
+```
+8. **Integrate with your framework.** If you are using a supported framework, add decorators and middleware for it.
+   For more details, see [integrations doc.](https://dishka.readthedocs.io/en/latest/integrations/index.html)
+```python
+from dishka.integrations.fastapi import (
+    FromDishka, inject, setup_dishka,
+)
+@router.get("/")
+@inject
+async def index(service: FromDishka[Service]) -> str:
+    ...
+...
+setup_dishka(container, app)
+```
+### Concepts
+**Dependency** is what you need for some pa
+...[Truncation]...
+objects are needed to start using the library. Integration with your framework is
+  straightforward, with examples provided.
+* **Speed**. The library is fast enough that performance is not a concern. In fact, it outperforms many
+  alternatives.
+See more in [technical requirements.](https://dishka.readthedocs.io/en/latest/requirements/technical.html)
+### Quickstart
+1. **Install Dishka.**
+```shell
+pip install dishka
+```
+2. **Define your classes with type hints.** Imagine you have two classes: `Service` (business logic) and
+   `DAO` (data access), along with an external API client:
+```python
+class DAO(Protocol):
+    ...
+class Service:
+    def __init__(self, dao: DAO):
+        ...
+class DAOImpl(DAO):
+    def __init__(self, connection: Connection):
+        ...
+class SomeClient:
+    ...
+```
+3. **Create `Provider`** instance and specify how to provide dependencies.
+Providers are used only to set up factories providing your objects.
+Use `scope=Scope.APP` for dependencies created once for the entire application lifetime,
+and `scope=Scope.REQUEST` for those that need to be recreated for each request, event, etc.
+To learn more about scopes, see [documentation.](https://dishka.readthedocs.io/en/latest/advanced/scopes.html)
+```python
+from dishka import Provider, Scope
+service_provider = Provider(scope=Scope.REQUEST)
+service_provider.provide(Service)
+service_provider.provide(DAOImpl, provides=DAO)
+service_provider.provide(SomeClient, scope=Scope.APP)  # override provider scope
+```
+To provide a connection, you might need some custom code:
+```python
+from dishka import Provider, provide, Scope
+class ConnectionProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def new_connection(self) -> Iterable[Connection]:
+        conn = sqlite3.connect(":memory:")
+        yield conn
+        conn.close()
+```
+4. **Create main `Container`** instance, passing providers, and enter `APP` scope.
+```python
+from dishka import make_container
+container = make_container(service_provider, ConnectionProvider())
+```
+5. **Access dependencies using container.** Container holds a cache of dependencies and is used to retrieve them.
+   You can use `.get` method to access `APP`-scoped dependencies:
+```python
+client = container.get(SomeClient)  # `SomeClient` has Scope.APP, so it is accessible here
+client = container.get(SomeClient)  # same instance of `SomeClient`
+```
+6. **Enter and exit `REQUEST` scope repeatedly using a context manager**:
+```python
+# subcontainer to access shorter-living objects
+with container() as request_container:
+    service = request_container.get(Service)
+    service = request_container.get(Service)  # same service instance
+# since we exited the context manager, the connection is now closed
+# new subcontainer to have a new lifespan for request processing
+with container() as request_container:
+    service = request_container.get(Service)  # new service instance
+```
+7. **Close container** when done:
+```python
+container.close()
+```
+8. **Integrate with your framework.** If you are using a supported framework, add decorators and middleware for it.
+   For more details, see [integrations doc.](https://dishka.readthedocs.io/en/latest/integrations/index.html)
+```python
+from dishka.integrations.fastapi import (
+    FromDishka, inject, setup_dishka,
+)
+@router.get("/")
+@inject
+async def index(service: FromDishka[Service]) -> str:
+    ...
+...
+setup_dishka(container, app)
+```
+### Concepts
+**Dependency** is what you need for some parts of your code to work.
+Dependencies are simply objects you don't create directly in place and might want to replace someday, at least for
+testing purposes.
+Some of them live for the entire application lifetime, while others are created and destroyed with each request.
+Dependencies can also rely on other objects, which then become their dependencies.
+**Scope** is the lifespan of a dependency. Standard scopes are (with some skipped):
+`APP` -> `REQUEST` -> `ACTION` -> `STEP`.
+You decide when to enter and exit each scope, but this is done one by one.
+You set a scope for each dependency when you configure how it is created.
+If the same dependency is requested multiple times within a single scope without leaving it, then by default the same
+instance is returned.
+For a web application, enter `APP` scope on startup and `REQUEST` scope for each HTTP request.
+You can create a custom scope by defining your own `Scope` class if the standard scope flow doesn't fit your needs.
+**Container** is what you use to get your dependencies.
+You simply call `.get(SomeType)` and it finds a way to provide you with an instance of that type.
+Container itself doesn't create objects but manages their lifecycle and caches.
+It delegates object creation to providers that are passed during creation.
+**Provider** is a collection of functions that provide concrete objects.
+`Provider` is a class with attributes and methods, each being the result of `provide`, `alias`, `from_context`, or
+`decorate`.
+They can be used as provider methods, functions to assign attributes, or method decorators.
+`@provide` can be used as a decorator for a method.
+This method will be called when the corresponding dependency has to be created.
+Name doesn't matter: just make sure it's different from other `Provider` attributes.
+Type hints do matter: they indicate what this method creates and what it requires.
+All method parameters are treated as dependencies and are created using the container.
+If `provide` is applied to a class, that class itself is treated as a factory (its `__init__` parameters are analyzed).
+Remember to assign this call to an attribute; otherwise, it will be ignored.
+**Component** is an isolated group of providers within the same container, identified by a unique string.
+When a dependency is requested, it is only searched within the same component as its direct dependant, unless explicitly
+specified otherwise.
+This structure allows you to build different parts of the application separately without worrying about using the same
+types.
+`cat /repo/README.md` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 198 turns left to complete the task.
+---------------------------
+### Thought: The README file provides an overview of the project and its usage but does not specify how to configure the environment for running tests. Next, I will examine the `pyproject.toml` file since it commonly contains environment and dependency configurations.
+
+### Action:
+```bash
+cat /repo/pyproject.toml
+```
+### Observation:
+Running `cat /repo/pyproject.toml`...
+[build-system]
+requires = ["setuptools>=66.0"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools]
+include-package-data = true
+[tool.setuptools.packages.find]
+where = ["src"]
+[project]
+name = "dishka"
+version = "0.1"
+readme = "README.md"
+authors = [
+    { name = "Andrey Tikhonov", email = "17@itishka.org" },
+]
+license = { text = "Apache-2.0" }
+description = "Minimal DI framework"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Typing :: Typed",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    'exceptiongroup>=1.1.3; python_version<"3.11"',
+]
+[project.urls]
+"Source" = "https://github.com/reagento/dishka"
+"Homepage" = "https://github.com/reagento/dishka"
+"Documentation" = "https://dishka.readthedocs.io/en/stable/"
+"Bug Tracker" = "https://github.com/reagento/dishka/issues"
+`cat /repo/pyproject.toml` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 197 turns left to complete the task.
+---------------------------
+### Thought: The `pyproject.toml` file specifies that the project uses `setuptools` for building and lists some dependencies such as `exceptiongroup`. However, it does not include all the dependencies needed for the development and testing environment. Next, I'll check the `requirements_dev.txt` file to see if it contains the necessary dependencies for development and testing.
+
+### Action:
+```bash
+cat /repo/requirements_dev.txt
+```
+### Observation:
+Running `cat /repo/requirements_dev.txt`...
+ruff==0.6.*
+tox==4.21.*
+tox-uv==1.15.*
+mypy==1.12.*
+`cat /repo/requirements_dev.txt` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 196 turns left to complete the task.
+---------------------------
+### Thought: The `requirements_dev.txt` file contains development dependencies including `ruff`, `tox`, `tox-uv`, and `mypy`. These should be added to the waiting list for installation. 
+
+### Action: Adding `requirements_dev.txt` to the waiting list.
+```bash
+waitinglist addfile /repo/requirements_dev.txt
+```
+### Observation:
+Running `waitinglist addfile /repo/requirements_dev.txt`...
+No entries in "/repo/requirements_dev.txt" have been added to the waiting list.
+There are no correctly formatted entries in "/repo/requirements_dev.txt" that have been placed in the conflict list.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 195 turns left to complete the task.
+---------------------------
+### Thought: The content in `requirements_dev.txt` was not properly recognized. Let me check the file content again to make sure it matches the expected format of "package_name==version".
+
+### Action:
+```bash
+cat /repo/requirements_dev.txt
+```
+### Observation:
+Running `cat /repo/requirements_dev.txt`...
+ruff==0.6.*
+tox==4.21.*
+tox-uv==1.15.*
+mypy==1.12.*
+`cat /repo/requirements_dev.txt` executes with returncode: 0
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 194 turns left to complete the task.
+---------------------------
+### Thought: The content in `requirements_dev.txt` file is correctly formatted. However, it was not added to the waiting list successfully. I will add each dependency from `requirements_dev.txt` one by one to the waiting list.
+
+### Action:
+```bash
+waitinglist add -p ruff -v 0.6.* -t pip && waitinglist add -p tox -v 4.21.* -t pip && waitinglist add -p tox-uv -v 1.15.* -t pip && waitinglist add -p mypy -v 1.12.* -t pip
+```
+### Observation:
+Running `waitinglist add -p ruff -v 0.6.* -t pip`...
+'ruff0.6.*' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p tox -v 4.21.* -t pip`...
+'tox4.21.*' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p tox-uv -v 1.15.* -t pip`...
+'tox-uv1.15.*' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p mypy -v 1.12.* -t pip`...
+'mypy1.12.*' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 193 turns left to complete the task.
+---------------------------
+### Thought: Now that I have added the development dependencies from `requirements_dev.txt` to the waiting list, I will proceed to download these dependencies. 
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'ruff0.6.*' has been removed from the waiting list.
+'ruff0.6.*' (using pip to download) has been added into the waiting list. 
+"ruff0.6.*" installed failed due to non-timeout errors
+'tox4.21.*' has been removed from the waiting list.
+'tox4.21.*' (using pip to download) has been added into the waiting list. 
+"tox4.21.*" installed failed due to non-timeout errors
+'tox-uv1.15.*' has been removed from the waiting list.
+'tox-uv1.15.*' (using pip to download) has been added into the waiting list. 
+"tox-uv1.15.*" installed failed due to non-timeout errors
+'mypy1.12.*' has been removed from the waiting list.
+'mypy1.12.*' (using pip to download) has been added into the waiting list. 
+"mypy1.12.*" installed failed due to non-timeout errors
+'ruff0.6.*' has been removed from the waiting list.
+'ruff0.6.*' (using pip to download) has been added into the waiting list. 
+"ruff0.6.*" installed failed due to non-timeout errors
+'tox4.21.*' has been removed from the waiting list.
+'tox4.21.*' (using pip to download) has been added into the waiting list. 
+"tox4.21.*" installed failed due to non-timeout errors
+'tox-uv1.15.*' has been removed from the waiting list.
+'tox-uv1.15.*' (using pip to download) has been added into the waiting list. 
+"tox-uv1.15.*" installed failed due to non-timeout errors
+'mypy1.12.*' has been removed from the waiting list.
+'mypy1.12.*' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+"mypy1.12.*" installed failed due to non-timeout errors
+'ruff0.6.*' has been removed from the waiting list.
+The third-party library "ruff0.6.*" (using tool pip) has been added to the failed list due to three download non-timeout errors.
+No third-party libraries were successfully downloaded in this round.
+In this round, the following third-party libraries failed to download. They are:
+----------------------------------------------------------------------------------------------------
+ruff0.6.* (using tool pip)
+Failed message:
+ An error occurred while running pip:
+ERROR: Invalid requirement: 'ruff0.6.*': Expected end or semicolon (after name and no valid version specifier)
+ruff0.6.*
+^
+----------------------------------------------------------------------------------------------------
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 192 turns left to complete the task.
+---------------------------
+### Thought: The error messages indicate that there is an issue with the version constraints format in the waiting list. I will adjust the version constraints to use the correct format for downloading the packages.
+
+### Action:
+```bash
+waitinglist add -p ruff -v "==0.6.*" -t pip && waitinglist add -p tox -v "==4.21.*" -t pip && waitinglist add -p tox-uv -v "==1.15.*" -t pip && waitinglist add -p mypy -v "==1.12.*" -t pip
+```
+### Observation:
+Running `waitinglist add -p ruff -v "==0.6.*" -t pip`...
+'ruff"==0.6.*"' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p tox -v "==4.21.*" -t pip`...
+'tox' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '"==4.21.*"' has been successfully added into conflict list, serving as a potential version constraint for 'tox'(using pip to download).Running `waitinglist add -p tox-uv -v "==1.15.*" -t pip`...
+'tox-uv' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '"==1.15.*"' has been successfully added into conflict list, serving as a potential version constraint for 'tox-uv'(using pip to download).Running `waitinglist add -p mypy -v "==1.12.*" -t pip`...
+'mypy' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '"==1.12.*"' has been successfully added into conflict list, serving as a potential version constraint for 'mypy'(using pip to download).
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 191 turns left to complete the task.
+---------------------------
+### Thought: Now I need to solve the conflicts for the added version constraints from `conflictlist` to ensure proper downloading.
+
+### Action:
+```bash
+conflictlist solve -v "==4.21.*" && conflictlist solve -v "==1.15.*" && conflictlist solve -v "==1.12.*"
+```
+### Observation:
+Running `conflictlist solve -v "==4.21.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==4.21.*"` executes with returncode: 127
+Running `conflictlist solve -v "==1.15.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==1.15.*"` executes with returncode: 127
+Running `conflictlist solve -v "==1.12.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==1.12.*"` executes with returncode: 127
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 190 turns left to complete the task.
+---------------------------
+### Thought: The previous attempt to solve the conflicts was incorrect. I misunderstood the correct way to install these packages, I will resolve these conflicts correctly using the right commands.
+### Action:
+```bash
+conflictlist solve -v "==0.6.*" && conflictlist solve -v "==4.21.*" && conflictlist solve -v "==1.15.*" && conflictlist solve -v "==1.12.*"
+```
+### Observation:
+Running `conflictlist solve -v "==0.6.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==0.6.*"` executes with returncode: 127
+Running `conflictlist solve -v "==4.21.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==4.21.*"` executes with returncode: 127
+Running `conflictlist solve -v "==1.15.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==1.15.*"` executes with returncode: 127
+Running `conflictlist solve -v "==1.12.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==1.12.*"` executes with returncode: 127
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 189 turns left to complete the task.
+---------------------------
+### Thought: It appears that I used incorrect syntax for adding constraints in the conflict list. I need to use `conflictlist solve` followed by the correct version constraint. Let me attempt this again more carefully step-by-step.
+
+### Action:
+```bash
+conflictlist solve -v "==0.6.*"
+```
+### Observation:
+Running `conflictlist solve -v "==0.6.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==0.6.*"` executes with returncode: 127
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 188 turns left to complete the task.
+---------------------------
+### Thought: It seems that there is an error with how I am specifying the version constraints. I will try resolving the constraints without the wildcards to see if it works correctly.
+
+### Action:
+```bash
+conflictlist solve -v "==0.6.0"
+```
+### Observation:
+Running `conflictlist solve -v "==0.6.0"`...
+'tox['"==4.21.*"']' has been removed from the conflict list, and there are 2 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 187 turns left to complete the task.
+---------------------------
+### Thought: The version constraints provided did not match any entries in the conflict list. Since wildcards are causing issues, I will resolve the constraints by choosing the exact versions specified in the `requirements_dev.txt` file.
+
+### Action:
+```bash
+conflictlist solve -v "==0.6.0" && conflictlist solve -v "==4.21.0" && conflictlist solve -v "==1.15.0" && conflictlist solve -v "==1.12.0"
+```
+### Observation:
+Running `conflictlist solve -v "==0.6.0"`...
+'tox-uv['"==1.15.*"']' has been removed from the conflict list, and there are 1 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.Running `conflictlist solve -v "==4.21.0"`...
+'mypy['"==1.12.*"']' has been removed from the conflict list, and there are 0 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.Running `conflictlist solve -v "==1.15.0"`...
+There are no conflicting entries left to be handled in the conflict list.Running `conflictlist solve -v "==1.12.0"`...
+There are no conflicting entries left to be handled in the conflict list.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 186 turns left to complete the task.
+---------------------------
+### Thought: I used incorrect version constraints, resulting in no changes applied. I will now correctly resolve individual conflicts step-by-step.
+
+### Action:
+```bash
+conflictlist show
+```
+### Observation:
+Running `conflictlist show`...
+The conflict list is empty; there are currently no version constraint conflicts to be resolved.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 185 turns left to complete the task.
+---------------------------
+### Thought: The conflict list is now empty, which means there are no outstanding version conflicts. I will proceed to the download process for the packages.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'tox4.21.*' has been removed from the waiting list.
+The third-party library "tox4.21.*" (using tool pip) has been added to the failed list due to three download non-timeout errors.
+No third-party libraries were successfully downloaded in this round.
+In this round, the following third-party libraries failed to download. They are:
+----------------------------------------------------------------------------------------------------
+tox4.21.* (using tool pip)
+Failed message:
+ An error occurred while running pip:
+ERROR: Invalid requirement: 'tox4.21.*': Expected end or semicolon (after name and no valid version specifier)
+tox4.21.*
+^
+----------------------------------------------------------------------------------------------------
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 184 turns left to complete the task.
+---------------------------
+### Thought: The format of version constraints appears to be incorrect. To amend this, I'll correctly specify the version constraint for the package `tox` and retry.
+
+### Action:
+```bash
+waitinglist add -p tox -v "==4.21.0" -t pip
+```
+### Observation:
+Running `waitinglist add -p tox -v "==4.21.0" -t pip`...
+'tox"==4.21.0"' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 183 turns left to complete the task.
+---------------------------
+### Thought: The version constraints are still being misinterpreted. I will add the version constraint as a single string enclosed in double quotes correctly this time to avoid syntax issues.
+
+### Action:
+```bash
+waitinglist add -p tox -v "4.21.0" -t pip
+```
+### Observation:
+Running `waitinglist add -p tox -v "4.21.0" -t pip`...
+'tox' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '"4.21.0"' has been successfully added into conflict list, serving as a potential version constraint for 'tox'(using pip to download).
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 182 turns left to complete the task.
+---------------------------
+### Thought: Now I need to solve the conflict for the `tox` package with the specified version and then proceed with the download.
+
+### Action:
+```bash
+conflictlist solve -v "4.21.0"
+```
+### Observation:
+Running `conflictlist solve -v "4.21.0"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "4.21.0"` executes with returncode: 127
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 181 turns left to complete the task.
+---------------------------
+### Thought: I need to follow the correct format for specifying version constraints while solving conflicts. Let me try solving the conflict correctly this time.
+
+### Action:
+```bash
+conflictlist solve -v "==4.21.0"
+```
+### Observation:
+Running `conflictlist solve -v "==4.21.0"`...
+'tox['"4.21.0"']' has been removed from the conflict list, and there are 0 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 180 turns left to complete the task.
+---------------------------
+### Thought: I need to use `==` for version constraints specified in the `conflictlist solve` command. After resolving the conflict accurately, I'll try downloading the package again.
+
+### Action:
+```bash
+conflictlist solve -v "==4.21.*"
+```
+### Observation:
+Running `conflictlist solve -v "==4.21.*"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "==4.21.*"` executes with returncode: 127
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 179 turns left to complete the task.
+---------------------------
+### Thought: It appears I was repeatedly approaching the conflict syntax incorrectly. Instead of taking this incorrect approach, solving the conflict manually should be done using the accurate conflict solver syntax. 
+
+I will try a different strategy. Since tangling with the constraints repeatedly caused a dissonance, let's check what got enlisted in the waiting list to revive proper conflict management.
+
+### Action:
+```bash
+waitinglist show
+```
+### Observation:
+Running `waitinglist show`...
+There are 4 third-party libraries in the waiting list, which will be downloaded together.
+The following shows the first all items in the waiting list.
+****************************************************************************************************
+tox-uv1.15.* (using pip to download)
+mypy1.12.* (using pip to download)
+ruff"==0.6.*" (using pip to download)
+tox"==4.21.0" (using pip to download)
+****************************************************************************************************
+If you need to download them, please enter the command `download`.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 178 turns left to complete the task.
+---------------------------
+### Thought: The version constraints listed in the waiting list have inconsistencies. I will remove the faulty items in the waiting list and add them with correct constraints.
+
+### Action:
+```bash
+waitinglist clear
+```
+### Observation:
+Running `waitinglist clear`...
+Success clear all the items of waitinglist.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 177 turns left to complete the task.
+---------------------------
+### Thought: Now that the waiting list is cleared, I will re-add the required packages with the correct version constraints to the waiting list.
+
+### Action:
+```bash
+waitinglist add -p ruff -v "==0.6.0" -t pip && waitinglist add -p tox -v "==4.21.0" -t pip && waitinglist add -p tox-uv -v "==1.15.0" -t pip && waitinglist add -p mypy -v "==1.12.0" -t pip
+```
+### Observation:
+Running `waitinglist add -p ruff -v "==0.6.0" -t pip`...
+'ruff"==0.6.0"' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p tox -v "==4.21.0" -t pip`...
+'tox"==4.21.0"' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p tox-uv -v "==1.15.0" -t pip`...
+'tox-uv"==1.15.0"' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p mypy -v "==1.12.0" -t pip`...
+'mypy"==1.12.0"' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 176 turns left to complete the task.
+---------------------------
+### Thought: There are still syntax issues. The version constraints are being appended to the package name uncorrectly. I will try another approach to ensure correct additions of waiting list items.
+
+### Action:
+```bash
+waitinglist add -p ruff -v 0.6.0 -t pip && waitinglist add -p tox -v 4.21.0 -t pip && waitinglist add -p tox-uv -v 1.15.0 -t pip && waitinglist add -p mypy -v 1.12.0 -t pip
+```
+### Observation:
+Running `waitinglist add -p ruff -v 0.6.0 -t pip`...
+'ruff' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '0.6.0' has been successfully added into conflict list, serving as a potential version constraint for 'ruff'(using pip to download).Running `waitinglist add -p tox -v 4.21.0 -t pip`...
+'tox' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '4.21.0' has been successfully added into conflict list, serving as a potential version constraint for 'tox'(using pip to download).Running `waitinglist add -p tox-uv -v 1.15.0 -t pip`...
+'tox-uv' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '1.15.0' has been successfully added into conflict list, serving as a potential version constraint for 'tox-uv'(using pip to download).Running `waitinglist add -p mypy -v 1.12.0 -t pip`...
+'mypy' (using pip to download) has been in waiting list. Therefore, it is about to add it to conflict list...
+The version constraint '1.12.0' has been successfully added into conflict list, serving as a potential version constraint for 'mypy'(using pip to download).
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 175 turns left to complete the task.
+---------------------------
+### Thought: Now I need to resolve the version constraints correctly from the conflict list. 
+
+### Action:
+```bash
+conflictlist solve -v "==0.6.0" && conflictlist solve -v "==4.21.0" && conflictlist solve -v "==1.15.0" && conflictlist solve -v "==1.12.0"
+```
+### Observation:
+Running `conflictlist solve -v "==0.6.0"`...
+'ruff['0.6.0']' has been removed from the conflict list, and there are 3 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.Running `conflictlist solve -v "==4.21.0"`...
+'tox['4.21.0']' has been removed from the conflict list, and there are 2 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.Running `conflictlist solve -v "==1.15.0"`...
+'tox-uv['1.15.0']' has been removed from the conflict list, and there are 1 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.Running `conflictlist solve -v "==1.12.0"`...
+'mypy['1.12.0']' has been removed from the conflict list, and there are 0 remaining conflicts to be addressed in the conflict list.
+The "version_constraints" you entered is neither in the original waiting list nor in the conflict list options. Please re-enter the command.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 174 turns left to complete the task.
+---------------------------
+### Thought: I need to use correct version constraints format without unnecessary additional "==". Let me accordingly resolve the conflicts precisely. 
+
+### Action:
+```bash
+conflictlist solve -v "0.6.0" && conflictlist solve -v "4.21.0" && conflictlist solve -v "1.15.0" && conflictlist solve -v "1.12.0"
+```
+### Observation:
+Running `conflictlist solve -v "0.6.0"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "0.6.0"` executes with returncode: 127
+Running `conflictlist solve -v "4.21.0"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "4.21.0"` executes with returncode: 127
+Running `conflictlist solve -v "1.15.0"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "1.15.0"` executes with returncode: 127
+Running `conflictlist solve -v "1.12.0"`...
+conflictlist command usage error, the following command formats are legal:
+1. `conflictlist solve`
+Explanation: The standalone `conflictlist solve` command means not to impose any version constraints, i.e., to default to downloading the latest version of the third-party library. This will update the version constraint in the waiting list to be unrestricted.
+2. `conflictlist solve -v "==2.0"`
+Explanation: Adding -v followed by a version constraint enclosed in double quotes updates the version constraint in the waiting list to that specific range, such as "==2.0", meaning to take version 2.0.
+3. `conflictlist solve -v ">3.0"`
+Explanation: Similar to the command 2, this constraint specifies a version number greater than 3.0.
+4. `conflictlist solve -u`
+Explanation: Adding -u indicates giving up all the constraints in the conflict list while still retaining the constraints in the waiting list, i.e., not updating the constraints for that library in the waiting list.
+5. `conflictlist clear`
+Explanation: Clear all the items in the conflict list.
+
+`conflictlist solve -v "1.12.0"` executes with returncode: 127
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 173 turns left to complete the task.
+---------------------------
+### Thought: I need to resolve the conflicts using the exact version constraint format specified earlier, ensuring the syntax is correct. Let me solve these conflicts accurately one at a time using available formats.
+
+### Action:
+```bash
+conflictlist solve -v "==0.6.0"
+```
+### Observation:
+Running `conflictlist solve -v "==0.6.0"`...
+There are no conflicting entries left to be handled in the conflict list.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 172 turns left to complete the task.
+---------------------------
+### Thought: The conflicts have been resolved. I will proceed to download dependencies again.
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'ruff"==0.6.0"' has been removed from the waiting list.
+"ruff"==0.6.0"" installed successfully.
+'tox"==4.21.0"' has been removed from the waiting list.
+"tox"==4.21.0"" installed successfully.
+'tox-uv"==1.15.0"' has been removed from the waiting list.
+"tox-uv"==1.15.0"" installed successfully.
+'mypy"==1.12.0"' has been removed from the waiting list.
+"mypy"==1.12.0"" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+ruff"==0.6.0" (using tool pip)
+tox"==4.21.0" (using tool pip)
+tox-uv"==1.15.0" (using tool pip)
+mypy"==1.12.0" (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 171 turns left to complete the task.
+---------------------------
+### Thought: Now that the development dependencies have been successfully installed, I will proceed to run the tests to check if the environment is correctly configured.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+tests/unit/test_quickstart_example.py::test_readme_example
+==================================== ERRORS ====================================
+____________ ERROR collecting docs/advanced/testing/test_example.py ____________
+ImportError while importing test module '/repo/docs/advanced/testing/test_example.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+docs/advanced/testing/test_example.py:7: in <module>
+    import pytest_asyncio
+E   ModuleNotFoundError: No module named 'pytest_asyncio'
+_______ ERROR collecting examples/real_world/tests/test_add_products.py ________
+ImportError while importing test module '/repo/examples/real_world/tests/test_add_products.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+examples/real_world/tests/test_add_products.py:9: in <module>
+    from myapp.ioc import InteractorProvider
+examples/real_world/myapp/ioc.py:3: in <module>
+    from dishka import (
+E   ModuleNotFoundError: No module named 'dishka'
+____________ ERROR collecting examples/real_world/tests/test_web.py ____________
+ImportError while importing test module '/repo/examples/real_world/tests/test_web.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+examples/real_world/tests/test_web.py:12: in <module>
+    import pytest_asyncio
+E   ModuleNotFoundError: No module named 'pytest_asyncio'
+_____________________ ERROR collecting tests/integrations ______________________
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+/usr/local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+tests/integrations/conftest.py:3: in <module>
+    from dishka import make_async_container, make_container
+E   ModuleNotFoundError: No module named 'dishka'
+_________ ERROR collecting tests/unit/container/override/test_alias.py _________
+ImportError while importing test module '/repo/tests/unit/container/override/test_alias.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/container/override/test_alias.py:3: in <module>
+    from dishka import Provider, Scope, alias, make_container, provide
+E   ModuleNotFoundError: No module named 'dishka'
+______ ERROR collecting tests/unit/container/override/test_context_var.py ______
+ImportError while importing test module '/repo/tests/unit/container/override/test_context_var.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/container/override/test_context_var.py:3: in <module>
+    from dishka import Provider, Scope, from_context, make_container
+E   ModuleNotFoundError: No module named 'dishka'
+________ ERROR collecting tests/unit/container/override/test_provide.py ________
+ImportError while importing test module '/repo/tests/unit/container/override/test_provide.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/container/override/test_provide.py:3: in <module>
+    from dishka import Provider, Scope, make_container, provide
+E   ModuleNotFoundError: No module named 'dishka'
+______ ERROR collecting tests/unit/container/override/test_provide_all.py ______
+ImportError while importing test module '/repo/tests/unit/container/override/test_provide_all.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/container/override/test_provide_all.py:3: in <module>
+    from dishka import Provider, Scope, make_container, provide_all
+E   ModuleNotFoundError: No module named 'dishka'
+_____________ ERROR collecting tests/unit/container/test_alias.py ______________
+ImportError while importing test module '/repo/tests/unit/container/test_alias.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/container/test_alias.py:6: in <module>
+    from dishka import (
+E   ModuleNotFoundError: No module named 'dishka'
+_____________ ERROR collecting tests/unit/container/test_cache.py ______________
+ImportError while importing test module '/repo/tests/unit/container/test_cache.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/container/test_cache.py:3: in <module>
+    from dishka import (
+E   ModuleNotFoundError: No module named 'dishka'
+__
+...[Truncation]...
+pe, make_container
+E   ModuleNotFoundError: No module named 'dishka'
+_____________ ERROR collecting tests/unit/plotter/test_wrappers.py _____________
+ImportError while importing test module '/repo/tests/unit/plotter/test_wrappers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/plotter/test_wrappers.py:3: in <module>
+    from dishka import (
+E   ModuleNotFoundError: No module named 'dishka'
+________________ ERROR collecting tests/unit/test_composite.py _________________
+ImportError while importing test module '/repo/tests/unit/test_composite.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/test_composite.py:1: in <module>
+    from dishka.dependency_source.composite import ensure_composite
+E   ModuleNotFoundError: No module named 'dishka'
+______________ ERROR collecting tests/unit/test_context_proxy.py _______________
+ImportError while importing test module '/repo/tests/unit/test_context_proxy.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/test_context_proxy.py:3: in <module>
+    from dishka import DEFAULT_COMPONENT, DependencyKey
+E   ModuleNotFoundError: No module named 'dishka'
+_________________ ERROR collecting tests/unit/test_entities.py _________________
+ImportError while importing test module '/repo/tests/unit/test_entities.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/test_entities.py:5: in <module>
+    from dishka.entities.key import FromComponent, hint_to_dependency_key
+E   ModuleNotFoundError: No module named 'dishka'
+_________________ ERROR collecting tests/unit/test_provider.py _________________
+ImportError while importing test module '/repo/tests/unit/test_provider.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/test_provider.py:6: in <module>
+    from dishka import Provider, Scope, alias, decorate, provide
+E   ModuleNotFoundError: No module named 'dishka'
+________________ ERROR collecting tests/unit/test_type_match.py ________________
+ImportError while importing test module '/repo/tests/unit/test_type_match.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/test_type_match.py:5: in <module>
+    from dishka.dependency_source.decorator import is_broader_or_same_type
+E   ModuleNotFoundError: No module named 'dishka'
+___________ ERROR collecting tests/unit/text_rendering/test_name.py ____________
+ImportError while importing test module '/repo/tests/unit/text_rendering/test_name.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/text_rendering/test_name.py:5: in <module>
+    import dishka
+E   ModuleNotFoundError: No module named 'dishka'
+___________ ERROR collecting tests/unit/text_rendering/test_path.py ____________
+ImportError while importing test module '/repo/tests/unit/text_rendering/test_path.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/text_rendering/test_path.py:5: in <module>
+    from dishka.dependency_source.make_factory import make_factory
+E   ModuleNotFoundError: No module named 'dishka'
+=========================== short test summary info ============================
+ERROR docs/advanced/testing/test_example.py
+ERROR examples/real_world/tests/test_add_products.py
+ERROR examples/real_world/tests/test_web.py
+ERROR tests/integrations - ModuleNotFoundError: No module named 'dishka'
+ERROR tests/unit/container/override/test_alias.py
+ERROR tests/unit/container/override/test_context_var.py
+ERROR tests/unit/container/override/test_provide.py
+ERROR tests/unit/container/override/test_provide_all.py
+ERROR tests/unit/container/test_alias.py
+ERROR tests/unit/container/test_cache.py
+ERROR tests/unit/container/test_components.py
+ERROR tests/unit/container/test_concurrency.py
+ERROR tests/unit/container/test_context_vars.py
+ERROR tests/unit/container/test_decorator.py
+ERROR tests/unit/container/test_dynamic.py
+ERROR tests/unit/container/test_enter_exit.py
+ERROR tests/unit/container/test_exceptions.py
+ERROR tests/unit/container/test_generic.py
+ERROR tests/unit/container/test_recursive.py
+ERROR tests/unit/container/test_resolve.py
+ERROR tests/unit/container/test_with_parents.py
+ERROR tests/unit/plotter/test_transform.py
+ERROR tests/unit/plotter/test_wrappers.py
+ERROR tests/unit/test_composite.py
+ERROR tests/unit/test_context_proxy.py
+ERROR tests/unit/test_entities.py
+ERROR tests/unit/test_provider.py
+ERROR tests/unit/test_type_match.py
+ERROR tests/unit/text_rendering/test_name.py
+ERROR tests/unit/text_rendering/test_path.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 30 errors during collection !!!!!!!!!!!!!!!!!!!
+1 test collected, 30 errors in 0.53s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 170 turns left to complete the task.
+---------------------------
+### Thought: The error messages indicate that there is a `ModuleNotFoundError` for `dishka` and `pytest_asyncio`. I will add these packages to the waiting list for installation.
+
+### Action:
+```bash
+waitinglist add -p dishka -t pip && waitinglist add -p pytest-asyncio -t pip
+```
+### Observation:
+Running `waitinglist add -p dishka -t pip`...
+'dishka' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p pytest-asyncio -t pip`...
+'pytest-asyncio' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 169 turns left to complete the task.
+---------------------------
+### Thought: Now I need to download the newly added dependencies from the waiting list to resolve the errors.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'dishka' has been removed from the waiting list.
+"dishka" installed successfully.
+'pytest-asyncio' has been removed from the waiting list.
+"pytest-asyncio" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+dishka (using tool pip)
+pytest-asyncio (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 168 turns left to complete the task.
+---------------------------
+### Thought: The dependencies `dishka` and `pytest-asyncio` have been successfully installed. I will now rerun the tests to check if the environment is correctly configured and the errors have been resolved.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+/usr/local/lib/python3.10/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+examples/real_world/tests/test_add_products.py::test_interactor
+tests/unit/container/override/test_alias.py::test_no_override
+tests/unit/container/override/test_alias.py::test_skip_no_override
+tests/unit/container/override/test_alias.py::test_override_ok
+tests/unit/container/override/test_alias.py::test_cant_override
+tests/unit/container/override/test_alias.py::test_skip_cant_override
+tests/unit/container/override/test_context_var.py::test_no_override
+tests/unit/container/override/test_context_var.py::test_skip_no_override
+tests/unit/container/override/test_context_var.py::test_override_ok
+tests/unit/container/override/test_context_var.py::test_cant_override
+tests/unit/container/override/test_context_var.py::test_skip_cant_override
+tests/unit/container/override/test_provide.py::test_no_override
+tests/unit/container/override/test_provide.py::test_skip_no_override
+tests/unit/container/override/test_provide.py::test_override_ok
+tests/unit/container/override/test_provide.py::test_cant_override
+tests/unit/container/override/test_provide.py::test_skip_cant_override
+tests/unit/container/override/test_provide_all.py::test_not_override
+tests/unit/container/override/test_provide_all.py::test_override
+tests/unit/container/test_alias.py::test_alias
+tests/unit/container/test_alias.py::test_alias_to_alias
+tests/unit/container/test_alias.py::test_cycle
+tests/unit/container/test_alias.py::test_missing_factory
+tests/unit/container/test_alias.py::test_implicit
+tests/unit/container/test_alias.py::test_implicit_no_source
+tests/unit/container/test_alias.py::test_implicit_all
+tests/unit/container/test_alias.py::test_implicit_generator
+tests/unit/container/test_alias.py::test_implicit_generator_alt
+tests/unit/container/test_alias.py::test_implicit_async_generator
+tests/unit/container/test_alias.py::test_implicit_async_generator_alt
+tests/unit/container/test_alias.py::test_union_alias
+tests/unit/container/test_cache.py::test_cache_sync
+tests/unit/container/test_cache.py::test_cache_async
+tests/unit/container/test_cache.py::test_nocache_sync
+tests/unit/container/test_cache.py::test_nocache_async
+tests/unit/container/test_cache.py::test_alias_sync
+tests/unit/container/test_cache.py::test_alias_async
+tests/unit/container/test_components.py::test_from_component
+tests/unit/container/test_components.py::test_from_component_async
+tests/unit/container/test_components.py::test_change_component
+tests/unit/container/test_components.py::test_set_component
+tests/unit/container/test_components.py::test_from_component_alias
+tests/unit/container/test_components.py::test_isolated_component
+tests/unit/container/test_components.py::test_cache
+tests/unit/container/test_components.py::test_cache_async
+tests/unit/container/test_components.py::test_decorator
+tests/unit/container/test_components.py::test_result_component
+tests/unit/container/test_concurrency.py::test_cache_sync
+tests/unit/container/test_concurrency.py::test_cache_async
+tests/unit/container/test_context_vars.py::test_simple
+tests/unit/container/test_context_vars.py::test_simple_async
+tests/unit/container/test_context_vars.py::test_not_found
+tests/unit/container/test_context_vars.py::test_not_found_async
+tests/unit/container/test_context_vars.py::test_2components
+tests/unit/container/test_context_vars.py::test_2components_factory
+tests/unit/container/test_context_vars.py::test_decorate
+tests/unit/container/test_decorator.py::test_simple
+tests/unit/container/test_decorator.py::test_with_hint
+tests/unit/container/test_decorator.py::test_decorator
+tests/unit/container/test_decorator.py::test_kwargs
+tests/unit/container/test_decorator.py::test_decorator_with_provides
+tests/unit/container/test_decorator.py::test_alias
+tests/unit/container/test_decorator.py::test_double
+tests/unit/container/test_decorator.py::test_double_ok
+tests/unit/container/test_decorator.py::test_missing_factory
+tests/unit/container/test_decorator.py::test_expected_decorator
+tests/unit/container/test_decorator.py::test_generic_decorator
+tests/unit/container/test_decorator.py::test_generic_double_decorator
+tests/unit/container/test_decorator.py::test_generic_decorator_generic_factory
+tests/unit/container/test_decorator.py::test_decorate_alias
+tests/unit/container/test_dynamic.py::test_dynamic
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.RUNTIME-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.APP-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.APP-None-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.RUNTIME-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.APP-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.APP-None-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.SESSION-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-Scope.STEP-Scope.STEP]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-None-Scope.REQUEST]
+tests/unit/container/test_enter_ex
+...[Truncation]...
+ncy_key[str-str-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Annotated-str-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Annotated-str-baz]
+tests/unit/test_provider.py::test_provider_init
+tests/unit/test_provider.py::test_parse_factory[sync_func_a-FactoryType.FACTORY-True]
+tests/unit/test_provider.py::test_parse_factory[sync_iter_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[sync_iterator_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[sync_gen_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_func_a-FactoryType.ASYNC_FACTORY-True]
+tests/unit/test_provider.py::test_parse_factory[async_iter_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_iterator_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_gen_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory_invalid_hint
+tests/unit/test_provider.py::test_parse_factory_invalid_hint_async
+tests/unit/test_provider.py::test_parse_factory_cls[ClassA-FactoryType.FACTORY-False]
+tests/unit/test_provider.py::test_provider_class_scope
+tests/unit/test_provider.py::test_provider_instance_scope
+tests/unit/test_provider.py::test_provider_instance_braces
+tests/unit/test_provider.py::test_self_hint
+tests/unit/test_provider.py::test_staticmethod
+tests/unit/test_provider.py::test_classmethod
+tests/unit/test_provider.py::test_callable
+tests/unit/test_provider.py::test_provide_as_method
+tests/unit/test_provider.py::test_provide_external_method
+tests/unit/test_provider.py::test_provide_protocol_impl
+tests/unit/test_provider.py::test_provide_all_cls
+tests/unit/test_provider.py::test_provide_all_instance
+tests/unit/test_provider.py::test_provide_random
+tests/unit/test_provider.py::test_provide_join_provides_cls
+tests/unit/test_provider.py::test_decorator
+tests/unit/test_provider.py::test_invalid_decorator
+tests/unit/test_quickstart_example.py::test_readme_example
+tests/unit/test_type_match.py::test_is_broader_or_same_type[C-C-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[C-D-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-C-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-SubC-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-D-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TSubCCD-TCD-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True0]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True1]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True2]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-BGeneric-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-True0]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-True1]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-False]
+tests/unit/text_rendering/test_name.py::test_get_name[A0-False-A0]
+tests/unit/text_rendering/test_name.py::test_get_name[A0-True-unit.text_rendering.test_name.A0]
+tests/unit/text_rendering/test_name.py::test_get_name[A1-False-A0.A1]
+tests/unit/text_rendering/test_name.py::test_get_name[foo-False-A0.A1.foo]
+tests/unit/text_rendering/test_name.py::test_get_name[foo_class-False-A0.A1.foo_class]
+tests/unit/text_rendering/test_name.py::test_get_name[bar-False-A0.bar]
+tests/unit/text_rendering/test_name.py::test_get_name[baz-False-baz]
+tests/unit/text_rendering/test_name.py::test_get_name[int-False-int]
+tests/unit/text_rendering/test_name.py::test_get_name[str-True-str]
+tests/unit/text_rendering/test_name.py::test_get_name[None-False-None]
+tests/unit/text_rendering/test_name.py::test_get_name[obj10-False-...]
+tests/unit/text_rendering/test_name.py::test_get_name[Scope-True-dishka.entities.scope.Scope]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[int]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[T]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA]
+tests/unit/text_rendering/test_path.py::test_cycle
+tests/unit/text_rendering/test_path.py::test_cycle_1
+tests/unit/text_rendering/test_path.py::test_linear
+==================================== ERRORS ====================================
+____________ ERROR collecting docs/advanced/testing/test_example.py ____________
+ImportError while importing test module '/repo/docs/advanced/testing/test_example.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+docs/advanced/testing/test_example.py:8: in <module>
+    from fastapi import APIRouter, FastAPI
+E   ModuleNotFoundError: No module named 'fastapi'
+____________ ERROR collecting examples/real_world/tests/test_web.py ____________
+ImportError while importing test module '/repo/examples/real_world/tests/test_web.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+examples/real_world/tests/test_web.py:13: in <module>
+    from asgi_lifespan import LifespanManager
+E   ModuleNotFoundError: No module named 'asgi_lifespan'
+=========================== short test summary info ============================
+ERROR docs/advanced/testing/test_example.py
+ERROR examples/real_world/tests/test_web.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+244 tests collected, 2 errors in 0.53s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 167 turns left to complete the task.
+---------------------------
+### Thought: The current errors indicate that there are missing dependencies: `fastapi` and `asgi_lifespan`. I will add these packages to the waiting list for installation.
+
+### Action:
+```bash
+waitinglist add -p fastapi -t pip && waitinglist add -p asgi_lifespan -t pip
+```
+### Observation:
+Running `waitinglist add -p fastapi -t pip`...
+'fastapi' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.Running `waitinglist add -p asgi_lifespan -t pip`...
+'asgi_lifespan' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 166 turns left to complete the task.
+---------------------------
+### Thought: Now that the missing dependencies have been added to the waiting list, I will proceed to download these dependencies.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'fastapi' has been removed from the waiting list.
+"fastapi" installed successfully.
+'asgi_lifespan' has been removed from the waiting list.
+"asgi_lifespan" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+fastapi (using tool pip)
+asgi_lifespan (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 165 turns left to complete the task.
+---------------------------
+### Thought: Now that the missing dependencies have been successfully installed, I will rerun the tests to check if the environment configuration is complete.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+/usr/local/lib/python3.10/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+examples/real_world/tests/test_add_products.py::test_interactor
+tests/unit/container/override/test_alias.py::test_no_override
+tests/unit/container/override/test_alias.py::test_skip_no_override
+tests/unit/container/override/test_alias.py::test_override_ok
+tests/unit/container/override/test_alias.py::test_cant_override
+tests/unit/container/override/test_alias.py::test_skip_cant_override
+tests/unit/container/override/test_context_var.py::test_no_override
+tests/unit/container/override/test_context_var.py::test_skip_no_override
+tests/unit/container/override/test_context_var.py::test_override_ok
+tests/unit/container/override/test_context_var.py::test_cant_override
+tests/unit/container/override/test_context_var.py::test_skip_cant_override
+tests/unit/container/override/test_provide.py::test_no_override
+tests/unit/container/override/test_provide.py::test_skip_no_override
+tests/unit/container/override/test_provide.py::test_override_ok
+tests/unit/container/override/test_provide.py::test_cant_override
+tests/unit/container/override/test_provide.py::test_skip_cant_override
+tests/unit/container/override/test_provide_all.py::test_not_override
+tests/unit/container/override/test_provide_all.py::test_override
+tests/unit/container/test_alias.py::test_alias
+tests/unit/container/test_alias.py::test_alias_to_alias
+tests/unit/container/test_alias.py::test_cycle
+tests/unit/container/test_alias.py::test_missing_factory
+tests/unit/container/test_alias.py::test_implicit
+tests/unit/container/test_alias.py::test_implicit_no_source
+tests/unit/container/test_alias.py::test_implicit_all
+tests/unit/container/test_alias.py::test_implicit_generator
+tests/unit/container/test_alias.py::test_implicit_generator_alt
+tests/unit/container/test_alias.py::test_implicit_async_generator
+tests/unit/container/test_alias.py::test_implicit_async_generator_alt
+tests/unit/container/test_alias.py::test_union_alias
+tests/unit/container/test_cache.py::test_cache_sync
+tests/unit/container/test_cache.py::test_cache_async
+tests/unit/container/test_cache.py::test_nocache_sync
+tests/unit/container/test_cache.py::test_nocache_async
+tests/unit/container/test_cache.py::test_alias_sync
+tests/unit/container/test_cache.py::test_alias_async
+tests/unit/container/test_components.py::test_from_component
+tests/unit/container/test_components.py::test_from_component_async
+tests/unit/container/test_components.py::test_change_component
+tests/unit/container/test_components.py::test_set_component
+tests/unit/container/test_components.py::test_from_component_alias
+tests/unit/container/test_components.py::test_isolated_component
+tests/unit/container/test_components.py::test_cache
+tests/unit/container/test_components.py::test_cache_async
+tests/unit/container/test_components.py::test_decorator
+tests/unit/container/test_components.py::test_result_component
+tests/unit/container/test_concurrency.py::test_cache_sync
+tests/unit/container/test_concurrency.py::test_cache_async
+tests/unit/container/test_context_vars.py::test_simple
+tests/unit/container/test_context_vars.py::test_simple_async
+tests/unit/container/test_context_vars.py::test_not_found
+tests/unit/container/test_context_vars.py::test_not_found_async
+tests/unit/container/test_context_vars.py::test_2components
+tests/unit/container/test_context_vars.py::test_2components_factory
+tests/unit/container/test_context_vars.py::test_decorate
+tests/unit/container/test_decorator.py::test_simple
+tests/unit/container/test_decorator.py::test_with_hint
+tests/unit/container/test_decorator.py::test_decorator
+tests/unit/container/test_decorator.py::test_kwargs
+tests/unit/container/test_decorator.py::test_decorator_with_provides
+tests/unit/container/test_decorator.py::test_alias
+tests/unit/container/test_decorator.py::test_double
+tests/unit/container/test_decorator.py::test_double_ok
+tests/unit/container/test_decorator.py::test_missing_factory
+tests/unit/container/test_decorator.py::test_expected_decorator
+tests/unit/container/test_decorator.py::test_generic_decorator
+tests/unit/container/test_decorator.py::test_generic_double_decorator
+tests/unit/container/test_decorator.py::test_generic_decorator_generic_factory
+tests/unit/container/test_decorator.py::test_decorate_alias
+tests/unit/container/test_dynamic.py::test_dynamic
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.RUNTIME-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.APP-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.APP-None-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.RUNTIME-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.APP-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.APP-None-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.SESSION-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-Scope.STEP-Scope.STEP]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-None-Scope.REQUEST]
+tests/unit/container/test_enter_ex
+...[Truncation]...
+endering/test_name.py::test_get_name[obj10-False-...]
+tests/unit/text_rendering/test_name.py::test_get_name[Scope-True-dishka.entities.scope.Scope]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[int]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[T]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA]
+tests/unit/text_rendering/test_path.py::test_cycle
+tests/unit/text_rendering/test_path.py::test_cycle_1
+tests/unit/text_rendering/test_path.py::test_linear
+==================================== ERRORS ====================================
+____________ ERROR collecting docs/advanced/testing/test_example.py ____________
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:33: in <module>
+    import httpx
+E   ModuleNotFoundError: No module named 'httpx'
+During handling of the above exception, another exception occurred:
+docs/advanced/testing/test_example.py:9: in <module>
+    from fastapi.testclient import TestClient
+/usr/local/lib/python3.10/site-packages/fastapi/testclient.py:1: in <module>
+    from starlette.testclient import TestClient as TestClient  # noqa
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:35: in <module>
+    raise RuntimeError(
+E   RuntimeError: The starlette.testclient module requires the httpx package to be installed.
+E   You can install this with:
+E       $ pip install httpx
+____________ ERROR collecting examples/real_world/tests/test_web.py ____________
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:33: in <module>
+    import httpx
+E   ModuleNotFoundError: No module named 'httpx'
+During handling of the above exception, another exception occurred:
+examples/real_world/tests/test_web.py:14: in <module>
+    from fastapi.testclient import TestClient
+/usr/local/lib/python3.10/site-packages/fastapi/testclient.py:1: in <module>
+    from starlette.testclient import TestClient as TestClient  # noqa
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:35: in <module>
+    raise RuntimeError(
+E   RuntimeError: The starlette.testclient module requires the httpx package to be installed.
+E   You can install this with:
+E       $ pip install httpx
+_________ ERROR collecting tests/integrations/fastapi/test_fastapi.py __________
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:33: in <module>
+    import httpx
+E   ModuleNotFoundError: No module named 'httpx'
+During handling of the above exception, another exception occurred:
+tests/integrations/fastapi/test_fastapi.py:8: in <module>
+    from fastapi.testclient import TestClient
+/usr/local/lib/python3.10/site-packages/fastapi/testclient.py:1: in <module>
+    from starlette.testclient import TestClient as TestClient  # noqa
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:35: in <module>
+    raise RuntimeError(
+E   RuntimeError: The starlette.testclient module requires the httpx package to be installed.
+E   You can install this with:
+E       $ pip install httpx
+____ ERROR collecting tests/integrations/fastapi/test_fastapi_websockets.py ____
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:33: in <module>
+    import httpx
+E   ModuleNotFoundError: No module named 'httpx'
+During handling of the above exception, another exception occurred:
+tests/integrations/fastapi/test_fastapi_websockets.py:9: in <module>
+    from fastapi.testclient import TestClient
+/usr/local/lib/python3.10/site-packages/fastapi/testclient.py:1: in <module>
+    from starlette.testclient import TestClient as TestClient  # noqa
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:35: in <module>
+    raise RuntimeError(
+E   RuntimeError: The starlette.testclient module requires the httpx package to be installed.
+E   You can install this with:
+E       $ pip install httpx
+_______ ERROR collecting tests/integrations/starlette/test_starlette.py ________
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:33: in <module>
+    import httpx
+E   ModuleNotFoundError: No module named 'httpx'
+During handling of the above exception, another exception occurred:
+tests/integrations/starlette/test_starlette.py:10: in <module>
+    from starlette.testclient import TestClient
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:35: in <module>
+    raise RuntimeError(
+E   RuntimeError: The starlette.testclient module requires the httpx package to be installed.
+E   You can install this with:
+E       $ pip install httpx
+__ ERROR collecting tests/integrations/starlette/test_starlette_websockets.py __
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:33: in <module>
+    import httpx
+E   ModuleNotFoundError: No module named 'httpx'
+During handling of the above exception, another exception occurred:
+tests/integrations/starlette/test_starlette_websockets.py:9: in <module>
+    from starlette.testclient import TestClient
+/usr/local/lib/python3.10/site-packages/starlette/testclient.py:35: in <module>
+    raise RuntimeError(
+E   RuntimeError: The starlette.testclient module requires the httpx package to be installed.
+E   You can install this with:
+E       $ pip install httpx
+=========================== short test summary info ============================
+ERROR docs/advanced/testing/test_example.py - RuntimeError: The starlette.tes...
+ERROR examples/real_world/tests/test_web.py - RuntimeError: The starlette.tes...
+ERROR tests/integrations/fastapi/test_fastapi.py - RuntimeError: The starlett...
+ERROR tests/integrations/fastapi/test_fastapi_websockets.py - RuntimeError: T...
+ERROR tests/integrations/starlette/test_starlette.py - RuntimeError: The star...
+ERROR tests/integrations/starlette/test_starlette_websockets.py - RuntimeErro...
+!!!!!!!!!!!!!!!!!!! Interrupted: 6 errors during collection !!!!!!!!!!!!!!!!!!!!
+244 tests collected, 6 errors in 0.99s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 164 turns left to complete the task.
+---------------------------
+### Thought: According to the errors, the `httpx` package is required. I will add `httpx` to the waiting list for installation.
+
+### Action:
+```bash
+waitinglist add -p httpx -t pip
+```
+### Observation:
+Running `waitinglist add -p httpx -t pip`...
+'httpx' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 163 turns left to complete the task.
+---------------------------
+### Thought: Now that `httpx` has been added to the waiting list, I will proceed to download this dependency.
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'httpx' has been removed from the waiting list.
+"httpx" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+httpx (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 162 turns left to complete the task.
+---------------------------
+### Thought: The `httpx` dependency is successfully installed. I will rerun the tests to verify if the environment configuration is complete and the errors have been resolved.
+
+### Action:
+```bash
+runtest
+```
+### Observation:
+Running `python /home/tools/runtest.py`...
+The output is too long, so we've truncated it to show you the first and last 5000 characters.
+Running `python /home/tools/runtest.py`...
+Error: Please modify the configuration according to the error messages below. Once all issues are resolved, rerun the tests.
+/usr/local/lib/python3.10/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+docs/advanced/testing/test_example.py::test_controller
+examples/real_world/tests/test_add_products.py::test_interactor
+tests/integrations/fastapi/test_fastapi.py::test_app_dependency[dishka_app]
+tests/integrations/fastapi/test_fastapi.py::test_app_dependency[dishka_auto_app]
+tests/integrations/fastapi/test_fastapi.py::test_request_dependency
+tests/integrations/fastapi/test_fastapi.py::test_compat
+tests/integrations/fastapi/test_fastapi.py::test_request_dependency2
+tests/integrations/fastapi/test_fastapi.py::test_fastapi_depends
+tests/integrations/fastapi/test_fastapi_websockets.py::test_app_dependency
+tests/integrations/fastapi/test_fastapi_websockets.py::test_request_dependency
+tests/integrations/fastapi/test_fastapi_websockets.py::test_request_dependency2
+tests/integrations/fastapi/test_fastapi_websockets.py::test_websocket_dependency
+tests/integrations/starlette/test_starlette.py::test_app_dependency
+tests/integrations/starlette/test_starlette.py::test_request_dependency
+tests/integrations/starlette/test_starlette.py::test_request_dependency2
+tests/integrations/starlette/test_starlette_websockets.py::test_app_dependency
+tests/integrations/starlette/test_starlette_websockets.py::test_request_dependency
+tests/integrations/starlette/test_starlette_websockets.py::test_request_dependency2
+tests/integrations/starlette/test_starlette_websockets.py::test_websocket_dependency
+tests/unit/container/override/test_alias.py::test_no_override
+tests/unit/container/override/test_alias.py::test_skip_no_override
+tests/unit/container/override/test_alias.py::test_override_ok
+tests/unit/container/override/test_alias.py::test_cant_override
+tests/unit/container/override/test_alias.py::test_skip_cant_override
+tests/unit/container/override/test_context_var.py::test_no_override
+tests/unit/container/override/test_context_var.py::test_skip_no_override
+tests/unit/container/override/test_context_var.py::test_override_ok
+tests/unit/container/override/test_context_var.py::test_cant_override
+tests/unit/container/override/test_context_var.py::test_skip_cant_override
+tests/unit/container/override/test_provide.py::test_no_override
+tests/unit/container/override/test_provide.py::test_skip_no_override
+tests/unit/container/override/test_provide.py::test_override_ok
+tests/unit/container/override/test_provide.py::test_cant_override
+tests/unit/container/override/test_provide.py::test_skip_cant_override
+tests/unit/container/override/test_provide_all.py::test_not_override
+tests/unit/container/override/test_provide_all.py::test_override
+tests/unit/container/test_alias.py::test_alias
+tests/unit/container/test_alias.py::test_alias_to_alias
+tests/unit/container/test_alias.py::test_cycle
+tests/unit/container/test_alias.py::test_missing_factory
+tests/unit/container/test_alias.py::test_implicit
+tests/unit/container/test_alias.py::test_implicit_no_source
+tests/unit/container/test_alias.py::test_implicit_all
+tests/unit/container/test_alias.py::test_implicit_generator
+tests/unit/container/test_alias.py::test_implicit_generator_alt
+tests/unit/container/test_alias.py::test_implicit_async_generator
+tests/unit/container/test_alias.py::test_implicit_async_generator_alt
+tests/unit/container/test_alias.py::test_union_alias
+tests/unit/container/test_cache.py::test_cache_sync
+tests/unit/container/test_cache.py::test_cache_async
+tests/unit/container/test_cache.py::test_nocache_sync
+tests/unit/container/test_cache.py::test_nocache_async
+tests/unit/container/test_cache.py::test_alias_sync
+tests/unit/container/test_cache.py::test_alias_async
+tests/unit/container/test_components.py::test_from_component
+tests/unit/container/test_components.py::test_from_component_async
+tests/unit/container/test_components.py::test_change_component
+tests/unit/container/test_components.py::test_set_component
+tests/unit/container/test_components.py::test_from_component_alias
+tests/unit/container/test_components.py::test_isolated_component
+tests/unit/container/test_components.py::test_cache
+tests/unit/container/test_components.py::test_cache_async
+tests/unit/container/test_components.py::test_decorator
+tests/unit/container/test_components.py::test_result_component
+tests/unit/container/test_concurrency.py::test_cache_sync
+tests/unit/container/test_concurrency.py::test_cache_async
+tests/unit/container/test_context_vars.py::test_simple
+tests/unit/container/test_context_vars.py::test_simple_async
+tests/unit/container/test_context_vars.py::test_not_found
+tests/unit/container/test_context_vars.py::test_not_found_async
+tests/unit/container/test_context_vars.py::test_2components
+tests/unit/container/test_context_vars.py::test_2components_factory
+tests/unit/container/test_context_vars.py::test_decorate
+tests/unit/container/test_decorator.py::test_simple
+tests/unit/container/test_decorator.py::test_with_hint
+tests/unit/container/test_decorator.py::test_decorator
+tests/unit/container/test_decorator.py::test_kwargs
+tests/unit/container/test_decorator.py::test_decorator_with_provides
+tests/unit/container/test_decorator.py::test_alias
+tests/unit/container/test_decorator.py::test_double
+tests/unit/container/test_decorator.py::test_double_ok
+tests/unit/container/test_decorator.py::test_missing_factory
+tests/unit/c
+...[Truncation]...
+.py::test_wrapper[render_d2-container0]
+tests/unit/plotter/test_wrappers.py::test_wrapper[render_d2-container1]
+tests/unit/plotter/test_wrappers.py::test_wrapper[render_mermaid-container0]
+tests/unit/plotter/test_wrappers.py::test_wrapper[render_mermaid-container1]
+tests/unit/test_composite.py::test_composite
+tests/unit/test_context_proxy.py::test_simple
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Any-Any-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[str-str-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Annotated-str-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Annotated-str-baz]
+tests/unit/test_provider.py::test_provider_init
+tests/unit/test_provider.py::test_parse_factory[sync_func_a-FactoryType.FACTORY-True]
+tests/unit/test_provider.py::test_parse_factory[sync_iter_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[sync_iterator_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[sync_gen_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_func_a-FactoryType.ASYNC_FACTORY-True]
+tests/unit/test_provider.py::test_parse_factory[async_iter_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_iterator_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_gen_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory_invalid_hint
+tests/unit/test_provider.py::test_parse_factory_invalid_hint_async
+tests/unit/test_provider.py::test_parse_factory_cls[ClassA-FactoryType.FACTORY-False]
+tests/unit/test_provider.py::test_provider_class_scope
+tests/unit/test_provider.py::test_provider_instance_scope
+tests/unit/test_provider.py::test_provider_instance_braces
+tests/unit/test_provider.py::test_self_hint
+tests/unit/test_provider.py::test_staticmethod
+tests/unit/test_provider.py::test_classmethod
+tests/unit/test_provider.py::test_callable
+tests/unit/test_provider.py::test_provide_as_method
+tests/unit/test_provider.py::test_provide_external_method
+tests/unit/test_provider.py::test_provide_protocol_impl
+tests/unit/test_provider.py::test_provide_all_cls
+tests/unit/test_provider.py::test_provide_all_instance
+tests/unit/test_provider.py::test_provide_random
+tests/unit/test_provider.py::test_provide_join_provides_cls
+tests/unit/test_provider.py::test_decorator
+tests/unit/test_provider.py::test_invalid_decorator
+tests/unit/test_quickstart_example.py::test_readme_example
+tests/unit/test_type_match.py::test_is_broader_or_same_type[C-C-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[C-D-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-C-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-SubC-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-D-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TSubCCD-TCD-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True0]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True1]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True2]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-BGeneric-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-True0]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-True1]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-False]
+tests/unit/text_rendering/test_name.py::test_get_name[A0-False-A0]
+tests/unit/text_rendering/test_name.py::test_get_name[A0-True-unit.text_rendering.test_name.A0]
+tests/unit/text_rendering/test_name.py::test_get_name[A1-False-A0.A1]
+tests/unit/text_rendering/test_name.py::test_get_name[foo-False-A0.A1.foo]
+tests/unit/text_rendering/test_name.py::test_get_name[foo_class-False-A0.A1.foo_class]
+tests/unit/text_rendering/test_name.py::test_get_name[bar-False-A0.bar]
+tests/unit/text_rendering/test_name.py::test_get_name[baz-False-baz]
+tests/unit/text_rendering/test_name.py::test_get_name[int-False-int]
+tests/unit/text_rendering/test_name.py::test_get_name[str-True-str]
+tests/unit/text_rendering/test_name.py::test_get_name[None-False-None]
+tests/unit/text_rendering/test_name.py::test_get_name[obj10-False-...]
+tests/unit/text_rendering/test_name.py::test_get_name[Scope-True-dishka.entities.scope.Scope]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[int]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[T]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA]
+tests/unit/text_rendering/test_path.py::test_cycle
+tests/unit/text_rendering/test_path.py::test_cycle_1
+tests/unit/text_rendering/test_path.py::test_linear
+==================================== ERRORS ====================================
+____________ ERROR collecting examples/real_world/tests/test_web.py ____________
+ImportError while importing test module '/repo/examples/real_world/tests/test_web.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+examples/real_world/tests/test_web.py:15: in <module>
+    from main_web import create_fastapi_app
+examples/real_world/main_web.py:4: in <module>
+    import uvicorn
+E   ModuleNotFoundError: No module named 'uvicorn'
+=========================== short test summary info ============================
+ERROR examples/real_world/tests/test_web.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+262 tests collected, 1 error in 0.91s
+The command execution failed, so I have reverted it back to the previous state, which is the environment before running this command.
+`runtest` executes with returncode: 2
+
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 161 turns left to complete the task.
+---------------------------
+### Thought: The current error indicates that the `uvicorn` package is missing. I will add `uvicorn` to the waiting list for installation.
+
+### Action:
+```bash
+waitinglist add -p uvicorn -t pip
+```
+### Observation:
+Running `waitinglist add -p uvicorn -t pip`...
+'uvicorn' (using pip to download) has been added into the waiting list. If you have multiple elements to add to the waitinglist, you can use && to connect multiple `waitinglist add` statements and surround them with ```bash and ```. Please make sure to write the complete statements; we will only recognize complete statements. Do not use ellipses or other incomplete forms.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 160 turns left to complete the task.
+---------------------------
+### Thought: Now that the `uvicorn` dependency has been added to the waiting list, I will proceed to download this dependency.
+
+### Action:
+```bash
+download
+```
+### Observation:
+Running `download`...
+'uvicorn' has been removed from the waiting list.
+"uvicorn" installed successfully.
+In this round, the following third-party libraries were successfully downloaded. They are:
+uvicorn (using tool pip)
+No third-party libraries failed to download in this round.
+[Current directory]:
+/
+You are currently in a [python:3.10] container.
+
+ENVIRONMENT REMINDER: You have 159 turns left to complete the task.
+---------------------------
+### Thought: The `uvicorn` dependency has been successfully installed. I will rerun the tests to verify if the environment configuration is correct and all errors have been resolved.
+
+### Action:
+```bash
+runtest
+```
+Congratulations, you have successfully configured the environment!
+/usr/local/lib/python3.10/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+docs/advanced/testing/test_example.py::test_controller
+examples/real_world/tests/test_add_products.py::test_interactor
+examples/real_world/tests/test_web.py::test_index
+tests/integrations/click/test_click.py::test_app_dependency[dishka_app]
+tests/integrations/click/test_click.py::test_app_dependency[dishka_auto_app]
+tests/integrations/click/test_click.py::test_app_dependency_with_nested_groups
+tests/integrations/click/test_click.py::test_app_dependency_with_option
+tests/integrations/fastapi/test_fastapi.py::test_app_dependency[dishka_app]
+tests/integrations/fastapi/test_fastapi.py::test_app_dependency[dishka_auto_app]
+tests/integrations/fastapi/test_fastapi.py::test_request_dependency
+tests/integrations/fastapi/test_fastapi.py::test_compat
+tests/integrations/fastapi/test_fastapi.py::test_request_dependency2
+tests/integrations/fastapi/test_fastapi.py::test_fastapi_depends
+tests/integrations/fastapi/test_fastapi_websockets.py::test_app_dependency
+tests/integrations/fastapi/test_fastapi_websockets.py::test_request_dependency
+tests/integrations/fastapi/test_fastapi_websockets.py::test_request_dependency2
+tests/integrations/fastapi/test_fastapi_websockets.py::test_websocket_dependency
+tests/integrations/starlette/test_starlette.py::test_app_dependency
+tests/integrations/starlette/test_starlette.py::test_request_dependency
+tests/integrations/starlette/test_starlette.py::test_request_dependency2
+tests/integrations/starlette/test_starlette_websockets.py::test_app_dependency
+tests/integrations/starlette/test_starlette_websockets.py::test_request_dependency
+tests/integrations/starlette/test_starlette_websockets.py::test_request_dependency2
+tests/integrations/starlette/test_starlette_websockets.py::test_websocket_dependency
+tests/unit/container/override/test_alias.py::test_no_override
+tests/unit/container/override/test_alias.py::test_skip_no_override
+tests/unit/container/override/test_alias.py::test_override_ok
+tests/unit/container/override/test_alias.py::test_cant_override
+tests/unit/container/override/test_alias.py::test_skip_cant_override
+tests/unit/container/override/test_context_var.py::test_no_override
+tests/unit/container/override/test_context_var.py::test_skip_no_override
+tests/unit/container/override/test_context_var.py::test_override_ok
+tests/unit/container/override/test_context_var.py::test_cant_override
+tests/unit/container/override/test_context_var.py::test_skip_cant_override
+tests/unit/container/override/test_provide.py::test_no_override
+tests/unit/container/override/test_provide.py::test_skip_no_override
+tests/unit/container/override/test_provide.py::test_override_ok
+tests/unit/container/override/test_provide.py::test_cant_override
+tests/unit/container/override/test_provide.py::test_skip_cant_override
+tests/unit/container/override/test_provide_all.py::test_not_override
+tests/unit/container/override/test_provide_all.py::test_override
+tests/unit/container/test_alias.py::test_alias
+tests/unit/container/test_alias.py::test_alias_to_alias
+tests/unit/container/test_alias.py::test_cycle
+tests/unit/container/test_alias.py::test_missing_factory
+tests/unit/container/test_alias.py::test_implicit
+tests/unit/container/test_alias.py::test_implicit_no_source
+tests/unit/container/test_alias.py::test_implicit_all
+tests/unit/container/test_alias.py::test_implicit_generator
+tests/unit/container/test_alias.py::test_implicit_generator_alt
+tests/unit/container/test_alias.py::test_implicit_async_generator
+tests/unit/container/test_alias.py::test_implicit_async_generator_alt
+tests/unit/container/test_alias.py::test_union_alias
+tests/unit/container/test_cache.py::test_cache_sync
+tests/unit/container/test_cache.py::test_cache_async
+tests/unit/container/test_cache.py::test_nocache_sync
+tests/unit/container/test_cache.py::test_nocache_async
+tests/unit/container/test_cache.py::test_alias_sync
+tests/unit/container/test_cache.py::test_alias_async
+tests/unit/container/test_components.py::test_from_component
+tests/unit/container/test_components.py::test_from_component_async
+tests/unit/container/test_components.py::test_change_component
+tests/unit/container/test_components.py::test_set_component
+tests/unit/container/test_components.py::test_from_component_alias
+tests/unit/container/test_components.py::test_isolated_component
+tests/unit/container/test_components.py::test_cache
+tests/unit/container/test_components.py::test_cache_async
+tests/unit/container/test_components.py::test_decorator
+tests/unit/container/test_components.py::test_result_component
+tests/unit/container/test_concurrency.py::test_cache_sync
+tests/unit/container/test_concurrency.py::test_cache_async
+tests/unit/container/test_context_vars.py::test_simple
+tests/unit/container/test_context_vars.py::test_simple_async
+tests/unit/container/test_context_vars.py::test_not_found
+tests/unit/container/test_context_vars.py::test_not_found_async
+tests/unit/container/test_context_vars.py::test_2components
+tests/unit/container/test_context_vars.py::test_2components_factory
+tests/unit/container/test_context_vars.py::test_decorate
+tests/unit/container/test_decorator.py::test_simple
+tests/unit/container/test_decorator.py::test_with_hint
+tests/unit/container/test_decorator.py::test_decorator
+tests/unit/container/test_decorator.py::test_kwargs
+tests/unit/container/test_decorator.py::test_decorator_with_provides
+tests/unit/container/test_decorator.py::test_alias
+tests/unit/container/test_decorator.py::test_double
+tests/unit/container/test_decorator.py::test_double_ok
+tests/unit/container/test_decorator.py::test_missing_factory
+tests/unit/container/test_decorator.py::test_expected_decorator
+tests/unit/container/test_decorator.py::test_generic_decorator
+tests/unit/container/test_decorator.py::test_generic_double_decorator
+tests/unit/container/test_decorator.py::test_generic_decorator_generic_factory
+tests/unit/container/test_decorator.py::test_decorate_alias
+tests/unit/container/test_dynamic.py::test_dynamic
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.RUNTIME-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.APP-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_create[Scope.APP-None-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.RUNTIME-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.APP-Scope.APP-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_async_create[Scope.APP-None-Scope.APP]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.SESSION-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-Scope.STEP-Scope.STEP]
+tests/unit/container/test_enter_exit.py::test_sync_enter[Scope.REQUEST-None-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_sync_enter[Scope.SESSION-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_sync_enter[Scope.REQUEST-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_sync_enter[Scope.REQUEST-Scope.STEP-Scope.STEP]
+tests/unit/container/test_enter_exit.py::test_error_in_sync_enter[Scope.REQUEST-None-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_async_enter[Scope.SESSION-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_async_enter[Scope.REQUEST-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_async_enter[Scope.REQUEST-Scope.STEP-Scope.STEP]
+tests/unit/container/test_enter_exit.py::test_async_enter[Scope.REQUEST-None-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter[Scope.SESSION-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter[Scope.REQUEST-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter[Scope.REQUEST-Scope.STEP-Scope.STEP]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter[Scope.REQUEST-None-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter_with_async_gen[Scope.SESSION-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter_with_async_gen[Scope.REQUEST-Scope.REQUEST-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter_with_async_gen[Scope.REQUEST-Scope.STEP-Scope.STEP]
+tests/unit/container/test_enter_exit.py::test_error_in_async_enter_with_async_gen[Scope.REQUEST-None-Scope.REQUEST]
+tests/unit/container/test_enter_exit.py::test_sync_exit_one
+tests/unit/container/test_enter_exit.py::test_async_exit_one
+tests/unit/container/test_exceptions.py::test_sync[SyncFinalizationError]
+tests/unit/container/test_exceptions.py::test_async[SyncFinalizationError]
+tests/unit/container/test_exceptions.py::test_async[AsyncFinalizationError]
+tests/unit/container/test_exceptions.py::test_no_factory_cls_sync
+tests/unit/container/test_exceptions.py::test_invalid_type_sync
+tests/unit/container/test_exceptions.py::test_no_type_sync
+tests/unit/container/test_exceptions.py::test_no_factory_init_sync
+tests/unit/container/test_exceptions.py::test_no_factory_init_async
+tests/unit/container/test_exceptions.py::test_no_factory_sync
+tests/unit/container/test_exceptions.py::test_no_factory_path_sync
+tests/unit/container/test_exceptions.py::test_no_factory_async
+tests/unit/container/test_exceptions.py::test_no_factory_path_async
+tests/unit/container/test_exceptions.py::test_async_factory_in_sync
+tests/unit/container/test_exceptions.py::test_invalid_scope_factory
+tests/unit/container/test_exceptions.py::test_missing_context_var_sync
+tests/unit/container/test_exceptions.py::test_missing_context_var_async
+tests/unit/container/test_exceptions.py::test_no_scope
+tests/unit/container/test_exceptions.py::test_invalid_scope
+tests/unit/container/test_generic.py::test_concrete_generic[A]
+tests/unit/container/test_generic.py::test_concrete_generic[B]
+tests/unit/container/test_generic.py::test_concrete_generic[ReplaceInit]
+tests/unit/container/test_generic.py::test_concrete_child
+tests/unit/container/test_generic.py::test_generic_class
+tests/unit/container/test_generic.py::test_bare_generic_method
+tests/unit/container/test_generic.py::test_generic_func
+tests/unit/container/test_generic.py::test_generic_validation_ok
+tests/unit/container/test_generic.py::test_generic_validation_typevar_ok
+tests/unit/container/test_generic.py::test_generic_validation_fail
+tests/unit/container/test_generic.py::test_passing_type_var
+tests/unit/container/test_generic.py::test_func_with_generic_params
+tests/unit/container/test_generic.py::test_passing_type_var_decorator
+tests/unit/container/test_generic.py::test_provide_type_non_generic
+tests/unit/container/test_recursive.py::test_provide_class
+tests/unit/container/test_recursive.py::test_provide_instance
+tests/unit/container/test_recursive.py::test_provide_any_of
+tests/unit/container/test_recursive.py::test_provide_all_class
+tests/unit/container/test_recursive.py::test_provide_all_instance
+tests/unit/container/test_resolve.py::test_sync[ClassA-False]
+tests/unit/container/test_resolve.py::test_sync[sync_func_a-False]
+tests/unit/container/test_resolve.py::test_sync[sync_iter_a-True]
+tests/unit/container/test_resolve.py::test_sync[sync_gen_a-True]
+tests/unit/container/test_resolve.py::test_async[ClassA-False]
+tests/unit/container/test_resolve.py::test_async[sync_func_a-False]
+tests/unit/container/test_resolve.py::test_async[sync_iter_a-True]
+tests/unit/container/test_resolve.py::test_async[sync_gen_a-True]
+tests/unit/container/test_resolve.py::test_async[async_func_a-False]
+tests/unit/container/test_resolve.py::test_async[async_iter_a-True]
+tests/unit/container/test_resolve.py::test_async[async_gen_a-True]
+tests/unit/container/test_resolve.py::test_2decorators
+tests/unit/container/test_resolve.py::test_value
+tests/unit/container/test_resolve.py::test_value_async
+tests/unit/container/test_resolve.py::test_external_method[method]
+tests/unit/container/test_resolve.py::test_external_method[classmethod]
+tests/unit/container/test_resolve.py::test_external_method[staticmethod]
+tests/unit/container/test_resolve.py::test_kwargs
+tests/unit/container/test_with_parents.py::test_is_type_var_tuple
+tests/unit/container/test_with_parents.py::test_simple_inheritance
+tests/unit/container/test_with_parents.py::test_ignore_parent_type[A1-Protocol-]
+tests/unit/container/test_with_parents.py::test_ignore_parent_type[A2-object-]
+tests/unit/container/test_with_parents.py::test_ignore_parent_type[A3-ABC-]
+tests/unit/container/test_with_parents.py::test_ignore_parent_type[A3-ABC-TTT]
+tests/unit/container/test_with_parents.py::test_type_var
+tests/unit/container/test_with_parents.py::test_type_var_tuple
+tests/unit/container/test_with_parents.py::test_type_var_and_type_var_tuple[obj0-val10-val20]
+tests/unit/container/test_with_parents.py::test_deep_inheritance
+tests/unit/container/test_with_parents.py::test_get_parents_by_generic_alias
+tests/unit/container/test_with_parents.py::test_using_ignoring_type
+tests/unit/container/test_with_parents.py::test_ignoring_parent
+tests/unit/container/test_with_parents.py::test_structures[TupleGeneric-result0]
+tests/unit/container/test_with_parents.py::test_structures[SequenceInt-result1]
+tests/unit/container/test_with_parents.py::test_structures[ListAny-result2]
+tests/unit/container/test_with_parents.py::test_structures[JsonMapping-result3]
+tests/unit/plotter/test_transform.py::test_empty
+tests/unit/plotter/test_transform.py::test_deps
+tests/unit/plotter/test_transform.py::test_invalid
+tests/unit/plotter/test_transform.py::test_components
+tests/unit/plotter/test_wrappers.py::test_wrapper[render_d2-container0]
+tests/unit/plotter/test_wrappers.py::test_wrapper[render_d2-container1]
+tests/unit/plotter/test_wrappers.py::test_wrapper[render_mermaid-container0]
+tests/unit/plotter/test_wrappers.py::test_wrapper[render_mermaid-container1]
+tests/unit/test_composite.py::test_composite
+tests/unit/test_context_proxy.py::test_simple
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Any-Any-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[str-str-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Annotated-str-None]
+tests/unit/test_entities.py::TestDependencyKey::test_hint_to_dependency_key[Annotated-str-baz]
+tests/unit/test_provider.py::test_provider_init
+tests/unit/test_provider.py::test_parse_factory[sync_func_a-FactoryType.FACTORY-True]
+tests/unit/test_provider.py::test_parse_factory[sync_iter_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[sync_iterator_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[sync_gen_a-FactoryType.GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_func_a-FactoryType.ASYNC_FACTORY-True]
+tests/unit/test_provider.py::test_parse_factory[async_iter_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_iterator_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory[async_gen_a-FactoryType.ASYNC_GENERATOR-True]
+tests/unit/test_provider.py::test_parse_factory_invalid_hint
+tests/unit/test_provider.py::test_parse_factory_invalid_hint_async
+tests/unit/test_provider.py::test_parse_factory_cls[ClassA-FactoryType.FACTORY-False]
+tests/unit/test_provider.py::test_provider_class_scope
+tests/unit/test_provider.py::test_provider_instance_scope
+tests/unit/test_provider.py::test_provider_instance_braces
+tests/unit/test_provider.py::test_self_hint
+tests/unit/test_provider.py::test_staticmethod
+tests/unit/test_provider.py::test_classmethod
+tests/unit/test_provider.py::test_callable
+tests/unit/test_provider.py::test_provide_as_method
+tests/unit/test_provider.py::test_provide_external_method
+tests/unit/test_provider.py::test_provide_protocol_impl
+tests/unit/test_provider.py::test_provide_all_cls
+tests/unit/test_provider.py::test_provide_all_instance
+tests/unit/test_provider.py::test_provide_random
+tests/unit/test_provider.py::test_provide_join_provides_cls
+tests/unit/test_provider.py::test_decorator
+tests/unit/test_provider.py::test_invalid_decorator
+tests/unit/test_quickstart_example.py::test_readme_example
+tests/unit/test_type_match.py::test_is_broader_or_same_type[C-C-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[C-D-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-C-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-SubC-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TC-D-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[TSubCCD-TCD-True]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True0]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True1]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-AGeneric-True2]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[AGeneric-BGeneric-False]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-True0]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-True1]
+tests/unit/test_type_match.py::test_is_broader_or_same_type[Mutiple-Mutiple-False]
+tests/unit/text_rendering/test_name.py::test_get_name[A0-False-A0]
+tests/unit/text_rendering/test_name.py::test_get_name[A0-True-unit.text_rendering.test_name.A0]
+tests/unit/text_rendering/test_name.py::test_get_name[A1-False-A0.A1]
+tests/unit/text_rendering/test_name.py::test_get_name[foo-False-A0.A1.foo]
+tests/unit/text_rendering/test_name.py::test_get_name[foo_class-False-A0.A1.foo_class]
+tests/unit/text_rendering/test_name.py::test_get_name[bar-False-A0.bar]
+tests/unit/text_rendering/test_name.py::test_get_name[baz-False-baz]
+tests/unit/text_rendering/test_name.py::test_get_name[int-False-int]
+tests/unit/text_rendering/test_name.py::test_get_name[str-True-str]
+tests/unit/text_rendering/test_name.py::test_get_name[None-False-None]
+tests/unit/text_rendering/test_name.py::test_get_name[obj10-False-...]
+tests/unit/text_rendering/test_name.py::test_get_name[Scope-True-dishka.entities.scope.Scope]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[int]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA[T]]
+tests/unit/text_rendering/test_name.py::test_get_name[GenericA-False-GenericA]
+tests/unit/text_rendering/test_path.py::test_cycle
+tests/unit/text_rendering/test_path.py::test_cycle_1
+tests/unit/text_rendering/test_path.py::test_linear
+
+267 tests collected in 0.87s
+Container e26d06770c30 stopped and removed
+Spend totally 683.1879303455353.

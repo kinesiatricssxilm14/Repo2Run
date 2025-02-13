@@ -1,0 +1,87 @@
+diff --git a/admyral/actions/integrations/communication/slack.py b/admyral/actions/integrations/communication/slack.py
+index 0b96d52..a54e6ae 100644
+--- a/admyral/actions/integrations/communication/slack.py
++++ b/admyral/actions/integrations/communication/slack.py
+@@ -72,7 +72,7 @@ def send_slack_message(
+         response_body = response.json()
+         if not response_body.get("ok"):
+             raise RuntimeError(
+-                f"Failed to send message in Slack. Error: {response_body.get("error")}"
++                f"Failed to send message in Slack. Error: {response_body.get('error')}"
+             )
+         return response_body
+ 
+@@ -158,7 +158,7 @@ def send_slack_message_to_user_by_email(
+         response_body = response.json()
+         if not response_body.get("ok"):
+             raise RuntimeError(
+-                f"Failed to send message to user by email in Slack . Message: {response_body.get("error")}"
++                f"Failed to send message to user by email in Slack. Message: {response_body.get('error')}"
+             )
+         return response_body
+ 
+diff --git a/admyral/actions/integrations/compliance/kandji.py b/admyral/actions/integrations/compliance/kandji.py
+index d84f8ef..129e265 100644
+--- a/admyral/actions/integrations/compliance/kandji.py
++++ b/admyral/actions/integrations/compliance/kandji.py
+@@ -136,7 +136,7 @@ def list_kandji_devices(
+ 
+             if last_checkin_within_days is not None:
+                 device_details = _kandji_get_api(
+-                    url=f"/devices/{device["device_id"]}/details"
++                    url=f"/devices/{device['device_id']}/details"
+                 )
+                 if (
+                     parse(device_details["mdm"]["last_check_in"])
+diff --git a/admyral/actions/integrations/enrich/leakcheck.py b/admyral/actions/integrations/enrich/leakcheck.py
+index 2cd6861..ae79ea9 100644
+--- a/admyral/actions/integrations/enrich/leakcheck.py
++++ b/admyral/actions/integrations/enrich/leakcheck.py
+@@ -80,7 +80,7 @@ def leakcheck_v2_lookup(
+         data = response.json()
+         if not data.get("success", False):
+             raise NonRetryableActionError(
+-                f"API responded with an error: {data.get("error", "Unknown error")}"
++                f"API responded with an error: {data.get('error', 'Unknown error')}"
+             )
+         return data["data"]
+ 
+diff --git a/admyral/editor/json_with_references_serde.py b/admyral/editor/json_with_references_serde.py
+index 096156e..f91bab8 100644
+--- a/admyral/editor/json_with_references_serde.py
++++ b/admyral/editor/json_with_references_serde.py
+@@ -195,7 +195,7 @@ def deserialize_json_with_reference(value: str) -> JsonValue:
+                 (
+                     start,
+                     end,
+-                    f'"{match.group().replace('\\"', '\"').replace('\"', '\\"')}"',
++                    f'"{match.group().replace(\'"\', \'\\\"\')}"',
+                 )
+             )
+ 
+diff --git a/admyral/models/condition.py b/admyral/models/condition.py
+index 8cb4092..7ec1798 100644
+--- a/admyral/models/condition.py
++++ b/admyral/models/condition.py
+@@ -99,7 +99,7 @@ class OrConditionExpression(ConditionExpression):
+         return visitor.visit(self)
+ 
+ 
+-type Condition = Annotated[
++Condition = Annotated[
+     ConstantConditionExpression
+     | UnaryConditionExpression
+     | BinaryConditionExpression
+diff --git a/admyral/models/editor.py b/admyral/models/editor.py
+index 5bca044..1c6ec39 100644
+--- a/admyral/models/editor.py
++++ b/admyral/models/editor.py
+@@ -73,7 +73,7 @@ class EditorWorkflowIfNode(EditorWorkflowBaseNode):
+     condition: str
+ 
+ 
+-type EditorWorkflowNode = (
++EditorWorkflowNode = (
+     EditorWorkflowStartNode | EditorWorkflowActionNode | EditorWorkflowIfNode
+ )
+ 
